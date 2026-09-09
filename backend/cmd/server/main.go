@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -21,6 +22,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -37,6 +39,8 @@ func main() {
 		log.Fatalf("database migration failed: %v", err)
 	}
 	log.Println("database migrated")
+
+	go runDueReminderLoop(pool)
 
 	smsWorker := notif.NewWorker(notif.SenderFunc(notif.SendSMSPayload), 2, 100, nil)
 	defer smsWorker.Close()
@@ -96,4 +100,48 @@ func main() {
 		log.Fatal(httpServer.ListenAndServeTLS(cert, os.Getenv("TLS_KEY")))
 	}
 	log.Fatal(httpServer.ListenAndServe())
+}
+
+// runDueReminderLoop periodically creates "due soon" in-app notifications for
+// assigned tasks that are not done or in review. Interval and window come from
+// environment variables and default to hourly reminders within the next day.
+func runDueReminderLoop(pool *pgxpool.Pool) {
+	windowHours := dueReminderFloatEnv("DUE_REMINDER_WINDOW_HOURS", 24)
+	interval := dueReminderDurationEnv("DUE_REMINDER_INTERVAL", time.Hour)
+
+	runOnce := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		count, err := db.CreateDueReminders(ctx, pool, windowHours)
+		if err != nil {
+			log.Printf("due reminders: %v", err)
+			return
+		}
+		if count > 0 {
+			log.Printf("due reminders: created %d", count)
+		}
+	}
+
+	runOnce()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for range ticker.C {
+		runOnce()
+	}
+}
+
+func dueReminderFloatEnv(key string, fallback float64) float64 {
+	v, err := strconv.ParseFloat(os.Getenv(key), 64)
+	if err != nil || v <= 0 {
+		return fallback
+	}
+	return v
+}
+
+func dueReminderDurationEnv(key string, fallback time.Duration) time.Duration {
+	v, err := strconv.Atoi(os.Getenv(key))
+	if err != nil || v <= 0 {
+		return fallback
+	}
+	return time.Duration(v) * time.Minute
 }

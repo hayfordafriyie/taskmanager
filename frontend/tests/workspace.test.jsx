@@ -1,16 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WorkspaceProvider } from '../src/modules/home/WorkspaceContext'
+import { AuthProvider } from '../src/modules/auth/AuthContext'
 import Home from '../src/modules/home'
 import Dock from '../src/components/Dock'
+import { renderWithProviders } from './test-utils'
 
 function renderWorkspace() {
-  return render(
-    <WorkspaceProvider>
-      <Home />
-      <Dock />
-    </WorkspaceProvider>,
+  return renderWithProviders(
+    <AuthProvider>
+      <WorkspaceProvider>
+        <Home />
+        <Dock />
+      </WorkspaceProvider>
+    </AuthProvider>,
   )
 }
 

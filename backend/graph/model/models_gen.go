@@ -33,6 +33,14 @@ type CreateAccountResult struct {
 	User    *User  `json:"user,omitempty"`
 }
 
+type CreateTaskInput struct {
+	Title       string     `json:"title"`
+	Description *string    `json:"description,omitempty"`
+	Priority    *Priority  `json:"priority,omitempty"`
+	DueAt       *time.Time `json:"dueAt,omitempty"`
+	AssigneeID  *uuid.UUID `json:"assigneeId,omitempty"`
+}
+
 type Invite struct {
 	ID        uuid.UUID `json:"id"`
 	TeamName  string    `json:"teamName"`
@@ -63,6 +71,16 @@ type LoginResult struct {
 type Mutation struct {
 }
 
+type Notification struct {
+	ID        uuid.UUID  `json:"id"`
+	Kind      string     `json:"kind"`
+	Title     string     `json:"title"`
+	Body      string     `json:"body"`
+	TaskID    *uuid.UUID `json:"taskId,omitempty"`
+	Read      bool       `json:"read"`
+	CreatedAt time.Time  `json:"createdAt"`
+}
+
 type OTPResult struct {
 	Success           bool   `json:"success"`
 	Message           string `json:"message"`
@@ -84,6 +102,27 @@ type RefreshResult struct {
 type ResetPasswordResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+type Task struct {
+	ID          uuid.UUID  `json:"id"`
+	TeamID      uuid.UUID  `json:"teamId"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Status      TaskStatus `json:"status"`
+	Priority    Priority   `json:"priority"`
+	DueAt       *time.Time `json:"dueAt,omitempty"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+	CreatedBy   *User      `json:"createdBy"`
+	Assignee    *User      `json:"assignee,omitempty"`
+}
+
+type TaskResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Task    *Task  `json:"task,omitempty"`
 }
 
 type Team struct {
@@ -115,6 +154,63 @@ type User struct {
 type VerifyOTPResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+type Priority string
+
+const (
+	PriorityLow    Priority = "LOW"
+	PriorityMedium Priority = "MEDIUM"
+	PriorityHigh   Priority = "HIGH"
+)
+
+var AllPriority = []Priority{
+	PriorityLow,
+	PriorityMedium,
+	PriorityHigh,
+}
+
+func (e Priority) IsValid() bool {
+	switch e {
+	case PriorityLow, PriorityMedium, PriorityHigh:
+		return true
+	}
+	return false
+}
+
+func (e Priority) String() string {
+	return string(e)
+}
+
+func (e *Priority) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Priority(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Priority", str)
+	}
+	return nil
+}
+
+func (e Priority) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *Priority) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e Priority) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type Role string
@@ -169,6 +265,65 @@ func (e *Role) UnmarshalJSON(b []byte) error {
 }
 
 func (e Role) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type TaskStatus string
+
+const (
+	TaskStatusTodo       TaskStatus = "TODO"
+	TaskStatusInProgress TaskStatus = "IN_PROGRESS"
+	TaskStatusReview     TaskStatus = "REVIEW"
+	TaskStatusDone       TaskStatus = "DONE"
+)
+
+var AllTaskStatus = []TaskStatus{
+	TaskStatusTodo,
+	TaskStatusInProgress,
+	TaskStatusReview,
+	TaskStatusDone,
+}
+
+func (e TaskStatus) IsValid() bool {
+	switch e {
+	case TaskStatusTodo, TaskStatusInProgress, TaskStatusReview, TaskStatusDone:
+		return true
+	}
+	return false
+}
+
+func (e TaskStatus) String() string {
+	return string(e)
+}
+
+func (e *TaskStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TaskStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TaskStatus", str)
+	}
+	return nil
+}
+
+func (e TaskStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *TaskStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e TaskStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

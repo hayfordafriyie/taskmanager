@@ -97,6 +97,58 @@ type AcceptInviteResult {
   team: Team
 }
 
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+type Task {
+  id: UUID!
+  teamId: UUID!
+  title: String!
+  description: String!
+  status: TaskStatus!
+  priority: Priority!
+  dueAt: Time
+  completedAt: Time
+  createdAt: Time!
+  updatedAt: Time!
+  createdBy: User!
+  assignee: User
+}
+
+type TaskResult {
+  success: Boolean!
+  message: String!
+  task: Task
+}
+
+input CreateTaskInput {
+  title: String!
+  description: String = ""
+  priority: Priority = MEDIUM
+  dueAt: Time
+  assigneeId: UUID
+}
+
+type Notification {
+  id: UUID!
+  kind: String!
+  title: String!
+  body: String!
+  taskId: UUID
+  read: Boolean!
+  createdAt: Time!
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -111,6 +163,9 @@ type Query {
   me: User!
   myTeam: Team!
   myInvites: [Invite!]!
+  teamTasks: [Task!]!
+  notifications: [Notification!]!
+  unreadNotificationCount: Int!
 }
 
 type Mutation {
@@ -125,4 +180,13 @@ type Mutation {
   inviteToTeam(phone: String!, role: Role!): InviteResult!
   acceptInvite(inviteId: UUID!): AcceptInviteResult!
   revokeInvite(inviteId: UUID!): Boolean!
+  createTask(input: CreateTaskInput!): TaskResult!
+  assignTask(taskId: UUID!, assigneeId: UUID): TaskResult!
+  setTaskStatus(taskId: UUID!, status: TaskStatus!): TaskResult!
+  markNotificationRead(id: UUID!): Boolean!
+  markNotificationUnread(id: UUID!): Boolean!
+  markAllNotificationsRead: Boolean!
+  markAllNotificationsUnread: Boolean!
+  deleteNotification(id: UUID!): Boolean!
+  deleteAllNotifications: Boolean!
 }

@@ -78,3 +78,36 @@ type InviteRow struct {
 	ExpiresAt          time.Time
 	CreatedAt          time.Time
 }
+
+type TaskRow struct {
+	ID          uuid.UUID
+	TeamID      uuid.UUID
+	CreatedBy   uuid.UUID
+	AssigneeID  *uuid.UUID
+	Title       string
+	Description string
+	Status      string
+	Priority    string
+	DueAt       *time.Time
+	CompletedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+
+	CreatorFirst   string
+	CreatorSurname string
+	// Assignee details (nil when there is no assignee).
+	AssigneePhone   *string
+	AssigneeFirst   *string
+	AssigneeSurname *string
+}
+
+type NotificationRow struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Kind      string
+	Title     string
+	Body      string
+	TaskID    *uuid.UUID
+	Read      bool
+	CreatedAt time.Time
+}

@@ -1,37 +1,53 @@
 import { useState } from "react";
-import { CheckboxIcon, MagnifyingGlassIcon, CheckIcon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, PriorityBadge, Avatar } from "../ui";
-
-const initialTasks = [
-  { id: 1, title: "Finish GraphQL resolver tests", project: "Backend", due: "Today", priority: "High", assignee: "KO", done: false },
-  { id: 2, title: "Write onboarding email copy", project: "Marketing", due: "Tomorrow", priority: "Medium", assignee: "AM", done: false },
-  { id: 3, title: "Review Q3 roadmap notes", project: "Planning", due: "Sep 12", priority: "High", assignee: "HB", done: false },
-  { id: 4, title: "Fix Radix Select focus ring", project: "Frontend", due: "Sep 14", priority: "Low", assignee: "KA", done: true },
-  { id: 5, title: "Update API rate-limit docs", project: "Docs", due: "Sep 15", priority: "Medium", assignee: "HB", done: false },
-  { id: 6, title: "Prepare demo environment", project: "DevOps", due: "Sep 16", priority: "Low", assignee: "KA", done: true },
-];
+import { CheckboxIcon, MagnifyingGlassIcon, CheckIcon, PersonIcon } from "@radix-ui/react-icons";
+import { Panel, ViewHeader, PriorityBadge } from "../ui";
+import { useAuth } from "../../auth/AuthContext";
+import { useTeamTasks, useSetTaskStatus, toApiStatus } from "../../tasks/hooks";
+import { useToast } from "../../../components/Toast";
 
 const filters = ["All", "Open", "Done"];
 
+const PRIORITY_LABEL = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
+
+function creatorName(t) {
+  const c = t.createdBy;
+  if (!c) return "Teammate";
+  return `${c.firstName ?? ""} ${c.surname ?? ""}`.trim() || "Teammate";
+}
+
 export function MyTasksView() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const toast = useToast();
+  const { user } = useAuth();
+  const { data: tasks = [], isLoading } = useTeamTasks({ enabled: !!user?.id });
+  const setStatus = useSetTaskStatus();
+
   const [filter, setFilter] = useState("All");
   const [query, setQuery] = useState("");
 
-  function toggle(id) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
-    );
-  }
-
-  const visible = tasks.filter((t) => {
-    if (filter === "Open" && t.done) return false;
-    if (filter === "Done" && !t.done) return false;
+  const mine = tasks.filter((t) => t.assignee?.id === user?.id);
+  const visible = mine.filter((t) => {
+    const done = toApiStatus(t.status) === "DONE";
+    if (filter === "Open" && done) return false;
+    if (filter === "Done" && !done) return false;
     if (query && !t.title.toLowerCase().includes(query.toLowerCase())) return false;
     return true;
   });
 
-  const doneCount = tasks.filter((t) => t.done).length;
+  const doneCount = mine.filter((t) => toApiStatus(t.status) === "DONE").length;
+
+  function toggle(t) {
+    const done = toApiStatus(t.status) === "DONE";
+    setStatus.mutate(
+      { taskId: t.id, status: done ? "TODO" : "DONE" },
+      {
+        onSuccess: (res) => {
+          const r = res?.data?.setTaskStatus;
+          if (r && !r.success) toast.error(r.message);
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
 
   return (
     <div>
@@ -51,72 +67,79 @@ export function MyTasksView() {
           ))}
         </div>
         <div className="relative">
-          <MagnifyingGlassIcon width={14} height={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <MagnifyingGlassIcon width={14} height={14} className="t-faint absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search tasks…"
+            aria-label="Search my tasks"
             className="control rounded-full py-2 pl-9 pr-3 text-sm"
           />
         </div>
       </div>
 
       <Panel className="mt-4">
-        <SectionTitleRow done={doneCount} total={tasks.length} />
-        <ul className="divide-soft mt-2">
-          {visible.map((t) => (
-            <li key={t.id} className="flex items-center gap-3 py-3">
-              <button
-                type="button"
-                aria-label={t.done ? "Mark as open" : "Mark as done"}
-                onClick={() => toggle(t.id)}
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                  t.done
-                    ? "border-emerald-500 bg-emerald-500 text-white"
-                    : "border-zinc-300 text-transparent hover:border-emerald-400 dark:border-zinc-600"
-                }`}
-              >
-                <CheckIcon width={12} height={12} />
-              </button>
-              <div className="min-w-0 flex-1">
-                <p
-                  className={`truncate text-sm font-medium ${
-                    t.done
-                      ? "text-zinc-400 line-through dark:text-zinc-500"
-                      : "t-ink"
-                  }`}
-                >
-                  {t.title}
-                </p>
-                <p className="text-xs t-soft">
-                  {t.project} · Due {t.due}
-                </p>
-              </div>
-              <PriorityBadge>{t.priority}</PriorityBadge>
-              <Avatar initial={t.assignee} className="h-7 w-7 text-[10px]" />
-            </li>
-          ))}
-          {visible.length === 0 && (
-            <li className="py-8 text-center text-sm t-soft">
-              No tasks match this view.
-            </li>
-          )}
-        </ul>
+        <header className="flex items-center gap-2">
+          <CheckboxIcon width={16} height={16} className="t-faint" />
+          <h2 className="font-display text-sm font-semibold t-ink">Tasks</h2>
+          <span className="ml-auto text-xs t-soft">
+            {doneCount} of {mine.length} done
+          </span>
+        </header>
+
+        {!user?.id ? (
+          <p className="py-8 text-center text-sm t-soft">
+            Sign in to see the tasks assigned to you.
+          </p>
+        ) : isLoading ? (
+          <p className="py-8 text-center text-sm t-soft">Loading tasks…</p>
+        ) : visible.length === 0 ? (
+          <p className="py-8 text-center text-sm t-soft">
+            {mine.length === 0
+              ? "No tasks are assigned to you yet."
+              : "No tasks match this view."}
+          </p>
+        ) : (
+          <ul className="divide-soft mt-2">
+            {visible.map((t) => {
+              const done = toApiStatus(t.status) === "DONE";
+              return (
+                <li key={t.id} className="flex items-center gap-3 py-3">
+                  <button
+                    type="button"
+                    aria-label={done ? "Mark as open" : "Mark as done"}
+                    onClick={() => toggle(t)}
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                      done
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-[var(--border-strong)] text-transparent hover:border-emerald-400"
+                    }`}
+                  >
+                    <CheckIcon width={12} height={12} />
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={`truncate text-sm font-medium ${
+                        done ? "t-faint line-through" : "t-ink"
+                      }`}
+                    >
+                      {t.title}
+                    </p>
+                    <p className="flex items-center gap-1 truncate text-xs t-soft">
+                      <PersonIcon width={11} height={11} />
+                      Assigned by {creatorName(t)}
+                      {t.dueAt ? ` · Due ${new Date(t.dueAt).toLocaleDateString()}` : ""}
+                    </p>
+                  </div>
+                  <PriorityBadge>{PRIORITY_LABEL[t.priority] || t.priority}</PriorityBadge>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Panel>
     </div>
   );
 }
 
-function SectionTitleRow({ done, total }) {
-  return (
-    <header className="flex items-center gap-2">
-      <CheckboxIcon width={16} height={16} className="t-faint" />
-      <h2 className="font-display text-sm font-semibold t-ink">
-        Tasks
-      </h2>
-      <span className="ml-auto text-xs t-soft">
-        {done} of {total} done
-      </span>
-    </header>
-  );
-}
+export default MyTasksView;

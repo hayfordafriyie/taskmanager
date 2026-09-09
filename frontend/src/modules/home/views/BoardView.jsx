@@ -1,98 +1,324 @@
-import { PlusIcon, ColumnsIcon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, PriorityBadge, Avatar } from "../ui";
+import { useState } from "react";
+import { PlusIcon, ColumnsIcon, PersonIcon } from "@radix-ui/react-icons";
+import { Panel, ViewHeader, Avatar } from "../ui";
+import { useMyTeam } from "../../invite/hooks";
+import {
+  useTeamTasks,
+  useCreateTask,
+  useAssignTask,
+  useSetTaskStatus,
+  toApiStatus,
+} from "../../tasks/hooks";
+import { useToast } from "../../../components/Toast";
 
-const columns = [
-  {
-    id: "todo",
-    title: "To do",
-    tint: "t-soft",
-    dot: "bg-zinc-400",
-    tasks: [
-      { id: 1, title: "Write release notes for v2", tag: "Docs", priority: "Medium", due: "Sep 18", assignee: "AM" },
-      { id: 2, title: "Add export to CSV", tag: "Backend", priority: "High", due: "Sep 19", assignee: "KO" },
-    ],
-  },
-  {
-    id: "progress",
-    title: "In progress",
-    tint: "text-indigo-600 dark:text-indigo-400",
-    dot: "bg-indigo-500",
-    tasks: [
-      { id: 3, title: "Design task detail screen", tag: "Frontend", priority: "High", due: "Sep 13", assignee: "KA" },
-      { id: 4, title: "GraphQL pagination", tag: "Backend", priority: "Medium", due: "Sep 14", assignee: "KO" },
-      { id: 5, title: "Draft help center articles", tag: "Docs", priority: "Low", due: "Sep 15", assignee: "AM" },
-    ],
-  },
-  {
-    id: "review",
-    title: "Review",
-    tint: "text-amber-600 dark:text-amber-400",
-    dot: "bg-amber-500",
-    tasks: [
-      { id: 6, title: "Auth middleware refactor", tag: "Backend", priority: "High", due: "Sep 12", assignee: "HB" },
-    ],
-  },
-  {
-    id: "done",
-    title: "Done",
-    tint: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-    tasks: [
-      { id: 7, title: "Onboarding flow", tag: "Frontend", priority: "Medium", due: "Sep 10", assignee: "KA" },
-      { id: 8, title: "Rate limiting", tag: "Backend", priority: "High", due: "Sep 9", assignee: "KO" },
-    ],
-  },
+const COLUMNS = [
+  { key: "TODO", label: "To do", dot: "bg-zinc-400", tint: "text-zinc-400" },
+  { key: "IN_PROGRESS", label: "In progress", dot: "bg-sky-500", tint: "text-sky-500" },
+  { key: "REVIEW", label: "Review", dot: "bg-amber-500", tint: "text-amber-500" },
+  { key: "DONE", label: "Done", dot: "bg-emerald-500", tint: "text-emerald-500" },
 ];
 
+const PRIORITY_LABEL = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
+const STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"];
+
+function priorityClass(p) {
+  const map = {
+    LOW: "tone-neutral",
+    MEDIUM: "tone-amber",
+    HIGH: "tone-red",
+  };
+  return map[p] || "tone-neutral";
+}
+
+function personLabel(m) {
+  return `${m?.firstName ?? ""} ${m?.surname ?? ""}`.trim() || "Unassigned";
+}
+
+function initials(m) {
+  if (!m) return "?";
+  return `${(m.firstName?.[0] || "")}${(m.surname?.[0] || "")}`.toUpperCase();
+}
+
 export function BoardView() {
+  const toast = useToast();
+  const { data: team } = useMyTeam();
+  const { data: tasks = [], isLoading } = useTeamTasks();
+
+  const createTask = useCreateTask();
+  const assignTask = useAssignTask();
+  const setStatus = useSetTaskStatus();
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState("MEDIUM");
+  const [assigneeId, setAssigneeId] = useState("");
+  const [dragId, setDragId] = useState(null);
+  const [overCol, setOverCol] = useState(null);
+
+  const members = team?.members ?? [];
+  const busy = createTask.isPending || setStatus.isPending || assignTask.isPending;
+
+  function handleAdd(e) {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Enter a task title first.");
+      return;
+    }
+    createTask.mutate(
+      {
+        input: {
+          title: title.trim(),
+          priority,
+          assigneeId: assigneeId || null,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          const r = res?.data?.createTask;
+          if (r?.success) {
+            setTitle("");
+            setAssigneeId("");
+            setShowAdd(false);
+            toast.success(r.message);
+          } else {
+            toast.error(r?.message || "Could not create the task.");
+          }
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
+
+  function dropOn(columnKey) {
+    if (!dragId) return;
+    setStatus.mutate(
+      { taskId: dragId, status: toApiStatus(columnKey) },
+      {
+        onSuccess: (res) => {
+          const r = res?.data?.setTaskStatus;
+          if (r && !r.success) toast.error(r.message);
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
+    setDragId(null);
+    setOverCol(null);
+  }
+
   return (
     <div>
-      <ViewHeader title="Board" subtitle="Drag tasks across columns as work progresses." />
-      <div className="-mx-3 mt-6 flex snap-x gap-3 overflow-x-auto px-3 pb-4 sm:-mx-6 sm:gap-4 sm:px-6">
-        {columns.map((col) => (
-          <Panel key={col.id} className="w-72 shrink-0 snap-start">
-            <header className="flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-              <h2 className={`font-display text-sm font-semibold ${col.tint}`}>
-                {col.title}
-              </h2>
-              <span className="badge-tint badge px-2 py-0.5 text-xs">
-                {col.tasks.length}
-              </span>
-            </header>
-            <ul className="mt-3 space-y-3">
-              {col.tasks.map((t) => (
-                <li
-                  key={t.id}
-                  className="glass-tile p-3 transition-all hover:-translate-y-0.5 hover:bg-[var(--glass-hover)]"
-                >
-                  <p className="text-sm font-medium t-ink">
-                    {t.title}
-                  </p>
-                  <p className="mt-1 text-xs t-soft">
-                    {t.tag} · Due {t.due}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <PriorityBadge>{t.priority}</PriorityBadge>
-                    <Avatar initial={t.assignee} className="h-6 w-6 text-[10px]" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="ring-accent mt-3 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium transition-colors text-[var(--ink-faint)] hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
-            >
-              <PlusIcon width={14} height={14} />
-              Add task
-            </button>
-          </Panel>
-        ))}
+      <ViewHeader title="Board" subtitle="Drag tasks across columns or change their status manually." />
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="seg">
+          <button
+            type="button"
+            onClick={() => setShowAdd((s) => !s)}
+            className="seg-btn"
+            aria-expanded={showAdd}
+          >
+            <PlusIcon width={14} height={14} />
+            Add task
+          </button>
+        </div>
       </div>
+
+      {showAdd && (
+        <Panel className="mt-3">
+          <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="text-xs font-medium t-soft">Title</span>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="What needs doing?"
+                aria-label="Task title"
+                className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium t-soft">Priority</span>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                aria-label="Priority"
+                className="control rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium t-soft">Assignee</span>
+              <select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                aria-label="Assignee"
+                className="control rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+              >
+                <option value="">Unassigned</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {personLabel(m)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={createTask.isPending}
+              className="btn-gloss-primary rounded-full px-5 py-2.5 text-sm"
+            >
+              {createTask.isPending ? "Adding…" : "Add task"}
+            </button>
+          </form>
+        </Panel>
+      )}
+
+      {isLoading ? (
+        <p className="t-soft mt-6 text-sm">Loading tasks…</p>
+      ) : (
+        <div className="-mx-3 mt-6 flex snap-x gap-3 overflow-x-auto px-3 pb-4 sm:-mx-6 sm:gap-4 sm:px-6">
+          {COLUMNS.map((col) => {
+            const colTasks = tasks.filter((t) => toApiStatus(t.status) === col.key);
+            const isOver = overCol === col.key;
+            return (
+              <Panel
+                key={col.key}
+                className={`w-72 shrink-0 snap-start transition-colors ${isOver ? "ring-2 ring-[var(--accent)]" : ""}`}
+              >
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setOverCol(col.key);
+                  }}
+                  onDragLeave={() => setOverCol((c) => (c === col.key ? null : c))}
+                  onDrop={() => dropOn(col.key)}
+                >
+                  <header className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                    <h2 className={`font-display text-sm font-semibold ${col.tint}`}>
+                      {col.label}
+                    </h2>
+                    <span className="badge badge-tint px-2 py-0.5 text-xs">
+                      {colTasks.length}
+                    </span>
+                  </header>
+
+                  <ul className="mt-3 space-y-3">
+                    {colTasks.map((t) => (
+                      <TaskCard
+                        key={t.id}
+                        task={t}
+                        members={members}
+                        dragId={dragId}
+                        onDragStart={() => setDragId(t.id)}
+                        onDragEnd={() => {
+                          setDragId(null);
+                          setOverCol(null);
+                        }}
+                        onStatus={(status) =>
+                          setStatus.mutate(
+                            { taskId: t.id, status },
+                            { onError: (err) => toast.error(err.message) },
+                          )
+                        }
+                        onAssignee={(memberId) =>
+                          assignTask.mutate(
+                            { taskId: t.id, assigneeId: memberId || null },
+                            { onError: (err) => toast.error(err.message) },
+                          )
+                        }
+                      />
+                    ))}
+                    {colTasks.length === 0 && (
+                      <li className="rounded-xl border border-dashed border-[var(--border-soft)] py-6 text-center text-xs t-faint">
+                        Drop tasks here
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </Panel>
+            );
+          })}
+        </div>
+      )}
+
       <p className="hidden items-center gap-2 text-xs t-faint lg:flex">
         <ColumnsIcon width={14} height={14} />
-        Board view – drag-and-drop coming soon.
+        Drag a card to another column to update its status. Use the card’s menu to reassign or move manually.
+      </p>
+      <p className="flex items-center gap-2 text-xs t-faint lg:hidden">
+        <PersonIcon width={14} height={14} />
+        Swipe columns sideways; drag cards to move status.
       </p>
     </div>
   );
 }
+
+function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onAssignee }) {
+  const assignee = task.assignee;
+  const dragging = dragId === task.id;
+  return (
+    <li
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", task.id);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      className={`glass-tile p-3 transition-all ${
+        dragging ? "opacity-40" : "hover:-translate-y-0.5 hover:bg-[var(--glass-hover)]"
+      }`}
+    >
+      <p className="text-sm font-medium t-ink">{task.title}</p>
+      <p className="mt-0.5 truncate text-xs t-soft">{task.description}</p>
+
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className={`badge rounded-full px-2 py-0.5 text-xs ${priorityClass(task.priority)}`}>
+          {PRIORITY_LABEL[task.priority] || task.priority}
+        </span>
+        <Avatar
+          initial={initials(assignee)}
+          className="h-6 w-6 text-[10px]"
+          title={personLabel(assignee)}
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label className="flex flex-1 items-center gap-1.5">
+          <span className="sr-only">Move to status</span>
+          <select
+            aria-label={`Change status of ${task.title}`}
+            value={task.status}
+            onChange={(e) => onStatus(toApiStatus(e.target.value))}
+            className="control w-full rounded-full px-2.5 py-1 text-xs"
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {COLUMNS.find((c) => c.key === s)?.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <select
+          aria-label={`Assignee of ${task.title}`}
+          value={task.assignee?.id ?? ""}
+          onChange={(e) => onAssignee(e.target.value)}
+          className="control max-w-[7.5rem] rounded-full px-2.5 py-1 text-xs"
+        >
+          <option value="">Unassigned</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {personLabel(m)}
+            </option>
+          ))}
+        </select>
+      </div>
+    </li>
+  );
+}
+
+export default BoardView;

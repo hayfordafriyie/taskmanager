@@ -17,6 +17,8 @@ exec:
   # Optional: Maximum number of goroutines in concurrency to use per child resolvers(default: unlimited)
   # worker_limit: 1000
 
+skip_mod_tidy: true
+
 # Uncomment to enable federation
 # federation:
 #   filename: graph/federation.go
