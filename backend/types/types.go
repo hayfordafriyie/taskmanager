@@ -39,3 +39,8 @@ type UserRow struct {
 	OtherNames *string
 	CreatedAt  time.Time
 }
+
+type SessionEntry struct {
+	Key     []byte
+	Expires time.Time
+}

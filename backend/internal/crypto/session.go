@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"taskmanager/types"
 )
 
 const SessionCookieName = "session_token"
@@ -17,19 +19,14 @@ const sessionCookiePath = "/"
 type SessionStore struct {
 	mu   sync.Mutex
 	ttl  time.Duration
-	keys map[string]sessionEntry
-}
-
-type sessionEntry struct {
-	key     []byte
-	expires time.Time
+	keys map[string]types.SessionEntry
 }
 
 func NewSessionStore(ttl time.Duration) *SessionStore {
 	if ttl <= 0 {
 		ttl = 30 * time.Minute
 	}
-	return &SessionStore{ttl: ttl, keys: make(map[string]sessionEntry)}
+	return &SessionStore{ttl: ttl, keys: make(map[string]types.SessionEntry)}
 }
 
 func (s *SessionStore) Create() (token string, key []byte, cookie *http.Cookie, err error) {
@@ -45,7 +42,7 @@ func (s *SessionStore) Create() (token string, key []byte, cookie *http.Cookie, 
 
 	s.mu.Lock()
 	s.sweepLocked()
-	s.keys[token] = sessionEntry{key: keyBytes, expires: time.Now().Add(s.ttl)}
+	s.keys[token] = types.SessionEntry{Key: keyBytes, Expires: time.Now().Add(s.ttl)}
 	s.mu.Unlock()
 
 	cookie = &http.Cookie{
@@ -69,11 +66,11 @@ func (s *SessionStore) Lookup(token string) ([]byte, bool) {
 	if !ok {
 		return nil, false
 	}
-	if time.Now().After(e.expires) {
+	if time.Now().After(e.Expires) {
 		delete(s.keys, token)
 		return nil, false
 	}
-	return e.key, true
+	return e.Key, true
 }
 
 func (s *SessionStore) Delete(token string) {
@@ -85,7 +82,7 @@ func (s *SessionStore) Delete(token string) {
 func (s *SessionStore) sweepLocked() {
 	now := time.Now()
 	for tok, e := range s.keys {
-		if now.After(e.expires) {
+		if now.After(e.Expires) {
 			delete(s.keys, tok)
 		}
 	}
