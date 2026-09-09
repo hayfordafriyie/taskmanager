@@ -8,7 +8,7 @@ import (
 	"taskmanager/internal/validator"
 )
 
-func TestNormalizeGhanaPhone(t *testing.T) {
+func TestNormalizePhone(t *testing.T) {
 	tests := []struct {
 		raw     string
 		want    string
@@ -24,42 +24,59 @@ func TestNormalizeGhanaPhone(t *testing.T) {
 		{"+233241234567", "+233241234567", false},
 		{"0241234567", "+233241234567", false},
 
+		{"+2348012345678", "+2348012345678", false},
+		{"+22507123456", "+22507123456", false},
+		{"+221771234567", "+221771234567", false},
+		{"+22670123456", "+22670123456", false},
+		{"+22376123456", "+22376123456", false},
+		{"+2209923456", "+2209923456", false},
+		{"+22870123456", "+22870123456", false},
+		{"+22901123456", "+22901123456", false},
+		{"+22790123456", "+22790123456", false},
+		{"+22466123456", "+22466123456", false},
+		{"+2459123456", "+2459123456", false},
+
 		{"+15551234567", "", true},
 		{"+2330537144161", "", true},
 		{"+23353714416", "", true},
 		{"+2335371441612", "", true},
 		{"+233997144161", "", true},
+		{"+234801234567", "", true},
+		{"+221651234567", "", true},
 		{"537144161", "", true},
 		{"+23353-714-416x1", "", true},
 		{"", "", true},
 	}
 
 	for _, tt := range tests {
-		got, err := validator.NormalizeGhanaPhone(tt.raw)
+		got, err := validator.NormalizePhone(tt.raw)
 		if tt.wantErr {
 			if err == nil {
-				t.Errorf("NormalizeGhanaPhone(%q): expected error, got %q", tt.raw, got)
+				t.Errorf("NormalizePhone(%q): expected error, got %q", tt.raw, got)
 			}
 			continue
 		}
 		if err != nil {
-			t.Errorf("NormalizeGhanaPhone(%q): unexpected error %v", tt.raw, err)
+			t.Errorf("NormalizePhone(%q): unexpected error %v", tt.raw, err)
 			continue
 		}
 		if got != tt.want {
-			t.Errorf("NormalizeGhanaPhone(%q) = %q, want %q", tt.raw, got, tt.want)
+			t.Errorf("NormalizePhone(%q) = %q, want %q", tt.raw, got, tt.want)
 		}
 	}
 }
 
-func TestIsValidGhanaPhone(t *testing.T) {
-	if !validator.IsValidGhanaPhone("+233537144161") {
+func TestIsValidPhone(t *testing.T) {
+	if !validator.IsValidPhone("+233537144161") {
 		t.Error("expected +233537144161 to be valid")
 	}
-	if validator.IsValidGhanaPhone("+233997144161") {
+	if !validator.IsValidPhone("+2348012345678") {
+		t.Error("expected +2348012345678 to be valid")
+	}
+	if validator.IsValidPhone("+233997144161") {
 		t.Error("expected +233997144161 to be invalid (bad network prefix)")
 	}
-	if validator.IsValidGhanaPhone("+1234567890123") {
+	if validator.IsValidPhone("+1234567890123") {
 		t.Error("expected foreign number to be invalid")
 	}
 }

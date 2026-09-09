@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { gql } from "../../lib/api";
 import Button from "../../components/Button";
+import PhoneInput from "../../components/PhoneInput";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -88,13 +89,10 @@ export default function ResetPassword() {
         onSubmit={stage === "phone" ? requestCode : reset}
         className="mt-6 space-y-4"
       >
-        <input
-          type="tel"
+        <PhoneInput
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+233..."
+          onChange={setPhone}
           disabled={stage === "code"}
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
         />
         {stage === "code" && (
           <>

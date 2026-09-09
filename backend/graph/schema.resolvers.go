@@ -23,7 +23,7 @@ import (
 
 // RequestOtp is the resolver for the requestOTP field.
 func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model.OTPResult, error) {
-	normalized, err := validator.NormalizeGhanaPhone(phone)
+	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 
 // VerifyOtp is the resolver for the verifyOTP field.
 func (r *mutationResolver) VerifyOtp(ctx context.Context, phone string, code string) (*model.VerifyOTPResult, error) {
-	normalized, err := validator.NormalizeGhanaPhone(phone)
+	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (r *mutationResolver) VerifyOtp(ctx context.Context, phone string, code str
 
 // CreateAccount is the resolver for the createAccount field.
 func (r *mutationResolver) CreateAccount(ctx context.Context, input model.CreateAccountInput) (*model.CreateAccountResult, error) {
-	normalized, err := validator.NormalizeGhanaPhone(input.Phone)
+	normalized, err := validator.NormalizePhone(input.Phone)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, input model.Create
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, phone string, password string) (*model.LoginResult, error) {
-	normalized, err := validator.NormalizeGhanaPhone(phone)
+	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
 
 // RequestPasswordReset is the resolver for the requestPasswordReset field.
 func (r *mutationResolver) RequestPasswordReset(ctx context.Context, phone string) (*model.OTPResult, error) {
-	normalized, err := validator.NormalizeGhanaPhone(phone)
+	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func (r *mutationResolver) RequestPasswordReset(ctx context.Context, phone strin
 
 // ResetPassword is the resolver for the resetPassword field.
 func (r *mutationResolver) ResetPassword(ctx context.Context, phone string, code string, password string, confirmPassword string) (*model.ResetPasswordResult, error) {
-	normalized, err := validator.NormalizeGhanaPhone(phone)
+	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
 		return nil, err
 	}
