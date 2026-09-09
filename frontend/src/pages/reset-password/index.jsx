@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { gql } from "../../lib/api";
+import Button from "../../components/Button";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -121,21 +122,21 @@ export default function ResetPassword() {
             />
           </>
         )}
-        <button
+        <Button
           type="submit"
           disabled={
             busy ||
             !phone ||
             (stage === "code" && (!code || !password || !confirm))
           }
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="w-full"
         >
           {busy
             ? "Working…"
             : stage === "phone"
               ? "Send reset code"
               : "Reset password"}
-        </button>
+        </Button>
       </form>
 
       {status && (
@@ -149,6 +150,15 @@ export default function ResetPassword() {
           {status.text}
         </p>
       )}
+
+      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+        <Link
+          to="/login"
+          className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+        >
+          Back to sign in
+        </Link>
+      </p>
     </div>
   );
 }

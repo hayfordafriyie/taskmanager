@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import Button from "../../components/Button";
 
 export default function Login() {
   const { login } = useAuth();
@@ -63,13 +64,13 @@ export default function Login() {
           placeholder="Password"
           className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
         />
-        <button
+        <Button
           type="submit"
           disabled={busy || !phone || !password}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="w-full"
         >
           {busy ? "Signing in…" : "Login"}
-        </button>
+        </Button>
       </form>
 
       <div className="mt-4 space-y-1 text-sm">
@@ -83,12 +84,12 @@ export default function Login() {
           </Link>
         </p>
         <p className="text-zinc-600 dark:text-zinc-400">
-          Wasn&apos;t you who logged in?{" "}
+          Don&apos;t remember your password?{" "}
           <Link
             to="/reset-password"
             className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
           >
-            Reset your password
+            Reset it
           </Link>
         </p>
       </div>
