@@ -3,21 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { gql } from "../../lib/api";
 import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
+import { useToast } from "../../components/Toast";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [stage, setStage] = useState("phone");
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState(null);
 
   async function requestCode(e) {
     e.preventDefault();
+    if (!phone) {
+      toast.error("Enter your phone number first.");
+      return;
+    }
     setBusy(true);
-    setStatus(null);
     try {
       const res = await gql(
         "mutation ($phone: String!) { requestPasswordReset(phone: $phone) { success message } }",
@@ -25,19 +29,13 @@ export default function ResetPassword() {
       );
       const result = res?.data?.requestPasswordReset;
       if (result?.success) {
-        setStatus({
-          kind: "ok",
-          text: "A reset code was sent to your phone.",
-        });
+        toast.success(result?.message ?? "A reset code was sent to your phone.");
         setStage("code");
       } else {
-        setStatus({
-          kind: "error",
-          text: result?.message ?? "Unexpected response",
-        });
+        toast.error(result?.message ?? "Unexpected response");
       }
     } catch (err) {
-      setStatus({ kind: "error", text: err.message });
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -45,8 +43,11 @@ export default function ResetPassword() {
 
   async function reset(e) {
     e.preventDefault();
+    if (password !== confirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
     setBusy(true);
-    setStatus(null);
     try {
       const res = await gql(
         `mutation ($phone: String!, $code: String!, $password: String!, $confirmPassword: String!) {
@@ -63,13 +64,10 @@ export default function ResetPassword() {
           state: { notice: "Password updated. Please log in again." },
         });
       } else {
-        setStatus({
-          kind: "error",
-          text: result?.message ?? "Reset failed",
-        });
+        toast.error(result?.message ?? "Reset failed");
       }
     } catch (err) {
-      setStatus({ kind: "error", text: err.message });
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -136,18 +134,6 @@ export default function ResetPassword() {
               : "Reset password"}
         </Button>
       </form>
-
-      {status && (
-        <p
-          className={`mt-4 text-sm ${
-            status.kind === "ok"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {status.text}
-        </p>
-      )}
 
       <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         <Link

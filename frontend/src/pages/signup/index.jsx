@@ -3,28 +3,33 @@ import { Link } from 'react-router-dom';
 import { gql } from '../../lib/api';
 import Button from '../../components/Button';
 import PhoneInput from '../../components/PhoneInput';
+import { useToast } from '../../components/Toast';
 
 export default function Signup() {
+  const toast = useToast();
   const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState(''); 
   const [busy, setBusy] = useState(false);
 
   async function requestCode(e) {
     e.preventDefault();
+    if (!phone) {
+      toast.error('Enter your phone number first.');
+      return;
+    }
     setBusy(true);
-    setStatus(null);
     try {
       const res = await gql(
         'mutation ($phone: String!) { requestOTP(phone: $phone) { success message expiresInSeconds retryAfterSeconds } }',
         { phone },
       );
       const result = res?.data?.requestOTP;
-      setStatus({
-        kind: result?.success ? 'ok' : 'error',
-        text: result?.message ?? 'Unexpected response',
-      });
+      if (result?.success) {
+        toast.success(result?.message ?? 'Code sent to your phone.');
+      } else {
+        toast.error(result?.message ?? 'Unexpected response');
+      }
     } catch (err) {
-      setStatus({ kind: 'error', text: err.message });
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -48,17 +53,6 @@ export default function Signup() {
           {busy ? 'Sending…' : 'Request code'}
         </Button>
       </form>
-      {status && (
-        <p
-          className={`mt-4 text-sm ${
-            status.kind === 'ok'
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-red-600 dark:text-red-400'
-          }`}
-        >
-          {status.text}
-        </p>
-      )}
       <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
         Already have an account?{' '}
         <Link

@@ -10,7 +10,7 @@ import {
   ItemText,
   ItemIndicator,
 } from "radix-ui/select";
-import { countryOptions, combinePhone } from "../lib/phone";
+import { countryOptions, combinePhone, normalizeNational } from "../lib/phone";
 
 function splitNumber(value) {
   for (const country of countryOptions) {
@@ -31,8 +31,9 @@ export default function PhoneInput({ value, onChange, disabled }) {
   }
 
   function handleNational(e) {
-    setNational(e.target.value);
-    onChange(combinePhone(country, e.target.value));
+    const fixed = normalizeNational(country, e.target.value);
+    setNational(fixed);
+    onChange(combinePhone(country, fixed));
   }
 
   const active = countryOptions.find((c) => c.code === country) || countryOptions[0];

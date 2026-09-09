@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+
+http://:80 {
+	redir https://localhost:8443{uri} permanent
+}
+
+https://:443 {
+	tls /etc/certs/server.crt /etc/certs/server.key
+
+	root * /usr/share/caddy
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy https://backend:8080 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	handle {
+		try_files {path} {path}/ /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+	}
+}

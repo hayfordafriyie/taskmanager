@@ -1,18 +1,35 @@
 package graph
 
 import (
+	"time"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"taskmanager/internal/notif"
+	"taskmanager/internal/server"
+)
+
+const (
+	brutePhoneMax    = 5
+	brutePhoneWindow = time.Minute
+	bruteIPMax       = 20
+	bruteIPWindow    = time.Minute
 )
 
 type Resolver struct {
-	Pool     *pgxpool.Pool
-	SMSQueue *notif.Worker
+	Pool       *pgxpool.Pool
+	SMSQueue   *notif.Worker
+	brutePhone *server.BruteProtector
+	bruteIP    *server.BruteProtector
 }
 
 func NewResolver(pool *pgxpool.Pool, smsQueue *notif.Worker) *Resolver {
 	if smsQueue == nil {
 		smsQueue = notif.NewWorker(notif.SenderFunc(notif.SendSMSPayload), 1, 100, nil)
 	}
-	return &Resolver{Pool: pool, SMSQueue: smsQueue}
+	return &Resolver{
+		Pool:       pool,
+		SMSQueue:   smsQueue,
+		brutePhone: server.NewBruteProtector(brutePhoneMax, brutePhoneWindow),
+		bruteIP:    server.NewBruteProtector(bruteIPMax, bruteIPWindow),
+	}
 }

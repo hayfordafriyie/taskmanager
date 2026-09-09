@@ -41,7 +41,10 @@ export function getAccessToken() {
 }
 
 async function startSession() {
-  const res = await fetch(SESSION_ENDPOINT, { method: 'POST' });
+  const res = await fetch(SESSION_ENDPOINT, {
+    method: 'POST',
+    credentials: 'include',
+  });
   if (!res.ok) {
     throw new Error(`session handshake failed with status ${res.status}`);
   }
@@ -72,6 +75,7 @@ async function send(query, variables, headers) {
   const body = await encrypt(JSON.stringify({ query, variables }));
   const res = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
+    credentials: 'include',
     headers,
     body,
   });
@@ -81,6 +85,7 @@ async function send(query, variables, headers) {
     await ensureSession();
     const retried = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
+      credentials: 'include',
       headers,
       body: await encrypt(JSON.stringify({ query, variables })),
     });

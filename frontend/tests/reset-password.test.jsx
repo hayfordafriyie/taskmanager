@@ -1,0 +1,192 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import ToastProvider from '../src/components/Toast'
+import ResetPassword from '../src/pages/reset-password'
+import Login from '../src/pages/login'
+
+const { gqlMock } = vi.hoisted(() => ({ gqlMock: vi.fn() }))
+
+vi.mock('../src/lib/api', () => ({
+  gql: gqlMock,
+  clearTokens: vi.fn(),
+  setTokens: vi.fn(),
+}))
+
+vi.mock('../src/context/AuthContext', () => ({
+  useAuth: () => ({
+    login: vi.fn(),
+    logout: vi.fn(),
+    user: null,
+    isAuthenticated: false,
+    initializing: false,
+  }),
+}))
+
+function renderReset() {
+  return render(
+    <ToastProvider>
+      <MemoryRouter initialEntries={['/reset-password']}>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastProvider>,
+  )
+}
+
+describe('ResetPassword', () => {
+  beforeEach(() => {
+    gqlMock.mockReset()
+  })
+
+  async function fillPhone(user) {
+    await user.type(screen.getByRole('textbox'), '0537144161')
+    await user.click(screen.getByRole('button', { name: 'Send reset code' }))
+    await screen.findByPlaceholderText('Verification code')
+  }
+
+  async function fillResetForm(user, confirm = 'secret') {
+    await user.type(screen.getByPlaceholderText('Verification code'), '123456')
+    await user.type(screen.getByPlaceholderText('New password'), 'secret')
+    await user.type(
+      screen.getByPlaceholderText('Confirm new password'),
+      confirm,
+    )
+  }
+
+  it('renders heading and send-code controls', () => {
+    renderReset()
+    expect(
+      screen.getByRole('heading', { name: 'Reset Password' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Send reset code' }),
+    ).toBeInTheDocument()
+  })
+
+  it('disables the submit button until a phone is provided', async () => {
+    const user = userEvent.setup()
+    renderReset()
+    const submit = screen.getByRole('button', { name: 'Send reset code' })
+    expect(submit).toBeDisabled()
+    await user.type(screen.getByRole('textbox'), '0537144161')
+    expect(submit).toBeEnabled()
+  })
+
+  it('shows a validation toast when the empty form is submitted', async () => {
+    const { container } = renderReset()
+    fireEvent.submit(container.querySelector('form'))
+    expect(
+      await screen.findByText('Enter your phone number first.'),
+    ).toBeInTheDocument()
+    expect(gqlMock).not.toHaveBeenCalled()
+  })
+
+  it('moves to the code stage on successful request', async () => {
+    gqlMock.mockResolvedValue({
+      data: {
+        requestPasswordReset: {
+          success: true,
+          message: 'A reset code was sent to your phone.',
+        },
+      },
+    })
+    const user = userEvent.setup()
+    renderReset()
+    await user.type(screen.getByRole('textbox'), '0537144161')
+    await user.click(screen.getByRole('button', { name: 'Send reset code' }))
+    expect(
+      await screen.findByText('A reset code was sent to your phone.'),
+    ).toBeInTheDocument()
+    const codeInput = screen.getByPlaceholderText('Verification code')
+    expect(codeInput).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('53 714 4161')).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Reset password' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows an error toast when the request fails', async () => {
+    gqlMock.mockResolvedValue({
+      data: {
+        requestPasswordReset: { success: false, message: 'No such phone' },
+      },
+    })
+    const user = userEvent.setup()
+    renderReset()
+    await user.type(screen.getByRole('textbox'), '0537144161')
+    await user.click(screen.getByRole('button', { name: 'Send reset code' }))
+    expect(await screen.findByText('No such phone')).toBeInTheDocument()
+    expect(
+      screen.queryByPlaceholderText('Verification code'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('rejects a password mismatch with a validation toast', async () => {
+    gqlMock.mockResolvedValue({
+      data: {
+        requestPasswordReset: {
+          success: true,
+          message: 'A reset code was sent to your phone.',
+        },
+      },
+    })
+    const user = userEvent.setup()
+    renderReset()
+    await fillPhone(user)
+    await fillResetForm(user, 'different')
+    await user.click(screen.getByRole('button', { name: 'Reset password' }))
+    expect(
+      await screen.findByText('Passwords do not match.'),
+    ).toBeInTheDocument()
+    expect(gqlMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('navigates to login with a notice on successful reset', async () => {
+    gqlMock.mockResolvedValueOnce({
+      data: {
+        requestPasswordReset: {
+          success: true,
+          message: 'A reset code was sent to your phone.',
+        },
+      },
+    })
+    gqlMock.mockResolvedValueOnce({
+      data: { resetPassword: { success: true, message: 'Password updated' } },
+    })
+    const user = userEvent.setup()
+    renderReset()
+    await fillPhone(user)
+    await fillResetForm(user)
+    await user.click(screen.getByRole('button', { name: 'Reset password' }))
+    expect(
+      await screen.findByText('Password updated. Please log in again.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Login' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows an error toast when the reset fails', async () => {
+    gqlMock.mockResolvedValueOnce({
+      data: {
+        requestPasswordReset: {
+          success: true,
+          message: 'A reset code was sent to your phone.',
+        },
+      },
+    })
+    gqlMock.mockResolvedValueOnce({
+      data: { resetPassword: { success: false, message: 'Code expired' } },
+    })
+    const user = userEvent.setup()
+    renderReset()
+    await fillPhone(user)
+    await fillResetForm(user)
+    await user.click(screen.getByRole('button', { name: 'Reset password' }))
+    expect(await screen.findByText('Code expired')).toBeInTheDocument()
+  })
+})

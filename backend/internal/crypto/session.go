@@ -99,10 +99,20 @@ func SessionHandler(store *SessionStore) http.HandlerFunc {
 			http.Error(w, "failed to create session", http.StatusInternalServerError)
 			return
 		}
+		if isHTTPS(r) {
+			cookie.Secure = true
+		}
 		http.SetCookie(w, cookie)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]string{
 			"key": base64.StdEncoding.EncodeToString(key),
 		})
 	}
+}
+
+func isHTTPS(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+	return r.Header.Get("X-Forwarded-Proto") == "https"
 }

@@ -27,6 +27,9 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 	if err != nil {
 		return nil, err
 	}
+	if err := r.guardAuth(ctx, normalized); err != nil {
+		return nil, err
+	}
 
 	registered, err := db.PhoneRegistered(ctx, r.Pool, normalized)
 	if err != nil {
@@ -83,6 +86,9 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 func (r *mutationResolver) VerifyOtp(ctx context.Context, phone string, code string) (*model.VerifyOTPResult, error) {
 	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
+		return nil, err
+	}
+	if err := r.guardAuth(ctx, normalized); err != nil {
 		return nil, err
 	}
 
@@ -167,6 +173,9 @@ func (r *mutationResolver) Login(ctx context.Context, phone string, password str
 	if err != nil {
 		return nil, err
 	}
+	if err := r.guardAuth(ctx, normalized); err != nil {
+		return nil, err
+	}
 
 	creds, err := db.UserByPhone(ctx, r.Pool, normalized)
 	if err != nil {
@@ -203,6 +212,7 @@ func (r *mutationResolver) Login(ctx context.Context, phone string, password str
 		PhoneNumbers: []string{normalized},
 		Message:      loginAccessAlert,
 	}, "")
+	r.clearAuth(normalized)
 
 	return &model.LoginResult{
 		Success:      true,
@@ -293,6 +303,9 @@ func (r *mutationResolver) RequestPasswordReset(ctx context.Context, phone strin
 	if err != nil {
 		return nil, err
 	}
+	if err := r.guardAuth(ctx, normalized); err != nil {
+		return nil, err
+	}
 
 	registered, err := db.PhoneRegistered(ctx, r.Pool, normalized)
 	if err != nil {
@@ -348,6 +361,9 @@ func (r *mutationResolver) RequestPasswordReset(ctx context.Context, phone strin
 func (r *mutationResolver) ResetPassword(ctx context.Context, phone string, code string, password string, confirmPassword string) (*model.ResetPasswordResult, error) {
 	normalized, err := validator.NormalizePhone(phone)
 	if err != nil {
+		return nil, err
+	}
+	if err := r.guardAuth(ctx, normalized); err != nil {
 		return nil, err
 	}
 

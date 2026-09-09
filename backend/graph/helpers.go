@@ -1,13 +1,20 @@
 package graph
 
 import (
+	"context"
 	"errors"
+	"net"
+	"net/http"
+	"strings"
 
 	"taskmanager/graph/model"
+	"taskmanager/internal/auth"
 	"taskmanager/types"
 )
 
 var errNotAuthenticated = errors.New("not authenticated")
+
+var errTooManyRequests = errors.New("too many attempts, please try again later")
 
 const (
 	otpPurposeRegister      = "register"
@@ -44,4 +51,35 @@ func otpFailureMessage(reason string) string {
 	default:
 		return "invalid verification code"
 	}
+}
+
+func (r *Resolver) guardAuth(ctx context.Context, phone string) error {
+	request := auth.Request(ctx)
+	if request != nil {
+		if ip := clientIP(request); ip != "" && !r.bruteIP.Allow("ip:"+ip) {
+			return errTooManyRequests
+		}
+	}
+	if phone != "" && !r.brutePhone.Allow("phone:"+phone) {
+		return errTooManyRequests
+	}
+	return nil
+}
+
+func (r *Resolver) clearAuth(phone string) {
+	r.brutePhone.Reset("phone:" + phone)
+}
+
+func clientIP(r *http.Request) string {
+	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+		first, _, _ := strings.Cut(fwd, ",")
+		if ip := strings.TrimSpace(first); ip != "" {
+			return ip
+		}
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }

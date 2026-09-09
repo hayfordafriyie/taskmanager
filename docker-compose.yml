@@ -1,0 +1,169 @@
+services:
+  certgen:
+    image: alpine:3.20
+    container_name: taskmanager-certgen
+    restart: "no"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache openssl
+        if [ ! -f /certs/server.crt ]; then
+          openssl req -x509 -nodes -newkey rsa:2048 -days 825 \
+            -keyout /certs/server.key -out /certs/server.crt \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+          chmod 644 /certs/server.crt /certs/server.key
+        fi
+    volumes:
+      - certs:/certs
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskmanager-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+        reservations:
+          cpus: "0.5"
+          memory: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: taskmanager-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+        reservations:
+          cpus: "0.1"
+          memory: 64m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build: ./backend
+    image: taskmanager-backend
+    container_name: taskmanager-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      DB_SSLMODE: disable
+      SERVER_PORT: "8080"
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SMS_KEY: ${SMS_KEY}
+      SMS_API_KEY: ${SMS_API_KEY}
+      SENDER_ID: ${SENDER_ID}
+      DEFAULT_SMS_SENDER_ID: ${DEFAULT_SMS_SENDER_ID}
+      SMS_BASE_URL: ${SMS_BASE_URL}
+      TLS_CERT: ${TLS_CERT}
+      TLS_KEY: ${TLS_KEY}
+    volumes:
+      - certs:/certs:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+        reservations:
+          cpus: "0.25"
+          memory: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+        VITE_API_VERSION: ${VITE_API_VERSION:-v1}
+        VITE_ENCRYPTED_MARKER: ${VITE_ENCRYPTED_MARKER:-1}
+    image: taskmanager-frontend
+    container_name: taskmanager-frontend
+    restart: unless-stopped
+    volumes:
+      - certs:/etc/certs:ro
+    ports:
+      - "5173:80"
+      - "8443:443"
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+        reservations:
+          cpus: "0.1"
+          memory: 64m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  certs:
+  pgdata:
+  redisdata:
+
+networks:
+  default:
+    name: taskmanager-net

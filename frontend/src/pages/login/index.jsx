@@ -1,35 +1,42 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
+import { useToast } from "../../components/Toast";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState(null);
   const notice = location.state?.notice || null;
+
+  useEffect(() => {
+    if (notice) {
+      toast.info(notice);
+    }
+  }, [notice, toast]);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!phone || !password) {
+      toast.error("Phone and password are required.");
+      return;
+    }
     setBusy(true);
-    setStatus(null);
     try {
       const result = await login(phone, password);
       if (result?.success) {
         navigate("/", { replace: true });
       } else {
-        setStatus({
-          kind: "error",
-          text: result?.message ?? "Login failed",
-        });
+        toast.error(result?.message ?? "Login failed");
       }
     } catch (err) {
-      setStatus({ kind: "error", text: err.message });
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -43,12 +50,6 @@ export default function Login() {
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
         Sign in to your account.
       </p>
-
-      {notice && (
-        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-          {notice}
-        </p>
-      )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <PhoneInput value={phone} onChange={setPhone} />
@@ -88,18 +89,6 @@ export default function Login() {
           </Link>
         </p>
       </div>
-
-      {status && (
-        <p
-          className={`mt-4 text-sm ${
-            status.kind === "ok"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400"
-          }`}
-        >
-          {status.text}
-        </p>
-      )}
     </div>
   );
 }
