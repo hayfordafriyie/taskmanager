@@ -61,11 +61,14 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 		return nil, fmt.Errorf("store otp: %w", err)
 	}
 
-	if _, err := r.SMSSender.SendSMSPayload(notif.SMSPayload{
+	if !r.SMSQueue.Enqueue(notif.SMSPayload{
 		PhoneNumbers: []string{normalized},
 		Message:      otp.Message(code, otp.DefaultTTL),
-	}, ""); err != nil {
-		return nil, fmt.Errorf("send otp sms: %w", err)
+	}, "") {
+		return &model.OTPResult{
+			Success: false,
+			Message: "temporarily unable to send the verification code, please try again",
+		}, nil
 	}
 
 	return &model.OTPResult{

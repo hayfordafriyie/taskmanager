@@ -30,6 +30,7 @@ type fakeSMSSender struct {
 	mu       sync.Mutex
 	messages []string
 	fail     bool
+	errs     []error
 }
 
 func (f *fakeSMSSender) SendSMSPayload(payload notif.SMSPayload, senderID string) (float64, error) {
@@ -58,19 +59,63 @@ func (f *fakeSMSSender) sentCount() int {
 	return len(f.messages)
 }
 
+func (f *fakeSMSSender) setFail(fail bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.fail = fail
+}
+
+func (f *fakeSMSSender) sendErrorCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.errs)
+}
+
+func (f *fakeSMSSender) recordError(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.errs = append(f.errs, err)
+}
+
 func newTestServer(t *testing.T) (*httptest.Server, *pgxpool.Pool, *fakeSMSSender, func()) {
 	t.Helper()
 	pool, cleanup := PrepareTestDB(t)
 	sender := &fakeSMSSender{}
 
-	exec := graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, sender)})
+	worker := notif.NewWorker(sender, 2, 16, sender.recordError)
+	exec := graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, worker)})
 	h := handler.New(exec)
 	h.AddTransport(transport.Options{})
 	h.AddTransport(transport.POST{})
 
 	srv := httptest.NewServer(h)
-	t.Cleanup(srv.Close)
+	t.Cleanup(func() {
+		srv.Close()
+		worker.Close()
+	})
 	return srv, pool, sender, cleanup
+}
+
+func waitUntil(t *testing.T, timeout time.Duration, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if cond() {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatalf("condition not met within %s", timeout)
+}
+
+func waitForSMSCode(t *testing.T, sender *fakeSMSSender) string {
+	t.Helper()
+	var code string
+	waitUntil(t, 5*time.Second, func() bool {
+		code = sender.lastCode()
+		return gqlCodeRe.MatchString(code)
+	})
+	return code
 }
 
 const (
@@ -147,10 +192,7 @@ func registerUserHTTP(t *testing.T, srv *httptest.Server, sender *fakeSMSSender,
 	if res["success"] != true {
 		t.Fatalf("requestOTP failed: %v", res)
 	}
-	code := sender.lastCode()
-	if !gqlCodeRe.MatchString(code) {
-		t.Fatalf("no code captured from sms, got %q", code)
-	}
+	code := waitForSMSCode(t, sender)
 	res = gqlMutation(t, gqlQuery(t, srv, verifyOTPQuery(phone, code)), "verifyOTP")
 	if res["success"] != true {
 		t.Fatalf("verifyOTP failed: %v", res)
@@ -173,8 +215,8 @@ func TestRequestOTP(t *testing.T) {
 	if res["expiresInSeconds"] != float64(600) {
 		t.Errorf("expected expiresInSeconds 600, got %v", res["expiresInSeconds"])
 	}
-	if code := sender.lastCode(); !gqlCodeRe.MatchString(code) {
-		t.Fatalf("expected sms to contain a 6-digit code, got %q", code)
+	if code := waitForSMSCode(t, sender); code == "" {
+		t.Fatal("expected sms to contain a 6-digit code")
 	}
 
 	again := gqlMutation(t, gqlQuery(t, srv, requestOTPQuery("+233537144161")), "requestOTP")
@@ -201,7 +243,7 @@ func TestVerifyOTP(t *testing.T) {
 	defer cleanup()
 
 	gqlMutation(t, gqlQuery(t, srv, requestOTPQuery("+233537144161")), "requestOTP")
-	code := sender.lastCode()
+	code := waitForSMSCode(t, sender)
 
 	res := gqlMutation(t, gqlQuery(t, srv, verifyOTPQuery("+233537144161", code)), "verifyOTP")
 	if res["success"] != true {
@@ -249,7 +291,7 @@ func TestCreateAccountWithOtherNames(t *testing.T) {
 	if res["success"] != true {
 		t.Fatalf("requestOTP failed: %v", res)
 	}
-	code := sender.lastCode()
+	code := waitForSMSCode(t, sender)
 	gqlMutation(t, gqlQuery(t, srv, verifyOTPQuery(phone, code)), "verifyOTP")
 
 	res = gqlMutation(t, gqlQuery(t, srv, createAccountQueryFull(phone, "Kojo", "Asante", "Nana", "StrongPass1!", "StrongPass1!")), "createAccount")
@@ -298,11 +340,19 @@ func TestCreateAccountSMSFailure(t *testing.T) {
 	srv, _, sender, cleanup := newTestServer(t)
 	defer cleanup()
 
-	sender.fail = true
+	sender.setFail(true)
 	resp := gqlQuery(t, srv, requestOTPQuery("+233537144161"))
-	if !hasGQLErrors(t, resp) {
-		t.Fatalf("expected error when sms fails, got %v", resp)
+	if hasGQLErrors(t, resp) {
+		t.Fatalf("expected requestOTP to succeed with async delivery, got %v", resp)
 	}
+	res := gqlMutation(t, resp, "requestOTP")
+	if res["success"] != true {
+		t.Fatalf("expected requestOTP success regardless of sms availability, got %+v", res)
+	}
+
+	waitUntil(t, 5*time.Second, func() bool {
+		return sender.sendErrorCount() > 0
+	})
 }
 
 func TestCreateAccountDuplicatePhone(t *testing.T) {

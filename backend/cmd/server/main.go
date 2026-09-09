@@ -11,6 +11,7 @@ import (
 
 	"taskmanager/graph"
 	"taskmanager/internal/db"
+	"taskmanager/internal/notif"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -34,7 +35,10 @@ func main() {
 	}
 	log.Println("database migrated")
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, nil)}))
+	smsWorker := notif.NewWorker(notif.SenderFunc(notif.SendSMSPayload), 2, 100, nil)
+	defer smsWorker.Close()
+
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, smsWorker)}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
