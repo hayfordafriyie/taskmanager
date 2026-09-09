@@ -17,12 +17,9 @@ function renderWorkspace() {
 describe('Workspace', () => {
   it('defaults to the dashboard view when the page opens', () => {
     renderWorkspace()
-    expect(
-      screen.getByRole('heading', { name: 'Dashboard' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText('An overview of your progress is coming soon.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Good (morning|afternoon|evening|night), Hayford/)).toBeInTheDocument()
+    expect(screen.getByText('Upcoming tasks')).toBeInTheDocument()
+    expect(screen.getByText('Tasks done today')).toBeInTheDocument()
   })
 
   it('renders content based on the active dock item', async () => {
@@ -33,7 +30,7 @@ describe('Workspace', () => {
       screen.getByRole('heading', { name: 'My tasks' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Your personal task list is coming soon.'),
+      screen.getByText('Everything assigned to you, in one place.'),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'My tasks' }),

@@ -41,10 +41,10 @@ export function Dock() {
                 aria-label={label}
                 aria-pressed={active}
                 onClick={() => setActiveView(label)}
-                className={`rounded-full p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                className={`rounded-full p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                   active
-                    ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+                    ? "-translate-y-2 bg-indigo-100 text-indigo-700 shadow-md dark:bg-indigo-950 dark:text-indigo-300"
+                    : "text-zinc-500 hover:-translate-y-2 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                 }`}
               >
                 <Icon width={20} height={20} />

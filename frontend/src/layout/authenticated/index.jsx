@@ -15,7 +15,7 @@ export default function AuthenticatedLayout() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-zinc-950">
       <WorkspaceProvider>
-      <nav className="flex items-center justify-between bg-white shadow p-4 dark:bg-zinc-900">
+      <nav className="sticky top-0 z-40 flex items-center justify-between bg-white shadow p-4 dark:bg-zinc-900">
         <h1 className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100">
           Task Manager
         </h1>
