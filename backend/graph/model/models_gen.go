@@ -3,10 +3,20 @@
 package model
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type AcceptInviteResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Team    *Team  `json:"team,omitempty"`
+}
 
 type CreateAccountInput struct {
 	Phone           string  `json:"phone"`
@@ -21,6 +31,25 @@ type CreateAccountResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	User    *User  `json:"user,omitempty"`
+}
+
+type Invite struct {
+	ID        uuid.UUID `json:"id"`
+	TeamName  string    `json:"teamName"`
+	Phone     string    `json:"phone"`
+	Role      Role      `json:"role"`
+	Status    string    `json:"status"`
+	InvitedBy *User     `json:"invitedBy"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type InviteResult struct {
+	Success           bool    `json:"success"`
+	Message           string  `json:"message"`
+	Invite            *Invite `json:"invite,omitempty"`
+	InviteeRegistered bool    `json:"inviteeRegistered"`
+	AlreadyMember     bool    `json:"alreadyMember"`
 }
 
 type LoginResult struct {
@@ -57,6 +86,23 @@ type ResetPasswordResult struct {
 	Message string `json:"message"`
 }
 
+type Team struct {
+	ID      uuid.UUID     `json:"id"`
+	Name    string        `json:"name"`
+	Role    Role          `json:"role"`
+	Members []*TeamMember `json:"members"`
+	Invites []*Invite     `json:"invites"`
+}
+
+type TeamMember struct {
+	ID        uuid.UUID `json:"id"`
+	Phone     string    `json:"phone"`
+	FirstName string    `json:"firstName"`
+	Surname   string    `json:"surname"`
+	Role      Role      `json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 type User struct {
 	ID         uuid.UUID `json:"id"`
 	Phone      string    `json:"phone"`
@@ -69,4 +115,61 @@ type User struct {
 type VerifyOTPResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+type Role string
+
+const (
+	RoleAdmin  Role = "ADMIN"
+	RoleMember Role = "MEMBER"
+	RoleGuest  Role = "GUEST"
+)
+
+var AllRole = []Role{
+	RoleAdmin,
+	RoleMember,
+	RoleGuest,
+}
+
+func (e Role) IsValid() bool {
+	switch e {
+	case RoleAdmin, RoleMember, RoleGuest:
+		return true
+	}
+	return false
+}
+
+func (e Role) String() string {
+	return string(e)
+}
+
+func (e *Role) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Role(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Role", str)
+	}
+	return nil
+}
+
+func (e Role) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *Role) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e Role) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

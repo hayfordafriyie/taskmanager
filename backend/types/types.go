@@ -49,3 +49,32 @@ type UserCredentials struct {
 	UserRow
 	PasswordHash string
 }
+
+type TeamRow struct {
+	ID        uuid.UUID
+	Name      string
+	CreatedAt time.Time
+}
+
+type TeamMemberRow struct {
+	ID        uuid.UUID
+	Phone     string
+	FirstName string
+	Surname   string
+	Role      string
+	CreatedAt time.Time
+}
+
+type InviteRow struct {
+	ID                 uuid.UUID
+	TeamID             uuid.UUID
+	TeamName           string
+	Phone              string
+	Role               string
+	Status             string
+	InvitedBy          uuid.UUID
+	InvitedByFirstName string
+	InvitedBySurname   string
+	ExpiresAt          time.Time
+	CreatedAt          time.Time
+}

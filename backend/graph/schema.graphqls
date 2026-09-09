@@ -49,6 +49,54 @@ type ResetPasswordResult {
   message: String!
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+type Team {
+  id: UUID!
+  name: String!
+  role: Role!
+  members: [TeamMember!]!
+  invites: [Invite!]!
+}
+
+type TeamMember {
+  id: UUID!
+  phone: String!
+  firstName: String!
+  surname: String!
+  role: Role!
+  createdAt: Time!
+}
+
+type Invite {
+  id: UUID!
+  teamName: String!
+  phone: String!
+  role: Role!
+  status: String!
+  invitedBy: User!
+  expiresAt: Time!
+  createdAt: Time!
+}
+
+type InviteResult {
+  success: Boolean!
+  message: String!
+  invite: Invite
+  inviteeRegistered: Boolean!
+  alreadyMember: Boolean!
+}
+
+type AcceptInviteResult {
+  success: Boolean!
+  message: String!
+  team: Team
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -61,6 +109,8 @@ input CreateAccountInput {
 type Query {
   health: String!
   me: User!
+  myTeam: Team!
+  myInvites: [Invite!]!
 }
 
 type Mutation {
@@ -72,4 +122,7 @@ type Mutation {
   logout: Boolean!
   requestPasswordReset(phone: String!): OTPResult!
   resetPassword(phone: String!, code: String!, password: String!, confirmPassword: String!): ResetPasswordResult!
+  inviteToTeam(phone: String!, role: Role!): InviteResult!
+  acceptInvite(inviteId: UUID!): AcceptInviteResult!
+  revokeInvite(inviteId: UUID!): Boolean!
 }

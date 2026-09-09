@@ -399,6 +399,132 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, phone string, code
 	}, nil
 }
 
+// InviteToTeam is the resolver for the inviteToTeam field.
+func (r *mutationResolver) InviteToTeam(ctx context.Context, phone string, role model.Role) (*model.InviteResult, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	normalized, err := validator.NormalizePhone(phone)
+	if err != nil {
+		return nil, err
+	}
+	if normalized == user.Phone {
+		return &model.InviteResult{
+			Success: false,
+			Message: "you cannot invite yourself",
+		}, nil
+	}
+
+	team, err := db.EnsurePersonalTeam(ctx, r.Pool, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("load team: %w", err)
+	}
+
+	invite, err := db.InviteMember(ctx, r.Pool, team.ID, normalized, toDBRole(role), user.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, db.ErrSelfInvite):
+			return &model.InviteResult{Success: false, Message: err.Error()}, nil
+		case errors.Is(err, db.ErrAlreadyInvited):
+			return &model.InviteResult{Success: false, Message: err.Error()}, nil
+		case errors.Is(err, db.ErrAlreadyMember):
+			return &model.InviteResult{Success: false, Message: "this person is already a member of this team", AlreadyMember: true}, nil
+		default:
+			return nil, fmt.Errorf("invite member: %w", err)
+		}
+	}
+
+	registered, err := db.PhoneRegistered(ctx, r.Pool, normalized)
+	if err != nil {
+		return nil, fmt.Errorf("check invitee registered: %w", err)
+	}
+
+	r.SMSQueue.Enqueue(types.SMSPayload{
+		PhoneNumbers: []string{normalized},
+		Message:      inviteSMSMessage,
+	}, "")
+
+	invite.TeamName = team.Name
+	invite.TeamID = team.ID
+	invite.Status = "pending"
+	modelInvite, err := toModelInvite(invite, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.InviteResult{
+		Success:           true,
+		Message:           "invitation sent",
+		Invite:            modelInvite,
+		InviteeRegistered: registered,
+	}, nil
+}
+
+// AcceptInvite is the resolver for the acceptInvite field.
+func (r *mutationResolver) AcceptInvite(ctx context.Context, inviteID uuid.UUID) (*model.AcceptInviteResult, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	team, _, err := db.AcceptInvite(ctx, r.Pool, inviteID, user.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, db.ErrNoPendingInvite):
+			return &model.AcceptInviteResult{Success: false, Message: err.Error()}, nil
+		case errors.Is(err, db.ErrInviteExpired):
+			return &model.AcceptInviteResult{Success: false, Message: err.Error()}, nil
+		case errors.Is(err, db.ErrInviteNotForYou):
+			return &model.AcceptInviteResult{Success: false, Message: err.Error()}, nil
+		case errors.Is(err, db.ErrAlreadyMember):
+			return &model.AcceptInviteResult{Success: false, Message: err.Error()}, nil
+		case errors.Is(err, db.ErrInviteInvalid):
+			return &model.AcceptInviteResult{Success: false, Message: "this invite no longer exists"}, nil
+		default:
+			return nil, fmt.Errorf("accept invite: %w", err)
+		}
+	}
+
+	teamView, err := r.buildTeam(ctx, team.ID, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &model.AcceptInviteResult{
+		Success: true,
+		Message: "you joined the workspace",
+		Team:    teamView,
+	}, nil
+}
+
+// RevokeInvite is the resolver for the revokeInvite field.
+func (r *mutationResolver) RevokeInvite(ctx context.Context, inviteID uuid.UUID) (bool, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	team, err := db.EnsurePersonalTeam(ctx, r.Pool, user.ID)
+	if err != nil {
+		return false, fmt.Errorf("load team: %w", err)
+	}
+	role, err := db.MemberRole(ctx, r.Pool, team.ID, user.ID)
+	if err != nil {
+		if errors.Is(err, db.ErrNotTeamMember) {
+			return false, nil
+		}
+		return false, err
+	}
+	if role != "admin" {
+		return false, nil
+	}
+	revoked, err := db.RevokeInvite(ctx, r.Pool, inviteID, user.ID)
+	if err != nil {
+		return false, fmt.Errorf("revoke invite: %w", err)
+	}
+	return revoked, nil
+}
+
 // Health is the resolver for the health field.
 func (r *queryResolver) Health(ctx context.Context) (string, error) {
 	return "ok", nil
@@ -433,6 +559,45 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 		return nil, errNotAuthenticated
 	}
 	return toModelUser(user), nil
+}
+
+// MyTeam is the resolver for the myTeam field.
+func (r *queryResolver) MyTeam(ctx context.Context) (*model.Team, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	team, err := db.EnsurePersonalTeam(ctx, r.Pool, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("load team: %w", err)
+	}
+	return r.buildTeam(ctx, team.ID, user.ID)
+}
+
+// MyInvites is the resolver for the myInvites field.
+func (r *queryResolver) MyInvites(ctx context.Context) ([]*model.Invite, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	inviteRows, err := db.PendingInvitesForPhone(ctx, r.Pool, user.Phone)
+	if err != nil {
+		return nil, fmt.Errorf("load invites: %w", err)
+	}
+	invites := make([]*model.Invite, 0, len(inviteRows))
+	for i := range inviteRows {
+		inviter := &types.UserRow{
+			ID:        inviteRows[i].InvitedBy,
+			FirstName: inviteRows[i].InvitedByFirstName,
+			Surname:   inviteRows[i].InvitedBySurname,
+		}
+		invite, err := toModelInvite(&inviteRows[i], inviter)
+		if err != nil {
+			return nil, err
+		}
+		invites = append(invites, invite)
+	}
+	return invites, nil
 }
 
 // Mutation returns MutationResolver implementation.
