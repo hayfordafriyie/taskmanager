@@ -443,7 +443,11 @@ func (r *mutationResolver) InviteToTeam(ctx context.Context, phone string, role 
 
 	r.SMSQueue.Enqueue(types.SMSPayload{
 		PhoneNumbers: []string{normalized},
-		Message:      inviteSMSMessage,
+		Message: inviteSMSFor(
+			fmt.Sprintf("%s %s", user.FirstName, user.Surname),
+			team.Name,
+			registered,
+		),
 	}, "")
 
 	invite.TeamName = team.Name

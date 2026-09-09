@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 
 	"taskmanager/graph/model"
@@ -26,8 +27,28 @@ const (
 	otpPurposeRegister      = "register"
 	otpPurposePasswordReset = "password_reset"
 	loginAccessAlert        = "Your Task Manager account was accessed via a new login. If this was not you, reset your password immediately."
-	inviteSMSMessage        = "You have been invited to join Task Manager. Log in and accept your invitation from the Invite page."
 )
+
+// inviteSMSFor explains the next step based on whether the invitee already has
+// an account. Invites are keyed by phone number, so a brand-new user simply
+// signs up with that number and the invitation is waiting for them.
+func inviteSMSFor(inviterName, teamName string, registered bool) string {
+	url := strings.TrimRight(os.Getenv("APP_URL"), "/")
+	ctx := ""
+	if url != "" {
+		ctx = " at " + url
+	}
+	if registered {
+		return fmt.Sprintf(
+			"%s invited you to join %s on Task Manager. Log in%s and accept your invitation from the Invite page.",
+			inviterName, teamName, ctx,
+		)
+	}
+	return fmt.Sprintf(
+		"%s invited you to join %s on Task Manager. Create an account with this phone number%s and your invitation will be waiting.",
+		inviterName, teamName, ctx,
+	)
+}
 
 func int32Ptr(v int32) *int32 {
 	return &v

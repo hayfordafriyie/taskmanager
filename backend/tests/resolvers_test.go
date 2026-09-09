@@ -31,6 +31,7 @@ var gqlCodeRe = regexp.MustCompile(`\b[0-9]{6}\b`)
 type fakeSMSSender struct {
 	mu       sync.Mutex
 	messages []string
+	phones   []string
 	fail     bool
 	errs     []error
 }
@@ -41,8 +42,23 @@ func (f *fakeSMSSender) SendSMSPayload(payload types.SMSPayload, senderID string
 	if f.fail {
 		return 0, errors.New("sms service down")
 	}
-	f.messages = append(f.messages, payload.Message)
+	for _, phone := range payload.PhoneNumbers {
+		f.phones = append(f.phones, phone)
+		f.messages = append(f.messages, payload.Message)
+	}
 	return 1, nil
+}
+
+func (f *fakeSMSSender) messagesFor(phone string) []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []string
+	for i, p := range f.phones {
+		if p == phone {
+			out = append(out, f.messages[i])
+		}
+	}
+	return out
 }
 
 func (f *fakeSMSSender) lastCode() string {

@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -116,6 +117,49 @@ func TestInviteToTeamCreatesPendingInvite(t *testing.T) {
 	}
 	if n := pendingInviteCount(t, team); n != 1 {
 		t.Errorf("expected one pending invite, got %d", n)
+	}
+}
+
+func inviteSMSForPhone(t *testing.T, sender *fakeSMSSender, phone string) string {
+	t.Helper()
+	var invite string
+	waitUntil(t, 5*time.Second, func() bool {
+		for _, msg := range sender.messagesFor(phone) {
+			if strings.Contains(msg, "invited you to join") {
+				invite = msg
+				return true
+			}
+		}
+		return false
+	})
+	return invite
+}
+
+func TestInviteSMSPointsExistingUsersToLoginAndNewUsersToSignup(t *testing.T) {
+	t.Setenv("APP_URL", "https://tm.example")
+
+	srv, _, sender, cleanup := newTestServer(t)
+	defer cleanup()
+
+	ownerToken := registerAndLogin(t, srv, sender, "+233537144161")
+	registerUserHTTP(t, srv, sender, "+233541230000")
+
+	gqlMutation(t, gqlQueryAuth(t, srv, inviteQuery("+233541230000", "MEMBER"), ownerToken), "inviteToTeam")
+	loginSMS := inviteSMSForPhone(t, sender, "+233541230000")
+	if !strings.Contains(loginSMS, "Log in") || !strings.Contains(loginSMS, "https://tm.example") {
+		t.Errorf("expected registered invitee SMS to say Log in with the app URL, got %q", loginSMS)
+	}
+	if strings.Contains(loginSMS, "Create an account") {
+		t.Errorf("registered invitee must not be told to sign up, got %q", loginSMS)
+	}
+
+	gqlMutation(t, gqlQueryAuth(t, srv, inviteQuery("+233551234567", "GUEST"), ownerToken), "inviteToTeam")
+	signupSMS := inviteSMSForPhone(t, sender, "+233551234567")
+	if !strings.Contains(signupSMS, "Create an account") || !strings.Contains(signupSMS, "https://tm.example") {
+		t.Errorf("expected new-user SMS to say Create an account with the app URL, got %q", signupSMS)
+	}
+	if strings.Contains(signupSMS, "Log in") {
+		t.Errorf("new user must not be told to log in, got %q", signupSMS)
 	}
 }
 
