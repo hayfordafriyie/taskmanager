@@ -2,14 +2,14 @@ package graph
 
 import (
 	"taskmanager/graph/model"
-	"taskmanager/internal/db"
+	"taskmanager/types"
 )
 
 func int32Ptr(v int32) *int32 {
 	return &v
 }
 
-func toModelUser(u *db.UserRow) *model.User {
+func toModelUser(u *types.UserRow) *model.User {
 	if u == nil {
 		return nil
 	}

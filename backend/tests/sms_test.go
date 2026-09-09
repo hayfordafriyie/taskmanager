@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"taskmanager/internal/notif"
+	"taskmanager/types"
 )
 
 type smsServer struct {
@@ -46,8 +47,8 @@ func (c *requestCounter) count() int {
 	return c.requests
 }
 
-func smsPayload() notif.SMSPayload {
-	return notif.SMSPayload{
+func smsPayload() types.SMSPayload {
+	return types.SMSPayload{
 		PhoneNumbers: []string{"+233537144161"},
 		Message:      "Your verification code is 123456.",
 	}
@@ -113,7 +114,7 @@ func TestSendSMSPayloadFormatsPhoneNumbers(t *testing.T) {
 	})
 
 	for _, in := range inputs {
-		if _, err := notif.SendSMSPayload(notif.SMSPayload{
+		if _, err := notif.SendSMSPayload(types.SMSPayload{
 			PhoneNumbers: []string{in},
 			Message:      "test",
 		}, ""); err != nil {
@@ -204,7 +205,7 @@ func TestSendSMSPayloadNoNumbers(t *testing.T) {
 		t.Error("request should not be made without recipients")
 	})
 
-	if _, err := notif.SendSMSPayload(notif.SMSPayload{PhoneNumbers: []string{}, Message: "x"}, ""); err == nil {
+	if _, err := notif.SendSMSPayload(types.SMSPayload{PhoneNumbers: []string{}, Message: "x"}, ""); err == nil {
 		t.Fatal("expected error when no phone numbers")
 	}
 }

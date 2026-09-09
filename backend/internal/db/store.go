@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"taskmanager/types"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -72,21 +74,12 @@ func PhoneRegistered(
 	return registered, nil
 }
 
-type UserRow struct {
-	ID         uuid.UUID
-	Phone      string
-	FirstName  string
-	Surname    string
-	OtherNames *string
-	CreatedAt  time.Time
-}
-
 func CreateUser(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	phone, firstName, surname, otherNames, passwordHash string,
-) (*UserRow, error) {
-	var u UserRow
+) (*types.UserRow, error) {
+	var u types.UserRow
 	err := pool.QueryRow(
 		ctx,
 		"SELECT id, phone, first_name, surname, other_names, created_at FROM create_user($1, $2, $3, $4, $5)",

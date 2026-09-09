@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"taskmanager/internal/notif"
+	"taskmanager/types"
 )
 
 type trackedSender struct {
@@ -15,7 +16,7 @@ type trackedSender struct {
 	fail  bool
 }
 
-func (s *trackedSender) SendSMSPayload(payload notif.SMSPayload, senderID string) (float64, error) {
+func (s *trackedSender) SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.calls++
@@ -37,7 +38,7 @@ type blockingSender struct {
 	calls int
 }
 
-func (s *blockingSender) SendSMSPayload(payload notif.SMSPayload, senderID string) (float64, error) {
+func (s *blockingSender) SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error) {
 	s.mu.Lock()
 	s.calls++
 	s.mu.Unlock()

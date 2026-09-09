@@ -13,9 +13,9 @@ import (
 
 	"taskmanager/graph/model"
 	"taskmanager/internal/db"
-	"taskmanager/internal/notif"
 	"taskmanager/internal/otp"
 	"taskmanager/internal/validator"
+	"taskmanager/types"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -61,7 +61,7 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 		return nil, fmt.Errorf("store otp: %w", err)
 	}
 
-	if !r.SMSQueue.Enqueue(notif.SMSPayload{
+	if !r.SMSQueue.Enqueue(types.SMSPayload{
 		PhoneNumbers: []string{normalized},
 		Message:      otp.Message(code, otp.DefaultTTL),
 	}, "") {

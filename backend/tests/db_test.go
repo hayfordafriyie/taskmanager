@@ -8,6 +8,7 @@ import (
 
 	"taskmanager/internal/db"
 	"taskmanager/internal/otp"
+	"taskmanager/types"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -240,7 +241,7 @@ func TestPhoneRegistered(t *testing.T) {
 	}
 }
 
-func registerUser(ctx context.Context, pool *pgxpool.Pool, phone string) (*db.UserRow, error) {
+func registerUser(ctx context.Context, pool *pgxpool.Pool, phone string) (*types.UserRow, error) {
 	code, codeHash, _ := otp.Generate()
 	if _, err := db.RequestOTP(ctx, pool, phone, "register", codeHash, time.Now().Add(otp.DefaultTTL)); err != nil {
 		return nil, err

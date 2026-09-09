@@ -18,6 +18,7 @@ import (
 	"taskmanager/internal/db"
 	"taskmanager/internal/notif"
 	"taskmanager/internal/otp"
+	"taskmanager/types"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
@@ -33,7 +34,7 @@ type fakeSMSSender struct {
 	errs     []error
 }
 
-func (f *fakeSMSSender) SendSMSPayload(payload notif.SMSPayload, senderID string) (float64, error) {
+func (f *fakeSMSSender) SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.fail {

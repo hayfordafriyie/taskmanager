@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"taskmanager/types"
 )
 
 const (
@@ -18,18 +20,7 @@ const (
 	smsRetryDelay = 500 * time.Millisecond
 )
 
-type SMSPayload struct {
-	PhoneNumbers []string
-	Message      string
-}
-
-type smsConfig struct {
-	APIKey          string
-	BaseURL         string
-	DefaultSenderID string
-}
-
-func newSMSConfig() (*smsConfig, error) {
+func newSMSConfig() (*types.SMSConfig, error) {
 	apiKey := os.Getenv("SMS_API_KEY")
 	if apiKey == "" {
 		apiKey = os.Getenv("SMS_KEY")
@@ -50,24 +41,15 @@ func newSMSConfig() (*smsConfig, error) {
 		return nil, errors.New("DEFAULT_SMS_SENDER_ID is not set in .env")
 	}
 
-	return &smsConfig{
+	return &types.SMSConfig{
 		APIKey:          apiKey,
 		BaseURL:         baseURL,
 		DefaultSenderID: senderID,
 	}, nil
 }
 
-type mnotifyResponse struct {
-	Code    string `json:"code"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Summary struct {
-		CreditUsed float64 `json:"credit_used"`
-	} `json:"summary"`
-}
-
 // SendSMSPayload sends an SMS to one or more numbers via mnotify.
-func SendSMSPayload(payload SMSPayload, senderID string) (float64, error) {
+func SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error) {
 	cfg, err := newSMSConfig()
 	if err != nil {
 		return 0, err
@@ -151,7 +133,7 @@ func SendSMSPayload(payload SMSPayload, senderID string) (float64, error) {
 			return 0, lastErr
 		}
 
-		var mResp mnotifyResponse
+		var mResp types.MnotifyResponse
 		if err := json.Unmarshal(body, &mResp); err != nil {
 			bodyStr := string(body)
 			if len(bodyStr) > 100 {

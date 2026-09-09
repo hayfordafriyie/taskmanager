@@ -4,24 +4,21 @@ import (
 	"errors"
 	"log"
 	"sync"
+
+	"taskmanager/types"
 )
 
 // Sender delivers a single SMS payload. SendSMSPayload satisfies this
 // interface.
 type Sender interface {
-	SendSMSPayload(payload SMSPayload, senderID string) (float64, error)
+	SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error)
 }
 
 // SenderFunc adapts a function to the Sender interface.
-type SenderFunc func(payload SMSPayload, senderID string) (float64, error)
+type SenderFunc func(payload types.SMSPayload, senderID string) (float64, error)
 
-func (f SenderFunc) SendSMSPayload(payload SMSPayload, senderID string) (float64, error) {
+func (f SenderFunc) SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error) {
 	return f(payload, senderID)
-}
-
-type job struct {
-	payload  SMSPayload
-	senderID string
 }
 
 // Worker delivers queued SMS payloads in the background so callers never
@@ -29,7 +26,7 @@ type job struct {
 // delivery failures and dropped messages are reported through an optional
 // onError hook (or the package logger when it is nil).
 type Worker struct {
-	queue   chan job
+	queue   chan types.SMSJob
 	send    Sender
 	onError func(error)
 	done    chan struct{}
@@ -48,7 +45,7 @@ func NewWorker(send Sender, n, queueSize int, onError func(error)) *Worker {
 		queueSize = 1
 	}
 	w := &Worker{
-		queue:   make(chan job, queueSize),
+		queue:   make(chan types.SMSJob, queueSize),
 		send:    send,
 		onError: onError,
 		done:    make(chan struct{}),
@@ -63,8 +60,8 @@ func NewWorker(send Sender, n, queueSize int, onError func(error)) *Worker {
 // Enqueue queues a message without blocking the caller. It returns false and
 // reports an error via onError when the queue is full or the worker is
 // shutting down.
-func (w *Worker) Enqueue(payload SMSPayload, senderID string) bool {
-	j := job{payload: payload, senderID: senderID}
+func (w *Worker) Enqueue(payload types.SMSPayload, senderID string) bool {
+	j := types.SMSJob{Payload: payload, SenderID: senderID}
 	select {
 	case w.queue <- j:
 		return true
@@ -104,8 +101,8 @@ func (w *Worker) run() {
 	}
 }
 
-func (w *Worker) sendJob(j job) {
-	if _, err := w.send.SendSMSPayload(j.payload, j.senderID); err != nil {
+func (w *Worker) sendJob(j types.SMSJob) {
+	if _, err := w.send.SendSMSPayload(j.Payload, j.SenderID); err != nil {
 		w.reportError(err)
 	}
 }
