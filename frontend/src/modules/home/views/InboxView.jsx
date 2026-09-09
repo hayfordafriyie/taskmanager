@@ -43,17 +43,14 @@ export function InboxView() {
   return (
     <div>
       <ViewHeader title="Inbox" subtitle="Activity, mentions, and assignments across your workspace." />
-      <div className="mt-6 flex items-center gap-2">
+      <div className="seg mt-6">
         {tabs.map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              tab === t
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : "bg-white text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-            }`}
+            aria-pressed={tab === t}
+            className="seg-btn"
           >
             {t}
           </button>
@@ -67,12 +64,10 @@ export function InboxView() {
               {g.label}
             </p>
             <Panel className="mt-2">
-              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <ul className="divide-soft">
                 {g.items.map((i) => (
                   <li key={i.id} className="flex items-start gap-3 py-3">
-                    <span className="mt-0.5 rounded-lg bg-zinc-100 p-2 dark:bg-zinc-800">
-                      <i.Icon width={16} height={16} className={i.tint} />
-                    </span>
+                    <span className="chip h-8 w-8">{<i.Icon width={16} height={16} className={i.tint} />}</span>
                     <p className="min-w-0 flex-1 text-sm text-zinc-700 dark:text-zinc-300">
                       {i.text}
                     </p>

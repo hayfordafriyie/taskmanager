@@ -61,9 +61,9 @@ const week = [
 ];
 
 const priorityTint = {
-  High: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  Medium: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  Low: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+  High: "tone-red",
+  Medium: "tone-amber",
+  Low: "tone-neutral",
 };
 
 function SectionHeader({ title, icon: Icon }) {
@@ -89,7 +89,7 @@ export function DashboardView() {
             {todayLabel()}
           </p>
         </div>
-        <span className="hidden rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 sm:inline-block">
+        <span className="tone-emerald hidden rounded-full px-3 py-1 text-xs font-medium sm:inline-block">
           12 tasks completed today
         </span>
       </header>
@@ -114,7 +114,7 @@ export function DashboardView() {
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <section className="glass-card p-4 lg:col-span-2">
           <SectionHeader title="Upcoming tasks" icon={CheckboxIcon} />
-          <ul className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-soft mt-3">
             {tasks.map((t) => (
               <li key={t.id} className="flex items-center gap-3 py-2.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
@@ -151,7 +151,7 @@ export function DashboardView() {
                     {p.progress}%
                   </span>
                 </div>
-                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div className="track mt-1.5 h-2 w-full">
                   <div
                     className={`h-full rounded-full ${p.bar}`}
                     style={{ width: `${p.progress}%` }}

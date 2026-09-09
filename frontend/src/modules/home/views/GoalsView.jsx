@@ -94,7 +94,7 @@ export function GoalsView() {
                 </p>
               </div>
             </div>
-            <ul className="mt-4 space-y-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+            <ul className="mt-4 space-y-3 border-t border-[var(--border-subtle)] pt-4">
               {g.results.map((r) => (
                 <li key={r.id}>
                   <div className="flex items-center justify-between text-sm">
@@ -105,7 +105,7 @@ export function GoalsView() {
                       {r.progress}%
                     </span>
                   </div>
-                  <div className="mt-1.5 h-1.5 w-full rounded-full bg-zinc-100 dark:bg-zinc-800">
+                  <div className="track mt-1.5 h-1.5 w-full">
                     <div
                       className="h-full rounded-full bg-indigo-500"
                       style={{ width: `${r.progress}%` }}

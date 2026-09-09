@@ -37,17 +37,14 @@ export function MyTasksView() {
     <div>
       <ViewHeader title="My tasks" subtitle="Everything assigned to you, in one place." />
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="seg">
           {filters.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                filter === f
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                  : "bg-white text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-              }`}
+              aria-pressed={filter === f}
+              className="seg-btn"
             >
               {f}
             </button>
@@ -66,7 +63,7 @@ export function MyTasksView() {
 
       <Panel className="mt-4">
         <SectionTitleRow done={doneCount} total={tasks.length} />
-        <ul className="mt-2 divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="divide-soft mt-2">
           {visible.map((t) => (
             <li key={t.id} className="flex items-center gap-3 py-3">
               <button

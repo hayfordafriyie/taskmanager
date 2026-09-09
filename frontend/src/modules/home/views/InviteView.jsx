@@ -116,7 +116,7 @@ export function InviteView() {
       <ViewHeader title="Invite" subtitle="Bring teammates into your workspace." />
 
       {invitesPending ? null : invites?.length > 0 ? (
-        <Panel className="mt-6 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40">
+        <Panel className="mt-6">
           <header className="flex items-center gap-2">
             <ClockIcon width={16} height={16} className="text-amber-600 dark:text-amber-500" />
             <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -127,7 +127,7 @@ export function InviteView() {
             {invites.map((invite) => (
               <li
                 key={invite.id}
-                className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-white p-3 sm:flex-row sm:items-center dark:border-amber-900 dark:bg-zinc-900"
+                className="glass-tile flex flex-col gap-3 p-3 sm:flex-row sm:items-center"
               >
                 <Avatar initial={initialsOf(invite)} />
                 <div className="min-w-0 flex-1">
@@ -143,7 +143,7 @@ export function InviteView() {
                   type="button"
                   onClick={() => handleAccept(invite.id)}
                   disabled={acceptInvite.isPending}
-                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                  className="btn-gloss-primary rounded-full px-3.5 py-2 text-sm"
                 >
                   Accept
                 </button>
@@ -169,19 +169,16 @@ export function InviteView() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+233541230000"
               aria-label="Phone number"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="seg flex-wrap">
               {roleOptions.map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    role === r
-                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                  }`}
+                  aria-pressed={role === r}
+                  className="seg-btn"
                 >
                   {roleLabel[r]}
                 </button>
@@ -190,7 +187,7 @@ export function InviteView() {
             <button
               type="submit"
               disabled={inviteToTeam.isPending}
-              className="w-full rounded-md bg-indigo-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="btn-gloss-primary w-full rounded-full px-3.5 py-2.5 text-sm"
             >
               Send invite
             </button>
@@ -209,7 +206,7 @@ export function InviteView() {
               Members ({members.length})
             </h2>
           </header>
-          <ul className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-soft mt-3">
             {members.map((m) => (
               <li key={m.id} className="flex items-center gap-3 py-3">
                 <Avatar initial={initialsOf(m)} />
@@ -236,7 +233,7 @@ export function InviteView() {
               Pending invites
             </h2>
           </header>
-          <ul className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-soft mt-3">
             {pendingInvites.map((invite) => (
               <li key={invite.id} className="flex items-center gap-3 py-3">
                 <div className="min-w-0 flex-1">

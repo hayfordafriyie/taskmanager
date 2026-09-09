@@ -35,19 +35,34 @@ export function NotificationBell() {
         </button>
       </Tooltip>
       {open && (
-        <div className="glass-pop glass-pop-in absolute right-0 top-12 w-72 rounded-2xl p-2" data-state="open">
-          <p className="t-ink px-2 py-1 text-sm font-semibold">
-            Notifications
-          </p>
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              className="rounded-xl p-2 transition-colors hover:bg-[var(--glass-b)]"
-            >
-              <p className="t-ink text-sm font-medium">{n.title}</p>
-              <p className="t-soft mt-0.5 text-xs">{n.description}</p>
-            </div>
-          ))}
+        <div className="absolute right-0 top-full z-50 pt-3">
+          <div
+            className="glass-pop glass-pop-in relative w-72 rounded-2xl p-2"
+            data-state="open"
+            role="dialog"
+            aria-label="Notifications"
+          >
+            <span
+              aria-hidden="true"
+              className="absolute -top-[7px] right-4 h-3.5 w-3.5 rotate-45 rounded-[2px] border-l border-t"
+              style={{
+                borderColor: "var(--border-soft)",
+                background: "var(--glass-strong)",
+              }}
+            />
+            <p className="t-ink px-2 py-1 text-sm font-semibold">
+              Notifications
+            </p>
+            {notifications.map((n) => (
+              <div
+                key={n.id}
+                className="rounded-xl p-2 transition-colors hover:bg-[var(--glass-b)]"
+              >
+                <p className="t-ink text-sm font-medium">{n.title}</p>
+                <p className="t-soft mt-0.5 text-xs">{n.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

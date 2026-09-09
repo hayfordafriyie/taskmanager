@@ -38,7 +38,7 @@ export function TimeView() {
           <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             This week
           </h2>
-          <span className="ml-auto rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+          <span className="badge tone-indigo ml-auto px-2.5 py-1 text-xs">
             24.5h total
           </span>
         </header>
@@ -55,7 +55,7 @@ export function TimeView() {
                 <th className="pb-2 text-right font-medium">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-soft">
               {rows.map((r) => {
                 const total = r.days.reduce((a, b) => a + b, 0);
                 return (

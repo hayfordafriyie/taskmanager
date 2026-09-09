@@ -1,5 +1,5 @@
 export const base =
-  "inline-flex items-center justify-center gap-2 rounded-[0.7rem] font-semibold leading-none ring-accent disabled:opacity-50 disabled:pointer-events-none select-none";
+  "inline-flex items-center justify-center gap-2 rounded-full font-semibold leading-none ring-accent disabled:opacity-50 disabled:pointer-events-none select-none";
 
 export const buttonVariants = {
   primary: "btn-gloss-primary text-sm",

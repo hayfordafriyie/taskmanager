@@ -76,10 +76,10 @@ export function DocsView() {
                       <button
                         type="button"
                         onClick={() => setSelected(d)}
-                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+                        className={`flex w-full items-center gap-2 rounded-[0.6rem] px-2 py-1.5 text-left text-sm transition-colors ${
                           selected.id === d.id
-                            ? "bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                            : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            ? "accent-text bg-[var(--accent-tint)] font-semibold"
+                            : "t-soft hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
                         }`}
                       >
                         <span className={`rounded p-0.5 ${d.tint}`}>

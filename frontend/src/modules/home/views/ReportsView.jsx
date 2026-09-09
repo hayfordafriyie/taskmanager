@@ -97,7 +97,7 @@ export function ReportsView() {
                 <span className="w-24 shrink-0 text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   {m.name}
                 </span>
-                <div className="h-2.5 w-full max-w-sm rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div className="track h-2.5 w-full max-w-sm">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${m.width}%`, backgroundColor: m.color }}
