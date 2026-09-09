@@ -98,7 +98,7 @@ export function DashboardView() {
         {stats.map(({ label, value, Icon, tint }) => (
           <div
             key={label}
-            className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="glass-card p-4"
           >
             <div className="flex items-center justify-between">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
@@ -112,7 +112,7 @@ export function DashboardView() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 lg:col-span-2">
+        <section className="glass-card p-4 lg:col-span-2">
           <SectionHeader title="Upcoming tasks" icon={CheckboxIcon} />
           <ul className="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
             {tasks.map((t) => (
@@ -138,7 +138,7 @@ export function DashboardView() {
           </ul>
         </section>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="glass-card p-4">
           <SectionHeader title="Projects" icon={TargetIcon} />
           <ul className="mt-3 space-y-4">
             {projects.map((p) => (
@@ -162,7 +162,7 @@ export function DashboardView() {
           </ul>
         </section>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="glass-card p-4">
           <SectionHeader title="Recent activity" icon={ChatBubbleIcon} />
           <ul className="mt-3 space-y-3">
             {activity.map((a) => (
@@ -176,13 +176,13 @@ export function DashboardView() {
           </ul>
         </section>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 lg:col-span-2">
+        <section className="glass-card p-4 lg:col-span-2">
           <SectionHeader title="Due this week" icon={CalendarIcon} />
           <div className="mt-3 grid grid-cols-7 gap-2">
             {week.map((d) => (
               <div
                 key={d.day}
-                className="flex flex-col items-center gap-1.5 rounded-lg bg-zinc-50 py-3 dark:bg-zinc-800/50"
+                className="flex flex-col items-center gap-1.5 glass-tile py-3"
               >
                 <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                   {d.day}

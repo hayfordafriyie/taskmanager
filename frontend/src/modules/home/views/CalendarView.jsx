@@ -23,7 +23,7 @@ function DayCell({ day }) {
   }
   const evts = events[day] || [];
   return (
-    <div className="min-h-24 rounded-lg border border-zinc-100 bg-white p-1.5 dark:border-zinc-800 dark:bg-zinc-800/40">
+    <div className="glass-tile min-h-24 p-1.5">
       <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
         {day}
       </span>
@@ -60,14 +60,14 @@ export function CalendarView() {
             <button
               type="button"
               aria-label="Previous month"
-              className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+              className="ring-accent rounded-lg p-1 transition-colors text-[var(--ink-faint)] hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
             >
               <ChevronLeftIcon width={16} height={16} />
             </button>
             <button
               type="button"
               aria-label="Next month"
-              className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+              className="ring-accent rounded-lg p-1 transition-colors text-[var(--ink-faint)] hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
             >
               <ChevronRightIcon width={16} height={16} />
             </button>

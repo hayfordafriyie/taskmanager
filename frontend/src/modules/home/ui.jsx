@@ -20,7 +20,7 @@ const statusTint = {
 export function PolicyBadge({ children, tone = "zinc" }) {
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusTint[tone] || statusTint.Low}`}
+      className={`badge rounded-full px-2.5 py-0.5 text-xs ${statusTint[tone] || statusTint.Low}`}
     >
       {children}
     </span>
@@ -30,7 +30,7 @@ export function PolicyBadge({ children, tone = "zinc" }) {
 export function PriorityBadge({ children }) {
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${priorityTint[children]}`}
+      className={`badge rounded-full px-2.5 py-0.5 text-xs ${priorityTint[children]}`}
     >
       {children}
     </span>
@@ -40,7 +40,7 @@ export function PriorityBadge({ children }) {
 export function Panel({ children, className = "" }) {
   return (
     <section
-      className={`rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 ${className}`}
+      className={`glass-card p-4 ${className}`}
     >
       {children}
     </section>
@@ -51,9 +51,9 @@ export function SectionTitle({ title, icon: Icon }) {
   return (
     <header className="flex items-center gap-2">
       {Icon && (
-        <Icon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+        <Icon width={16} height={16} className="t-faint" />
       )}
-      <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+      <h2 className="t-ink font-display text-sm font-semibold uppercase tracking-wide">
         {title}
       </h2>
     </header>
@@ -63,10 +63,10 @@ export function SectionTitle({ title, icon: Icon }) {
 export function ViewHeader({ title, subtitle = "Task Manager workspace" }) {
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="t-ink font-display text-2xl font-bold tracking-tight">
         {title}
       </h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+      <p className="t-soft mt-2 text-sm">{subtitle}</p>
     </div>
   );
 }
@@ -74,7 +74,7 @@ export function ViewHeader({ title, subtitle = "Task Manager workspace" }) {
 export function Avatar({ initial, className = "" }) {
   return (
     <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 ${className}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-xs font-semibold text-white shadow-sm ring-1 ring-white/40 dark:ring-white/10 ${className}`}
     >
       {initial}
     </span>

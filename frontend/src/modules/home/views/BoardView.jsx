@@ -56,7 +56,7 @@ export function BoardView() {
               <h2 className={`font-display text-sm font-semibold ${col.tint}`}>
                 {col.title}
               </h2>
-              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+              <span className="badge-tint badge px-2 py-0.5 text-xs">
                 {col.tasks.length}
               </span>
             </header>
@@ -64,7 +64,7 @@ export function BoardView() {
               {col.tasks.map((t) => (
                 <li
                   key={t.id}
-                  className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
+                  className="glass-tile p-3 transition-all hover:-translate-y-0.5 hover:bg-[var(--glass-hover)]"
                 >
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {t.title}
@@ -81,7 +81,7 @@ export function BoardView() {
             </ul>
             <button
               type="button"
-              className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
+              className="ring-accent mt-3 flex w-full items-center justify-center gap-1 rounded-lg py-2 text-xs font-medium transition-colors text-[var(--ink-faint)] hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
             >
               <PlusIcon width={14} height={14} />
               Add task

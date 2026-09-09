@@ -59,7 +59,7 @@ export function MyTasksView() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search tasks…"
-            className="rounded-full border border-zinc-200 bg-white py-1.5 pl-8 pr-3 text-sm text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className="control rounded-full py-2 pl-9 pr-3 text-sm"
           />
         </div>
       </div>

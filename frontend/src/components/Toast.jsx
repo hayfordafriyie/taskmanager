@@ -9,16 +9,10 @@ import {
 
 const ToastContext = createContext(null);
 
-const variantClasses = {
-  success: "border-emerald-200 dark:border-emerald-800",
-  error: "border-red-200 dark:border-red-800",
-  info: "border-zinc-200 dark:border-zinc-700",
-};
-
 const iconColors = {
   success: "text-emerald-600 dark:text-emerald-400",
-  error: "text-red-600 dark:text-red-400",
-  info: "text-indigo-600 dark:text-indigo-400",
+  error: "text-rose-600 dark:text-rose-400",
+  info: "accent-text",
 };
 
 function ToastIcon({ type }) {
@@ -82,24 +76,22 @@ export function ToastProvider({ children }) {
           key={toast?.id}
           open={open}
           onOpenChange={setOpen}
-          className={`toast-slide-in pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-md border bg-white p-4 shadow-lg dark:bg-zinc-900 ${
-            toast ? variantClasses[toast.type] || variantClasses.info : variantClasses.info
-          }`}
+          className="toast-slide-in glass-pop pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl p-4"
         >
           {toast && <ToastIcon type={toast.type} />}
           <div className="min-w-0 flex-1">
-            <Toast.Title className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <Toast.Title className="t-ink text-sm font-semibold">
               {toast?.title}
             </Toast.Title>
             {toast?.description && (
-              <Toast.Description className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <Toast.Description className="t-soft mt-1 text-sm">
                 {toast.description}
               </Toast.Description>
             )}
           </div>
           <Toast.Close
             aria-label="Close"
-            className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+            className="ring-accent t-faint shrink-0 rounded-lg p-1 transition-colors hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
           >
             <Cross2Icon width={14} height={14} />
           </Toast.Close>

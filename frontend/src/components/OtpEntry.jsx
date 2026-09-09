@@ -55,7 +55,7 @@ export default function OtpEntry({
         onChange={(e) => onChange(e.target.value)}
         placeholder="Verification code"
         disabled={disabled}
-        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
       />
       <Button
         variant="secondary"

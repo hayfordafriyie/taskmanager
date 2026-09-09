@@ -30,8 +30,8 @@ export function Dock() {
   const { activeView, setActiveView } = useWorkspace();
 
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
-      <div className="flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white/80 px-4 py-3 shadow-lg backdrop-blur dark:border-zinc-700 dark:bg-zinc-800/80">
+    <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 px-3">
+      <div className="dock-bar" role="navigation" aria-label="Workspace views">
         {items.map(({ label, Icon }) => {
           const active = activeView === label;
           return (
@@ -41,13 +41,9 @@ export function Dock() {
                 aria-label={label}
                 aria-pressed={active}
                 onClick={() => setActiveView(label)}
-                className={`rounded-full p-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-                  active
-                    ? "-translate-y-2 bg-indigo-100 text-indigo-700 shadow-md dark:bg-indigo-950 dark:text-indigo-300"
-                    : "text-zinc-500 hover:-translate-y-2 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
-                }`}
+                className="dock-item"
               >
-                <Icon width={20} height={20} />
+                <Icon width={19} height={19} />
               </button>
             </Tooltip>
           );
