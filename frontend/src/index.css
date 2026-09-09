@@ -432,6 +432,22 @@ body {
   opacity: 0.55;
 }
 
+/* --- Fixed top bar (mirrors the dock's fixed wrap) ------------------- */
+.top-nav-wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0.5rem 0;
+  pointer-events: none;
+}
+.top-nav-wrap > * {
+  pointer-events: auto;
+}
+
 /* --- Dock ------------------------------------------------------------ */
 .dock-wrap {
   position: fixed;

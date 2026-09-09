@@ -96,7 +96,7 @@ export function ToastProvider({ children }) {
             <Cross2Icon width={14} height={14} />
           </Toast.Close>
         </Toast.Root>
-        <Toast.Viewport className="pointer-events-none fixed top-4 right-4 z-[100] flex w-full max-w-sm flex-col gap-2 outline-none" />
+        <Toast.Viewport className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] z-[100] flex flex-col items-center gap-2 px-3 outline-none sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-full sm:max-w-sm sm:items-end sm:px-0" />
       </Toast.Provider>
     </ToastContext.Provider>
   );
