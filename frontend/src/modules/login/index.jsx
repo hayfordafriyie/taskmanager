@@ -48,7 +48,7 @@ export default function Login() {
       <h1 className="font-display text-2xl font-bold t-ink">
         Login
       </h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-sm t-soft">
         Sign in to your account.
       </p>
 
@@ -69,7 +69,7 @@ export default function Login() {
       </form>
 
       <div className="mt-4 space-y-1 text-sm">
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="t-soft">
           No account?{" "}
           <Link
             to="/signup"
@@ -78,7 +78,7 @@ export default function Login() {
             Sign up
           </Link>
         </p>
-        <p className="text-zinc-600 dark:text-zinc-400">
+        <p className="t-soft">
           Don&apos;t remember your password?{" "}
           <Link
             to="/reset-password"

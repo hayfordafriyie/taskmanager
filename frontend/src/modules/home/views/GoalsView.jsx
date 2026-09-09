@@ -76,19 +76,19 @@ export function GoalsView() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {goals.map((g) => (
           <Panel key={g.id}>
-            <header className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <TargetIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-                <h2 className="font-display text-sm font-semibold t-ink">
+            <header className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <TargetIcon width={16} height={16} className="t-faint shrink-0" />
+                <h2 className="truncate font-display text-sm font-semibold t-ink">
                   {g.name}
                 </h2>
               </div>
-              <PolicyBadge tone={g.status}>{g.status}</PolicyBadge>
+              <PolicyBadge tone={g.status} className="shrink-0">{g.status}</PolicyBadge>
             </header>
             <div className="mt-4 flex items-center gap-4">
               <ProgressRing value={g.progress} />
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Owner</p>
+                <p className="text-xs t-soft">Owner</p>
                 <p className="text-sm font-medium t-ink">
                   {g.owner}
                 </p>
@@ -98,10 +98,10 @@ export function GoalsView() {
               {g.results.map((r) => (
                 <li key={r.id}>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="min-w-0 flex-1 truncate text-zinc-700 dark:text-zinc-300">
+                    <span className="min-w-0 flex-1 truncate t-ink">
                       {r.name}
                     </span>
-                    <span className="ml-3 text-xs text-zinc-400 dark:text-zinc-500">
+                    <span className="ml-3 text-xs t-faint">
                       {r.progress}%
                     </span>
                   </div>

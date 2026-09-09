@@ -30,7 +30,7 @@ export function Dock() {
   const { activeView, setActiveView } = useWorkspace();
 
   return (
-    <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2 px-3">
+    <div className="dock-wrap">
       <div className="dock-bar" role="navigation" aria-label="Workspace views">
         {items.map(({ label, Icon }) => {
           const active = activeView === label;

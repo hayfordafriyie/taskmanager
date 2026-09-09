@@ -22,20 +22,20 @@ const statusTint = {
   Admin: "tone-indigo",
 };
 
-export function PolicyBadge({ children, tone = "zinc" }) {
+export function PolicyBadge({ children, tone = "zinc", className = "" }) {
   return (
     <span
-      className={`badge rounded-full px-2.5 py-0.5 text-xs ${statusTint[tone] || statusTint.Low}`}
+      className={`badge rounded-full px-2.5 py-0.5 text-xs ${statusTint[tone] || statusTint.Low} ${className}`}
     >
       {children}
     </span>
   );
 }
 
-export function PriorityBadge({ children }) {
+export function PriorityBadge({ children, className = "" }) {
   return (
     <span
-      className={`badge rounded-full px-2.5 py-0.5 text-xs ${priorityTint[children]}`}
+      className={`badge rounded-full px-2.5 py-0.5 text-xs ${priorityTint[children]} ${className}`}
     >
       {children}
     </span>
@@ -79,7 +79,7 @@ export function ViewHeader({ title, subtitle = "Task Manager workspace" }) {
 export function Avatar({ initial, className = "" }) {
   return (
     <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-xs font-semibold text-white shadow-sm ring-1 ring-white/40 dark:ring-white/10 ${className}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-700 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 ${className}`}
     >
       {initial}
     </span>

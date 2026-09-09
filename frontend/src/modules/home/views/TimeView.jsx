@@ -23,18 +23,18 @@ export function TimeView() {
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {summaries.map((s) => (
           <Panel key={s.label}>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{s.label}</p>
+            <p className="text-sm t-soft">{s.label}</p>
             <p className="mt-2 font-display text-2xl font-bold t-ink">
               {s.value}
             </p>
-            <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{s.hint}</p>
+            <p className="mt-0.5 text-xs t-faint">{s.hint}</p>
           </Panel>
         ))}
       </div>
 
       <Panel className="mt-4">
         <header className="flex items-center gap-2">
-          <StopwatchIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+          <StopwatchIcon width={16} height={16} className="t-faint" />
           <h2 className="font-display text-sm font-semibold t-ink">
             This week
           </h2>
@@ -71,7 +71,7 @@ export function TimeView() {
                       </span>
                     </td>
                     {r.days.map((h, i) => (
-                      <td key={i} className="py-3 text-right text-zinc-600 dark:text-zinc-400">
+                      <td key={i} className="py-3 text-right t-soft">
                         {h ? `${h}h` : "—"}
                       </td>
                     ))}

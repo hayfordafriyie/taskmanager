@@ -85,7 +85,7 @@ export default function ResetPassword() {
       <h1 className="font-display text-2xl font-bold t-ink">
         Reset Password
       </h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-sm t-soft">
         Verify your phone, then set a new password. Any other sessions on your
         account will be signed out.
       </p>
@@ -136,7 +136,7 @@ export default function ResetPassword() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-6 text-center text-sm t-soft">
         <Link
           to="/login"
           className="accent-text font-medium hover:underline"

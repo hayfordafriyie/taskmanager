@@ -92,6 +92,23 @@ export function InviteView() {
     }
   }
 
+  async function handleResend(invite) {
+    try {
+      const res = await inviteToTeam.mutateAsync({
+        phone: invite.phone,
+        role: invite.role,
+      });
+      const result = res?.data?.inviteToTeam;
+      if (result?.success) {
+        toast.success("Invitation resent.");
+      } else {
+        toast.error(result?.message || "Unable to resend the invitation.");
+      }
+    } catch (err) {
+      toast.error(err?.message || "Unable to resend the invitation.");
+    }
+  }
+
   if (isPending) {
     return (
       <div>
@@ -134,7 +151,7 @@ export function InviteView() {
                   <p className="text-sm font-medium t-ink">
                     {invite.teamName}
                   </p>
-                  <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="truncate text-xs t-soft">
                     Invited by {nameOf(invite.invitedBy)} · {shortDate(invite.createdAt)}
                   </p>
                 </div>
@@ -156,7 +173,7 @@ export function InviteView() {
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <Panel>
           <header className="flex items-center gap-2">
-            <PaperPlaneIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+            <PaperPlaneIcon width={16} height={16} className="t-faint" />
             <h2 className="font-display text-sm font-semibold t-ink">
               Invite people
             </h2>
@@ -193,7 +210,7 @@ export function InviteView() {
             </button>
           </form>
           {pendingInvites.length > 0 && (
-            <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="mt-3 text-xs t-faint">
               {pendingInvites.length} pending invitation{pendingInvites.length === 1 ? "" : "s"}.
             </p>
           )}
@@ -201,7 +218,7 @@ export function InviteView() {
 
         <Panel className="lg:col-span-2">
           <header className="flex items-center gap-2">
-            <PersonIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+            <PersonIcon width={16} height={16} className="t-faint" />
             <h2 className="font-display text-sm font-semibold t-ink">
               Members ({members.length})
             </h2>
@@ -214,7 +231,7 @@ export function InviteView() {
                   <p className="truncate text-sm font-medium t-ink">
                     {nameOf(m)}
                   </p>
-                  <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="truncate text-xs t-soft">
                     {m.phone}
                   </p>
                 </div>
@@ -228,7 +245,7 @@ export function InviteView() {
       {pendingInvites.length > 0 && (
         <Panel className="mt-4">
           <header className="flex items-center gap-2">
-            <PaperPlaneIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+            <PaperPlaneIcon width={16} height={16} className="t-faint" />
             <h2 className="font-display text-sm font-semibold t-ink">
               Pending invites
             </h2>
@@ -240,12 +257,21 @@ export function InviteView() {
                   <p className="truncate text-sm font-medium t-ink">
                     {invite.phone}
                   </p>
-                  <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="truncate text-xs t-soft">
                     Invited by {nameOf(invite.invitedBy)} · {shortDate(invite.createdAt)}
                   </p>
                 </div>
                 <PolicyBadge tone={roleLabel[invite.role]}>{roleLabel[invite.role]}</PolicyBadge>
                 <span className="text-xs text-amber-600 dark:text-amber-400">Pending</span>
+                <button
+                  type="button"
+                  onClick={() => handleResend(invite)}
+                  disabled={inviteToTeam.isPending}
+                  aria-label={`Resend invite to ${invite.phone}`}
+                  className="accent-text ring-accent rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--accent-tint)] disabled:opacity-50"
+                >
+                  Resend
+                </button>
                 <button
                   type="button"
                   onClick={() => handleRevoke(invite.id)}

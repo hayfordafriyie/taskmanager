@@ -60,7 +60,7 @@ export function InboxView() {
       <div className="mt-4 space-y-4">
         {visible.map((g) => (
           <div key={g.label}>
-            <p className="px-1 text-xs font-semibold text-zinc-400 dark:text-zinc-500">
+            <p className="px-1 text-xs font-semibold t-faint">
               {g.label}
             </p>
             <Panel className="mt-2">
@@ -68,10 +68,10 @@ export function InboxView() {
                 {g.items.map((i) => (
                   <li key={i.id} className="flex items-start gap-3 py-3">
                     <span className="chip h-8 w-8">{<i.Icon width={16} height={16} className={i.tint} />}</span>
-                    <p className="min-w-0 flex-1 text-sm text-zinc-700 dark:text-zinc-300">
+                    <p className="min-w-0 flex-1 text-sm t-ink">
                       {i.text}
                     </p>
-                    <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+                    <span className="shrink-0 text-xs t-faint">
                       {i.time}
                     </span>
                   </li>
@@ -82,7 +82,7 @@ export function InboxView() {
         ))}
       </div>
 
-      <p className="mt-4 flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500">
+      <p className="mt-4 flex items-center gap-2 text-xs t-faint">
         <EnvelopeOpenIcon width={14} height={14} />
         Marking notifications as read is coming soon.
       </p>

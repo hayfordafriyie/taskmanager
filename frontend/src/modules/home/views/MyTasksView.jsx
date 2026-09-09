@@ -88,7 +88,7 @@ export function MyTasksView() {
                 >
                   {t.title}
                 </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-xs t-soft">
                   {t.project} · Due {t.due}
                 </p>
               </div>
@@ -97,7 +97,7 @@ export function MyTasksView() {
             </li>
           ))}
           {visible.length === 0 && (
-            <li className="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            <li className="py-8 text-center text-sm t-soft">
               No tasks match this view.
             </li>
           )}
@@ -110,11 +110,11 @@ export function MyTasksView() {
 function SectionTitleRow({ done, total }) {
   return (
     <header className="flex items-center gap-2">
-      <CheckboxIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+      <CheckboxIcon width={16} height={16} className="t-faint" />
       <h2 className="font-display text-sm font-semibold t-ink">
         Tasks
       </h2>
-      <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="ml-auto text-xs t-soft">
         {done} of {total} done
       </span>
     </header>

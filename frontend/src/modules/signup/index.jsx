@@ -117,7 +117,7 @@ export default function Signup() {
       <h1 className="font-display text-2xl font-bold t-ink">
         Signup
       </h1>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-sm t-soft">
         {stage === "phone" &&
           "We’ll text a verification code to your phone."}
         {stage === "otp" &&
@@ -203,7 +203,7 @@ export default function Signup() {
         </form>
       )}
 
-      <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-6 text-center text-sm t-soft">
         Already have an account?{" "}
         <Link
           to="/login"

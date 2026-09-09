@@ -24,20 +24,20 @@ function DayCell({ day }) {
   const evts = events[day] || [];
   return (
     <div className="glass-tile min-h-24 p-1.5">
-      <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+      <span className="text-xs font-semibold t-soft">
         {day}
       </span>
       <div className="mt-1 space-y-1">
         {evts.slice(0, 2).map((e) => (
           <p
             key={e}
-            className="truncate rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+            className="tone-indigo truncate rounded px-1.5 py-0.5 text-[10px] font-medium"
           >
             {e}
           </p>
         ))}
         {evts.length > 2 && (
-          <p className="px-1 text-[10px] text-zinc-400 dark:text-zinc-500">
+          <p className="px-1 text-[10px] t-faint">
             +{evts.length - 2} more
           </p>
         )}
@@ -53,7 +53,7 @@ export function CalendarView() {
       <Panel className="mt-6">
         <header className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 font-display text-sm font-semibold t-ink">
-            <CalendarIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
+            <CalendarIcon width={16} height={16} className="t-faint" />
             September 2026
           </h2>
           <div className="flex items-center gap-1">
@@ -77,7 +77,7 @@ export function CalendarView() {
           {weekdays.map((d) => (
             <p
               key={d}
-              className="pb-1 text-center text-xs font-semibold text-zinc-400 dark:text-zinc-500"
+              className="pb-1 text-center text-xs font-semibold t-faint"
             >
               {d}
             </p>

@@ -12,18 +12,22 @@ export default function UnauthenticatedLayout() {
         <span />
         <span />
       </div>
-      <div className="relative z-10 flex min-h-[calc(100vh-3rem)] w-full items-center justify-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleTheme}
-          className="absolute top-0 right-0 flex items-center gap-2"
-        >
-          {theme === "dark" ? <SunIcon width={14} height={14} /> : <MoonIcon width={14} height={14} />}
-          {theme === "dark" ? "Light" : "Dark"} mode
-        </Button>
-        <div className="glass-card w-full max-w-md px-8 py-10 sm:px-10">
-          <Outlet />
+      <div className="relative z-10 flex min-h-[calc(100vh-2rem)] w-full items-center justify-center sm:min-h-[calc(100vh-3rem)]">
+        <div className="w-full max-w-md">
+          <div className="mb-3 flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              className="flex items-center gap-2"
+            >
+              {theme === "dark" ? <SunIcon width={14} height={14} /> : <MoonIcon width={14} height={14} />}
+              {theme === "dark" ? "Light" : "Dark"} mode
+            </Button>
+          </div>
+          <div className="glass-card px-6 py-8 sm:px-10 sm:py-10">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

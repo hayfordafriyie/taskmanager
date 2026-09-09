@@ -50,14 +50,14 @@ export function ReportsView() {
           <div className="mt-4 flex h-40 items-end gap-3">
             {days.map((d) => (
               <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
-                <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                <span className="text-xs font-medium t-soft">
                   {d.value}
                 </span>
                 <div
                   className="w-full max-w-10 rounded-t bg-indigo-500/90"
                   style={{ height: `${(d.value / maxValue) * 100}%` }}
                 />
-                <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                <span className="text-xs t-faint">
                   {d.day}
                 </span>
               </div>
@@ -79,7 +79,7 @@ export function ReportsView() {
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: s.color }}
                   />
-                  <span className="text-zinc-600 dark:text-zinc-300">{s.label}</span>
+                  <span className="t-ink">{s.label}</span>
                   <span className="ml-auto pl-4 font-medium t-ink">
                     {s.value}
                   </span>
@@ -94,7 +94,7 @@ export function ReportsView() {
           <ul className="mt-4 space-y-3">
             {team.map((m) => (
               <li key={m.name} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="w-24 shrink-0 text-sm font-medium t-ink">
                   {m.name}
                 </span>
                 <div className="track h-2.5 w-full max-w-sm">
@@ -103,7 +103,7 @@ export function ReportsView() {
                     style={{ width: `${m.width}%`, backgroundColor: m.color }}
                   />
                 </div>
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs font-medium t-soft">
                   {m.value}
                 </span>
               </li>

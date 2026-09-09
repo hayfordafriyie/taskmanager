@@ -123,6 +123,20 @@ describe('InviteView', () => {
     expect(await screen.findByText('Invitation revoked.')).toBeInTheDocument()
   })
 
+  it('resends an invite from the pending list', async () => {
+    const user = userEvent.setup()
+    renderInvite()
+
+    await user.click(screen.getByRole('button', { name: 'Resend invite to +233549876543' }))
+    await waitFor(() =>
+      expect(inviteToTeamMock).toHaveBeenCalledWith({
+        phone: '+233549876543',
+        role: 'GUEST',
+      }),
+    )
+    expect(await screen.findByText('Invitation resent.')).toBeInTheDocument()
+  })
+
   it('sends an invite with the selected role', async () => {
     const user = userEvent.setup()
     renderInvite()

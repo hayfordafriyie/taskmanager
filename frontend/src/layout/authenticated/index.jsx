@@ -20,12 +20,12 @@ export default function AuthenticatedLayout() {
       </div>
       <div className="relative z-10">
         <WorkspaceProvider>
-          <header className="glass-nav sticky top-4 z-40 mx-auto mt-4 flex w-[calc(100%-1.5rem)] max-w-6xl items-center justify-between gap-3 rounded-2xl px-5 py-2.5">
-            <h1 className="font-display text-lg font-bold tracking-tight">
+          <header className="glass-nav sticky top-3 z-40 mx-auto mt-3 flex w-[calc(100%-1rem)] max-w-6xl items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:top-4 sm:mt-4 sm:w-[calc(100%-1.5rem)] sm:gap-3 sm:px-5 sm:py-2.5">
+            <h1 className="min-w-0 shrink font-display text-base font-bold tracking-tight sm:text-lg">
               <span className="accent-text">Task</span>
               <span className="t-ink"> Manager</span>
             </h1>
-            <div className="flex items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
               <Tooltip
                 content={
                   theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
@@ -61,7 +61,7 @@ export default function AuthenticatedLayout() {
               </Tooltip>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+          <main className="mx-auto w-full max-w-6xl px-3 pt-6 pb-28 sm:px-6">
             <Outlet />
           </main>
           <Dock />

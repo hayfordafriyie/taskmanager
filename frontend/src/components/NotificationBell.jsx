@@ -37,7 +37,7 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full z-50 pt-3">
           <div
-            className="glass-pop glass-pop-in relative w-72 rounded-2xl p-2"
+            className="glass-pop glass-pop-in relative w-[min(18rem,calc(100vw-4.5rem))] rounded-2xl p-2 sm:w-72"
             data-state="open"
             role="dialog"
             aria-label="Notifications"

@@ -5,7 +5,7 @@ const columns = [
   {
     id: "todo",
     title: "To do",
-    tint: "text-zinc-500 dark:text-zinc-400",
+    tint: "t-soft",
     dot: "bg-zinc-400",
     tasks: [
       { id: 1, title: "Write release notes for v2", tag: "Docs", priority: "Medium", due: "Sep 18", assignee: "AM" },
@@ -48,9 +48,9 @@ export function BoardView() {
   return (
     <div>
       <ViewHeader title="Board" subtitle="Drag tasks across columns as work progresses." />
-      <div className="-mx-4 mt-6 flex gap-4 overflow-x-auto px-4 pb-4">
+      <div className="-mx-3 mt-6 flex snap-x gap-3 overflow-x-auto px-3 pb-4 sm:-mx-6 sm:gap-4 sm:px-6">
         {columns.map((col) => (
-          <Panel key={col.id} className="w-72 shrink-0">
+          <Panel key={col.id} className="w-72 shrink-0 snap-start">
             <header className="flex items-center gap-2">
               <span className={`h-2 w-2 rounded-full ${col.dot}`} />
               <h2 className={`font-display text-sm font-semibold ${col.tint}`}>
@@ -69,7 +69,7 @@ export function BoardView() {
                   <p className="text-sm font-medium t-ink">
                     {t.title}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-xs t-soft">
                     {t.tag} · Due {t.due}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
@@ -89,7 +89,7 @@ export function BoardView() {
           </Panel>
         ))}
       </div>
-      <p className="hidden items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500 lg:flex">
+      <p className="hidden items-center gap-2 text-xs t-faint lg:flex">
         <ColumnsIcon width={14} height={14} />
         Board view – drag-and-drop coming soon.
       </p>

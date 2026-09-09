@@ -71,7 +71,7 @@ export default function OtpEntry({
             : "Resend code"}
       </Button>
       {disabled && (
-        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="mt-2 text-xs t-soft">
           A verification code was sent to your phone.
         </p>
       )}
