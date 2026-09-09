@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import ToastProvider from '../src/components/Toast'
-import ResetPassword from '../src/pages/reset-password'
-import Login from '../src/pages/login'
+import { renderWithProviders } from './test-utils'
+import ResetPassword from '../src/modules/reset-password'
+import Login from '../src/modules/login'
 
 const { gqlMock } = vi.hoisted(() => ({ gqlMock: vi.fn() }))
 
@@ -14,7 +14,7 @@ vi.mock('../src/lib/api', () => ({
   setTokens: vi.fn(),
 }))
 
-vi.mock('../src/context/AuthContext', () => ({
+vi.mock('../src/modules/auth/AuthContext', () => ({
   useAuth: () => ({
     login: vi.fn(),
     logout: vi.fn(),
@@ -25,15 +25,13 @@ vi.mock('../src/context/AuthContext', () => ({
 }))
 
 function renderReset() {
-  return render(
-    <ToastProvider>
-      <MemoryRouter initialEntries={['/reset-password']}>
-        <Routes>
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </MemoryRouter>
-    </ToastProvider>,
+  return renderWithProviders(
+    <MemoryRouter initialEntries={['/reset-password']}>
+      <Routes>
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </MemoryRouter>,
   )
 }
 

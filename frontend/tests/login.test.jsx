@@ -3,11 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import ToastProvider from '../src/components/Toast'
-import Login from '../src/pages/login'
+import Login from '../src/modules/login'
 
 const { loginMock } = vi.hoisted(() => ({ loginMock: vi.fn() }))
 
-vi.mock('../src/context/AuthContext', () => ({
+vi.mock('../src/modules/auth/AuthContext', () => ({
   useAuth: () => ({
     login: loginMock,
     logout: vi.fn(),

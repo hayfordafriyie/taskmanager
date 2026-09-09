@@ -1,62 +1,68 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { gql } from "../../lib/api";
 import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
+import PasswordInput from "../../components/PasswordInput";
+import OtpEntry from "../../components/OtpEntry";
 import { useToast } from "../../components/Toast";
+import { useRequestPasswordReset } from "./hooks/useRequestPasswordReset";
+import { useResetPassword } from "./hooks/useResetPassword";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const toast = useToast();
+  const requestCode = useRequestPasswordReset();
+  const reset = useResetPassword();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [stage, setStage] = useState("phone");
-  const [busy, setBusy] = useState(false);
 
-  async function requestCode(e) {
+  async function requestResetCode() {
+    if (!phone) {
+      return false;
+    }
+    try {
+      const res = await requestCode.mutateAsync(phone);
+      const result = res?.data?.requestPasswordReset;
+      if (result?.success) {
+        toast.success(result?.message ?? "A reset code was sent to your phone.");
+        return true;
+      }
+      toast.error(result?.message ?? "Unexpected response");
+      return false;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    }
+  }
+
+  async function handleRequest(e) {
     e.preventDefault();
     if (!phone) {
       toast.error("Enter your phone number first.");
       return;
     }
-    setBusy(true);
-    try {
-      const res = await gql(
-        "mutation ($phone: String!) { requestPasswordReset(phone: $phone) { success message } }",
-        { phone },
-      );
-      const result = res?.data?.requestPasswordReset;
-      if (result?.success) {
-        toast.success(result?.message ?? "A reset code was sent to your phone.");
-        setStage("code");
-      } else {
-        toast.error(result?.message ?? "Unexpected response");
-      }
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setBusy(false);
+    const ok = await requestResetCode();
+    if (ok) {
+      setStage("code");
     }
   }
 
-  async function reset(e) {
+  async function handleReset(e) {
     e.preventDefault();
     if (password !== confirm) {
       toast.error("Passwords do not match.");
       return;
     }
-    setBusy(true);
     try {
-      const res = await gql(
-        `mutation ($phone: String!, $code: String!, $password: String!, $confirmPassword: String!) {
-          resetPassword(phone: $phone, code: $code, password: $password, confirmPassword: $confirmPassword) {
-            success message
-          }
-        }`,
-        { phone, code, password, confirmPassword: confirm },
-      );
+      const res = await reset.mutateAsync({
+        phone,
+        code,
+        password,
+        confirmPassword: confirm,
+      });
       const result = res?.data?.resetPassword;
       if (result?.success) {
         navigate("/login", {
@@ -68,10 +74,11 @@ export default function ResetPassword() {
       }
     } catch (err) {
       toast.error(err.message);
-    } finally {
-      setBusy(false);
     }
   }
+
+  const requesting = requestCode.isPending;
+  const resetting = reset.isPending;
 
   return (
     <div className="max-w-md">
@@ -84,7 +91,7 @@ export default function ResetPassword() {
       </p>
 
       <form
-        onSubmit={stage === "phone" ? requestCode : reset}
+        onSubmit={stage === "phone" ? handleRequest : handleReset}
         className="mt-6 space-y-4"
       >
         <PhoneInput
@@ -94,40 +101,34 @@ export default function ResetPassword() {
         />
         {stage === "code" && (
           <>
-            <input
-              type="text"
-              inputMode="numeric"
+            <OtpEntry
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Verification code"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              onChange={setCode}
+              onResend={requestResetCode}
             />
-            <input
-              type="password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
               placeholder="New password"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             />
-            <input
-              type="password"
+            <PasswordInput
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={setConfirm}
               placeholder="Confirm new password"
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             />
           </>
         )}
         <Button
           type="submit"
           disabled={
-            busy ||
+            requesting ||
+            resetting ||
             !phone ||
             (stage === "code" && (!code || !password || !confirm))
           }
           className="w-full"
         >
-          {busy
+          {requesting || resetting
             ? "Working…"
             : stage === "phone"
               ? "Send reset code"

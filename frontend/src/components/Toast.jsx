@@ -1,5 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as Toast from "radix-ui/toast";
+import {
+  CheckCircledIcon,
+  CrossCircledIcon,
+  InfoCircledIcon,
+  Cross2Icon,
+} from "@radix-ui/react-icons";
 
 const ToastContext = createContext(null);
 
@@ -16,27 +22,13 @@ const iconColors = {
 };
 
 function ToastIcon({ type }) {
-  const className = `mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`;
   if (type === "success") {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
-        <path d="M3.5 8.5L6.5 11.5L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
+    return <CheckCircledIcon className={`mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`} />;
   }
   if (type === "error") {
-    return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
-        <path d="M8 4.5V9M8 11.5V11.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    );
+    return <CrossCircledIcon className={`mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`} />;
   }
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
-      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 7.5V11M8 5.25V5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
+  return <InfoCircledIcon className={`mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`} />;
 }
 
 export function ToastProvider({ children }) {
@@ -74,10 +66,18 @@ export function ToastProvider({ children }) {
     };
   }, [show]);
 
+  useEffect(() => {
+    if (!open || !toast) {
+      return;
+    }
+    const id = setTimeout(() => setOpen(false), toast.duration ?? 5000);
+    return () => clearTimeout(id);
+  }, [open, toast]);
+
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <Toast.Provider duration={toast?.duration ?? 5000} swipeDirection="right">
+      <Toast.Provider duration={24 * 60 * 60 * 1000} swipeDirection="right">
         <Toast.Root
           key={toast?.id}
           open={open}
@@ -101,12 +101,10 @@ export function ToastProvider({ children }) {
             aria-label="Close"
             className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <Cross2Icon width={14} height={14} />
           </Toast.Close>
         </Toast.Root>
-        <Toast.Viewport className="pointer-events-none fixed right-4 bottom-4 z-[100] flex w-full max-w-sm flex-col gap-2 outline-none" />
+        <Toast.Viewport className="pointer-events-none fixed top-4 right-4 z-[100] flex w-full max-w-sm flex-col gap-2 outline-none" />
       </Toast.Provider>
     </ToastContext.Provider>
   );

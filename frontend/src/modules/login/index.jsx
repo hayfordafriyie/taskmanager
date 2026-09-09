@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../auth/AuthContext";
 import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
+import PasswordInput from "../../components/PasswordInput";
 import { useToast } from "../../components/Toast";
 
 export default function Login() {
@@ -53,12 +54,10 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <PhoneInput value={phone} onChange={setPhone} />
-        <input
-          type="password"
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           placeholder="Password"
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
         />
         <Button
           type="submit"

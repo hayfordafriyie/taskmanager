@@ -85,6 +85,44 @@ describe('Toast', () => {
     expect(screen.queryByText('short lived')).not.toBeInTheDocument()
   })
 
+  it('auto-dismisses by default after 5 seconds', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderDemo()
+    await user.click(screen.getByRole('button', { name: 'success' }))
+    expect(await screen.findByText('Saved successfully')).toBeInTheDocument()
+    await act(async () => {
+      vi.advanceTimersByTime(4000)
+    })
+    expect(screen.queryByText('Saved successfully')).toBeInTheDocument()
+    await act(async () => {
+      vi.advanceTimersByTime(1000)
+    })
+    expect(screen.queryByText('Saved successfully')).not.toBeInTheDocument()
+  })
+
+  it('restarts the auto-dismiss timer for a replacement toast', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderDemo()
+    await user.click(screen.getByRole('button', { name: 'success' }))
+    expect(await screen.findByText('Saved successfully')).toBeInTheDocument()
+    await act(async () => {
+      vi.advanceTimersByTime(3000)
+    })
+    await user.click(screen.getByRole('button', { name: 'info' }))
+    expect(await screen.findByText('Heads up')).toBeInTheDocument()
+    await act(async () => {
+      vi.advanceTimersByTime(3000)
+    })
+    expect(screen.queryByText('Saved successfully')).not.toBeInTheDocument()
+    expect(screen.queryByText('Heads up')).toBeInTheDocument()
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
+    expect(screen.queryByText('Heads up')).not.toBeInTheDocument()
+  })
+
   it('dismisses when the close button is clicked', async () => {
     const user = userEvent.setup()
     renderDemo()

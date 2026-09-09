@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ToastProvider from "./components/Toast";
-import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthenticatedLayout from "./layout/authenticated";
 import UnauthenticatedLayout from "./layout/unauthenticated";
-import Home from "./pages/home";
-import Login from "./pages/login";
-import Signup from "./pages/signup";
-import ResetPassword from "./pages/reset-password";
+import { AuthProvider } from "./modules/auth/AuthContext";
+import Home from "./modules/home";
+import Login from "./modules/login";
+import Signup from "./modules/signup";
+import ResetPassword from "./modules/reset-password";
 
 function App() {
   return (
