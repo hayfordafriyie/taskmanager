@@ -3,7 +3,7 @@ import { gql } from '../../lib/api';
 
 export default function Signup() {
   const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState(''); // {kind, text}
+  const [status, setStatus] = useState(''); 
   const [busy, setBusy] = useState(false);
 
   async function requestCode(e) {

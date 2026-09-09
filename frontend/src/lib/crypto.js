@@ -1,7 +1,7 @@
-// AES-256-GCM encryption using a per-session key issued by the backend via
-// POST /api/v1/session. The static key is never baked into the bundle; each
-// browser acquires its own key at runtime.
-// Payload wire format: base64(nonce || ciphertext), matching the Go side.
+
+
+
+
 
 let currentKey = null;
 let keyPromise = null;
@@ -11,8 +11,8 @@ export function setSessionKey(base64Key) {
   keyPromise = null;
 }
 
-// Returns a promise of a cached CryptoKey. If keyPromise is set (a handshake
-// is in flight), all callers share that same handshake.
+
+
 export function sessionKey() {
   if (!currentKey) {
     throw new Error(

@@ -365,8 +365,6 @@ func TestCreateAccountDuplicatePhone(t *testing.T) {
 	phone := "+233537144161"
 	registerUserHTTP(t, srv, sender, phone)
 
-	// Provide a fresh verified OTP directly against the store, bypassing the
-	// now-blocked requestOTP step.
 	code2, hash2, _ := otp.Generate()
 	ctx := context.Background()
 	if _, err := db.RequestOTP(ctx, pool, phone, otpPurposeTag, hash2, time.Now().Add(otp.DefaultTTL)); err != nil {

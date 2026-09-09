@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// RateLimit applies a token bucket per client IP to blunt brute-force and
-// abuse. Requests over the limit receive 429.
 func RateLimit(next http.Handler) http.Handler {
 	rl := newRateLimiter(10, 60)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +19,6 @@ func RateLimit(next http.Handler) http.Handler {
 	})
 }
 
-// rateLimiter is a per-key token bucket with lazy expiry.
 type rateLimiter struct {
 	mu      sync.Mutex
 	perSec  float64

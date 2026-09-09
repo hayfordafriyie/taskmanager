@@ -1,10 +1,7 @@
-// Package server contains the production-grade HTTP plumbing: security
-// headers and per-IP rate limiting.
 package server
 
 import "net/http"
 
-// SecurityHeaders sets hardened HTTP headers on every response.
 func SecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()

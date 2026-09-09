@@ -13,7 +13,6 @@ const (
 	ResendMinPeriod = 60 * time.Second
 )
 
-// Generate creates a fresh 6-digit code and its bcrypt hash.
 func Generate() (code, hash string, err error) {
 	code, err = randomDigits(6)
 	if err != nil {

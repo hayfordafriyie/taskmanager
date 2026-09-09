@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrPhoneNotVerified     = errors.New("phone number is not verified")
+	ErrPhoneNotVerified       = errors.New("phone number is not verified")
 	ErrPhoneAlreadyRegistered = errors.New("phone number is already registered")
 )
 
@@ -30,8 +30,6 @@ func RequestOTP(
 	return id, err
 }
 
-// LatestOTPTime returns when the most recent OTP was issued. ok is false
-// when no OTP has ever been requested for the phone.
 func LatestOTPTime(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -87,9 +85,9 @@ func CreateUser(
 	).Scan(&u.ID, &u.Phone, &u.FirstName, &u.Surname, &u.OtherNames, &u.CreatedAt)
 	if err != nil {
 		const (
-			errCodePhoneNotVerified  = "45001"
-			errCodePhoneRegistered   = "45002"
-			errCodeDuplicatePhone    = "23505"
+			errCodePhoneNotVerified = "45001"
+			errCodePhoneRegistered  = "45002"
+			errCodeDuplicatePhone   = "23505"
 		)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

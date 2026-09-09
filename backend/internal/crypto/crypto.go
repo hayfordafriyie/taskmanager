@@ -1,6 +1,3 @@
-// Package crypto provides symmetric AES-256-GCM encryption shared between the
-// backend and the frontend. Both sides hold the same base64 key from .env;
-// payloads are serialized as base64(nonce || ciphertext).
 package crypto
 
 import (
@@ -15,12 +12,10 @@ import (
 
 const nonceSize = 12
 
-// Cipher encrypts and decrypts payloads with a single shared key.
 type Cipher struct {
 	aead cipher.AEAD
 }
 
-// New creates a Cipher from a raw 32-byte AES-256 key.
 func New(key []byte) (*Cipher, error) {
 	if len(key) != 32 {
 		return nil, errors.New("encryption key must be 32 bytes")
@@ -36,7 +31,6 @@ func New(key []byte) (*Cipher, error) {
 	return &Cipher{aead: aead}, nil
 }
 
-// NewFromBase64 creates a Cipher from a base64-encoded 32-byte key.
 func NewFromBase64(encoded string) (*Cipher, error) {
 	key, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
@@ -45,7 +39,6 @@ func NewFromBase64(encoded string) (*Cipher, error) {
 	return New(key)
 }
 
-// Encrypt returns base64(nonce || ciphertext) for the plaintext.
 func (c *Cipher) Encrypt(plaintext []byte) (string, error) {
 	nonce := make([]byte, nonceSize)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
@@ -58,7 +51,6 @@ func (c *Cipher) Encrypt(plaintext []byte) (string, error) {
 	return base64.StdEncoding.EncodeToString(out), nil
 }
 
-// Decrypt reverses Encrypt.
 func (c *Cipher) Decrypt(encoded string) ([]byte, error) {
 	raw, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {

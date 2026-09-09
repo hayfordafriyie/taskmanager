@@ -9,10 +9,6 @@ const GhanaCountryCode = "233"
 
 var ErrInvalidPhone = errors.New("invalid ghana phone number, expected format like +233537144161")
 
-// NormalizeGhanaPhone normalizes a Ghana mobile number into
-// international E.164 form (+233XXXXXXXXX). Accepted inputs:
-//
-//	+233537144161, 233537144161, 00233537144161, 0537144161
 func NormalizeGhanaPhone(raw string) (string, error) {
 	s := strings.TrimSpace(raw)
 	s = strings.ReplaceAll(s, " ", "")

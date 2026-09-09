@@ -12,16 +12,15 @@ const (
 )
 
 var (
-	ErrPasswordTooShort    = errors.New("password must be at least 8 characters")
-	ErrPasswordTooLong     = errors.New("password must be at most 64 characters")
-	ErrPasswordUpper       = errors.New("password must contain at least one uppercase letter")
-	ErrPasswordLower       = errors.New("password must contain at least one lowercase letter")
-	ErrPasswordDigit       = errors.New("password must contain at least one digit")
-	ErrPasswordSpecial     = errors.New("password must contain at least one special character")
-	ErrPasswordMismatch    = errors.New("password and confirmation do not match")
+	ErrPasswordTooShort = errors.New("password must be at least 8 characters")
+	ErrPasswordTooLong  = errors.New("password must be at most 64 characters")
+	ErrPasswordUpper    = errors.New("password must contain at least one uppercase letter")
+	ErrPasswordLower    = errors.New("password must contain at least one lowercase letter")
+	ErrPasswordDigit    = errors.New("password must contain at least one digit")
+	ErrPasswordSpecial  = errors.New("password must contain at least one special character")
+	ErrPasswordMismatch = errors.New("password and confirmation do not match")
 )
 
-// ValidatePassword enforces a realistic password policy.
 func ValidatePassword(pw string) error {
 	if len(pw) < MinPasswordLength {
 		return ErrPasswordTooShort

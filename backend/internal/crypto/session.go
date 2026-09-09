@@ -10,16 +10,10 @@ import (
 	"time"
 )
 
-// SessionCookieName is the HttpOnly cookie that binds a client to its
-// encryption session key.
 const SessionCookieName = "session_token"
 
 const sessionCookiePath = "/"
 
-// SessionStore issues and tracks per-client AES session keys. The key is
-// handed to the client once, in plaintext, over the encrypted transport
-// (HTTPS); every subsequent request/response in that session is
-// authenticated-encrypted with that key instead of a static bundle key.
 type SessionStore struct {
 	mu   sync.Mutex
 	ttl  time.Duration
@@ -31,8 +25,6 @@ type sessionEntry struct {
 	expires time.Time
 }
 
-// NewSessionStore returns a store whose sessions expire after ttl (defaults
-// to 30 minutes when ttl <= 0).
 func NewSessionStore(ttl time.Duration) *SessionStore {
 	if ttl <= 0 {
 		ttl = 30 * time.Minute
@@ -40,8 +32,6 @@ func NewSessionStore(ttl time.Duration) *SessionStore {
 	return &SessionStore{ttl: ttl, keys: make(map[string]sessionEntry)}
 }
 
-// Create issues a new session and returns its token, key and the cookie that
-// must be sent back to the client.
 func (s *SessionStore) Create() (token string, key []byte, cookie *http.Cookie, err error) {
 	tokenBytes := make([]byte, 32)
 	keyBytes := make([]byte, 32)
@@ -69,7 +59,6 @@ func (s *SessionStore) Create() (token string, key []byte, cookie *http.Cookie, 
 	return token, keyBytes, cookie, nil
 }
 
-// Lookup returns the key for a session token, if it is still valid.
 func (s *SessionStore) Lookup(token string) ([]byte, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -87,7 +76,6 @@ func (s *SessionStore) Lookup(token string) ([]byte, bool) {
 	return e.key, true
 }
 
-// Delete removes a session immediately.
 func (s *SessionStore) Delete(token string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -103,10 +91,6 @@ func (s *SessionStore) sweepLocked() {
 	}
 }
 
-// SessionHandler issues a new encrypted session. It returns the AES session
-// key once in a plaintext JSON body and stores the session binding in an
-// HttpOnly cookie. Clients must acquire a session before making encrypted
-// requests.
 func SessionHandler(store *SessionStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

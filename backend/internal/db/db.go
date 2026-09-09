@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DSN builds a libpq connection string, optionally overriding the database name.
 func DSN(dbname string) string {
 	if dbname == "" {
 		dbname = os.Getenv("DB_NAME")

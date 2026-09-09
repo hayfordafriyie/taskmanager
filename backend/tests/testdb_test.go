@@ -14,9 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// PrepareTestDB connects to a fresh, disposable test database, runs
-// migrations, and returns a pool plus a cleanup function. Tests are skipped
-// when Postgres is not reachable.
 func PrepareTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 	t.Helper()
 

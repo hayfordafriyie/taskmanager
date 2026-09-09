@@ -6,9 +6,9 @@ export const SESSION_ENDPOINT = `/api/${API_VERSION}/session`;
 
 let sessionReady = null;
 
-// Acquires (once) a per-session encryption key from the backend. The key is
-// delivered over the encrypted transport; the session binding lives in an
-// HttpOnly cookie set by the browser.
+
+
+
 async function startSession() {
   const res = await fetch(SESSION_ENDPOINT, { method: 'POST' });
   if (!res.ok) {
@@ -36,11 +36,11 @@ async function readBody(res) {
   return text;
 }
 
-/**
- * Sends an encrypted GraphQL request to /api/v1/query and returns the
- * decrypted JSON envelope ({ data, errors }). The session key and HttpOnly
- * cookie are established lazily on first use.
- */
+
+
+
+
+
 export async function gql(query, variables = {}) {
   await ensureSession();
   const body = await encrypt(JSON.stringify({ query, variables }));
@@ -53,7 +53,7 @@ export async function gql(query, variables = {}) {
     body,
   });
   if (res.status === 401) {
-    // Session expired or revoked: re-handshake once and retry.
+    
     sessionReady = null;
     setSessionKey(undefined);
     await ensureSession();

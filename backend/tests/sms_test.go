@@ -13,8 +13,8 @@ import (
 )
 
 type smsServer struct {
-	counter     requestCounter
-	recipients  []string
+	counter      requestCounter
+	recipients   []string
 	recipientsMu sync.Mutex
 }
 

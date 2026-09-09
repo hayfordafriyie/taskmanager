@@ -6,14 +6,8 @@ import (
 	"net/http"
 )
 
-// EncryptedHeader is the header a client sets to opt into encrypted
-// request/response bodies.
 const EncryptedHeader = "X-Encrypted"
 
-// Middleware decrypts an encrypted request body and encrypts the response
-// body using the key bound to the client's session cookie. Requests without
-// the X-Encrypted header pass through untouched so the GraphQL playground and
-// health checks keep working with plaintext.
 func (s *SessionStore) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get(EncryptedHeader) != "1" {
@@ -60,8 +54,6 @@ func (s *SessionStore) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// encryptedResponseWriter buffers the plaintext response and encrypts it once
-// the handler has finished writing.
 type encryptedResponseWriter struct {
 	http.ResponseWriter
 	cipher *Cipher
@@ -80,8 +72,6 @@ func (w *encryptedResponseWriter) Write(p []byte) (int, error) {
 	return w.buf.Write(p)
 }
 
-// Flush implements http.Flusher as a no-op because output is buffered until
-// the handler completes.
 func (w *encryptedResponseWriter) Flush() {}
 
 func (w *encryptedResponseWriter) flush() {

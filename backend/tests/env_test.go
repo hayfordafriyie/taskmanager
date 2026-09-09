@@ -8,8 +8,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// LoadPackageEnv loads the nearest .env by walking up from the calling test
-// file, so nested packages do not need to hardcode relative depth.
 func LoadPackageEnv() {
 	_, file, _, ok := runtime.Caller(1)
 	if !ok {

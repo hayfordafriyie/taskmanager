@@ -48,7 +48,6 @@ func newSMSConfig() (*types.SMSConfig, error) {
 	}, nil
 }
 
-// SendSMSPayload sends an SMS to one or more numbers via mnotify.
 func SendSMSPayload(payload types.SMSPayload, senderID string) (float64, error) {
 	cfg, err := newSMSConfig()
 	if err != nil {
