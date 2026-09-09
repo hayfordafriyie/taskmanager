@@ -1,2 +1,3 @@
 .env
-bin/server.log
+bin/
+server.log
