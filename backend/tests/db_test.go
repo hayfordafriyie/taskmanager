@@ -1,25 +1,18 @@
-package db_test
+package tests
 
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"taskmanager/internal/db"
 	"taskmanager/internal/otp"
-	"taskmanager/internal/testutil"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
-
-func TestMain(m *testing.M) {
-	testutil.LoadPackageEnv()
-	os.Exit(m.Run())
-}
 
 func TestConnect(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -33,7 +26,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestMigrateIdempotent(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	if err := db.Migrate(context.Background(), pool); err != nil {
@@ -42,7 +35,7 @@ func TestMigrateIdempotent(t *testing.T) {
 }
 
 func TestRequestOTPAndLatestOTPTime(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -84,7 +77,7 @@ func TestRequestOTPAndLatestOTPTime(t *testing.T) {
 }
 
 func TestVerifyOTPFailures(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -113,7 +106,7 @@ func TestVerifyOTPFailures(t *testing.T) {
 }
 
 func TestVerifyOTPSucceedsOnce(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -139,7 +132,7 @@ func TestVerifyOTPSucceedsOnce(t *testing.T) {
 }
 
 func TestVerifyOTPUnknownPhone(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	valid, reason, _ := db.VerifyOTP(context.Background(), pool, "+233537144161", "register", "123456")
@@ -149,7 +142,7 @@ func TestVerifyOTPUnknownPhone(t *testing.T) {
 }
 
 func TestCreateUserRequiresVerification(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -162,7 +155,7 @@ func TestCreateUserRequiresVerification(t *testing.T) {
 }
 
 func TestCreateUserHappyPath(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -191,24 +184,20 @@ func TestCreateUserHappyPath(t *testing.T) {
 }
 
 func TestCreateUserDuplicatePhone(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()
 	phone := "+233537144161"
-	code, codeHash, _ := otp.Generate()
-	db.RequestOTP(ctx, pool, phone, "register", codeHash, time.Now().Add(otp.DefaultTTL))
-	db.VerifyOTP(ctx, pool, phone, "register", code)
-
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("StrongPass1!"), bcrypt.DefaultCost)
-	if _, err := db.CreateUser(ctx, pool, phone, "Kojo", "Asante", "", string(passwordHash)); err != nil {
-		t.Fatalf("first create should succeed, got %v", err)
+	if _, err := registerUser(ctx, pool, phone); err != nil {
+		t.Fatal(err)
 	}
 
 	code2, hash2, _ := otp.Generate()
 	db.RequestOTP(ctx, pool, phone, "register", hash2, time.Now().Add(otp.DefaultTTL))
 	db.VerifyOTP(ctx, pool, phone, "register", code2)
 
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("StrongPass1!"), bcrypt.DefaultCost)
 	_, err := db.CreateUser(ctx, pool, phone, "Ama", "Mensah", "", string(passwordHash))
 	if !errors.Is(err, db.ErrPhoneAlreadyRegistered) {
 		t.Fatalf("expected ErrPhoneAlreadyRegistered, got %v", err)
@@ -224,7 +213,7 @@ func TestCreateUserDuplicatePhone(t *testing.T) {
 }
 
 func TestPhoneRegistered(t *testing.T) {
-	pool, cleanup := testutil.PrepareTestDB(t)
+	pool, cleanup := PrepareTestDB(t)
 	defer cleanup()
 
 	ctx := context.Background()

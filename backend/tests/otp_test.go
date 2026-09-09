@@ -1,4 +1,4 @@
-package otp
+package tests
 
 import (
 	"fmt"
@@ -6,18 +6,20 @@ import (
 	"strings"
 	"testing"
 
+	"taskmanager/internal/otp"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
-var codeRe = regexp.MustCompile(`^[0-9]{6}$`)
+var otpCodeRe = regexp.MustCompile(`^[0-9]{6}$`)
 
 func TestGenerate(t *testing.T) {
 	for i := 0; i < 25; i++ {
-		code, hash, err := Generate()
+		code, hash, err := otp.Generate()
 		if err != nil {
 			t.Fatalf("Generate: %v", err)
 		}
-		if !codeRe.MatchString(code) {
+		if !otpCodeRe.MatchString(code) {
 			t.Fatalf("code %q is not 6 digits", code)
 		}
 		if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(code)); err != nil {
@@ -29,7 +31,7 @@ func TestGenerate(t *testing.T) {
 func TestGenerateUniqueness(t *testing.T) {
 	seen := map[string]bool{}
 	for i := 0; i < 200; i++ {
-		code, _, err := Generate()
+		code, _, err := otp.Generate()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -41,11 +43,11 @@ func TestGenerateUniqueness(t *testing.T) {
 }
 
 func TestMessage(t *testing.T) {
-	msg := Message("123456", DefaultTTL)
+	msg := otp.Message("123456", otp.DefaultTTL)
 	if !strings.Contains(msg, "123456") {
 		t.Errorf("message missing code: %q", msg)
 	}
-	if !strings.Contains(msg, fmt.Sprintf("%d", int(DefaultTTL.Minutes()))) {
+	if !strings.Contains(msg, fmt.Sprintf("%d", int(otp.DefaultTTL.Minutes()))) {
 		t.Errorf("message missing ttl: %q", msg)
 	}
 }
