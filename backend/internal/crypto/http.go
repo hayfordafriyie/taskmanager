@@ -11,13 +11,29 @@ import (
 const EncryptedHeader = "X-Encrypted"
 
 // Middleware decrypts an encrypted request body and encrypts the response
-// body for clients that opt in with X-Encrypted: 1. Requests without the
-// header pass through untouched so the GraphQL playground and health checks
-// keep working with plaintext.
-func Middleware(next http.Handler, c *Cipher) http.Handler {
+// body using the key bound to the client's session cookie. Requests without
+// the X-Encrypted header pass through untouched so the GraphQL playground and
+// health checks keep working with plaintext.
+func (s *SessionStore) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get(EncryptedHeader) != "1" {
 			next.ServeHTTP(w, r)
+			return
+		}
+
+		cookie, err := r.Cookie(SessionCookieName)
+		if err != nil {
+			http.Error(w, "missing session", http.StatusUnauthorized)
+			return
+		}
+		key, ok := s.Lookup(cookie.Value)
+		if !ok {
+			http.Error(w, "invalid or expired session", http.StatusUnauthorized)
+			return
+		}
+		c, err := New(key)
+		if err != nil {
+			http.Error(w, "invalid session key", http.StatusInternalServerError)
 			return
 		}
 

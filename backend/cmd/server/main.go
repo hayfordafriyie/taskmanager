@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 
@@ -13,6 +13,7 @@ import (
 	"taskmanager/internal/crypto"
 	"taskmanager/internal/db"
 	"taskmanager/internal/notif"
+	"taskmanager/internal/server"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -52,17 +53,15 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
-	cipher, err := crypto.NewFromBase64(os.Getenv("ENCRYPTION_KEY"))
-	if err != nil {
-		log.Fatalf("invalid ENCRYPTION_KEY: %v", err)
-	}
+	sessions := crypto.NewSessionStore(30 * time.Minute)
 
 	mux := http.NewServeMux()
 
 	const apiV1 = "/api/v1"
 
 	mux.Handle(apiV1+"/", playground.Handler("GraphQL playground", apiV1+"/query"))
-	mux.Handle(apiV1+"/query", crypto.Middleware(srv, cipher))
+	mux.HandleFunc(apiV1+"/session", crypto.SessionHandler(sessions))
+	mux.Handle(apiV1+"/query", sessions.Middleware(srv))
 	mux.HandleFunc("GET "+apiV1+"/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
@@ -73,14 +72,23 @@ func main() {
 		w.Write([]byte("ok"))
 	})
 
-	log.Printf("GraphQL API v1 available at %s/query", apiV1)
-
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		log.Fatal("SERVER_PORT is not set in .env")
 	}
 
-	addr := fmt.Sprintf(":%s", port)
-	log.Printf("GraphQL server listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	httpServer := &http.Server{
+		Addr:              ":" + port,
+		Handler:           server.RateLimit(server.SecurityHeaders(mux)),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	if cert := os.Getenv("TLS_CERT"); cert != "" && os.Getenv("TLS_KEY") != "" {
+		log.Printf("TLS enabled, GraphQL API v1 available at https://localhost:%s/api/v1/query", port)
+		log.Fatal(httpServer.ListenAndServeTLS(cert, os.Getenv("TLS_KEY")))
+	}
+	log.Fatal(httpServer.ListenAndServe())
 }

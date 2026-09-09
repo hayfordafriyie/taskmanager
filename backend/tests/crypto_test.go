@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"taskmanager/internal/crypto"
+
+	"github.com/99designs/gqlgen/graphql/handler"
 )
 
 func testCipher(t *testing.T) *crypto.Cipher {
@@ -76,33 +79,87 @@ func TestCryptoRejectsBadKey(t *testing.T) {
 	}
 }
 
-func encryptedGraphQLRequest(t *testing.T, srv *httptest.Server, c *crypto.Cipher, query string) map[string]any {
+func newEncryptedTestServer(t *testing.T, h *handler.Server) *httptest.Server {
+	t.Helper()
+	sessions := crypto.NewSessionStore(5 * time.Minute)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/session", crypto.SessionHandler(sessions))
+	mux.Handle("/api/v1/query", sessions.Middleware(h))
+	mux.Handle("/query", sessions.Middleware(h))
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+type encryptedTestClient struct {
+	c      *crypto.Cipher
+	cookie *http.Cookie
+}
+
+func newEncryptedClient(t *testing.T, srv *httptest.Server) *encryptedTestClient {
+	t.Helper()
+	resp, err := http.Post(srv.URL+"/api/v1/session", "application/json", nil)
+	if err != nil {
+		t.Fatalf("session handshake: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var out struct {
+		Key string `json:"key"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		t.Fatalf("decode session response: %v", err)
+	}
+	c, err := crypto.NewFromBase64(out.Key)
+	if err != nil {
+		t.Fatalf("build cipher from session key: %v", err)
+	}
+
+	var cookie *http.Cookie
+	for _, ck := range resp.Cookies() {
+		if ck.Name == crypto.SessionCookieName {
+			cookie = ck
+			break
+		}
+	}
+	if cookie == nil {
+		t.Fatal("session handshake did not set session cookie")
+	}
+
+	return &encryptedTestClient{c: c, cookie: cookie}
+}
+
+func (ec *encryptedTestClient) gql(t *testing.T, srv *httptest.Server, query string) map[string]any {
 	t.Helper()
 	plain, _ := json.Marshal(map[string]any{"query": query})
-	body, err := c.Encrypt(plain)
+	body, err := ec.c.Encrypt(plain)
 	if err != nil {
 		t.Fatal(err)
 	}
-	req, err := http.NewRequest(http.MethodPost, srv.URL+"/query", bytes.NewReader([]byte(body)))
+	req, err := http.NewRequest(http.MethodPost, srv.URL+"/api/v1/query", bytes.NewReader([]byte(body)))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set(crypto.EncryptedHeader, "1")
+	req.AddCookie(ec.cookie)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("encrypted request: %v", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
 
 	var encBody bytes.Buffer
 	if _, err := encBody.ReadFrom(resp.Body); err != nil {
 		t.Fatal(err)
 	}
-	decrypted, err := c.Decrypt(encBody.String())
+	decrypted, err := ec.c.Decrypt(encBody.String())
 	if err != nil {
-		t.Fatalf("decrypt response: %v (status %d)", err, resp.StatusCode)
+		t.Fatalf("decrypt response: %v", err)
 	}
 
 	var out map[string]any
@@ -113,20 +170,18 @@ func encryptedGraphQLRequest(t *testing.T, srv *httptest.Server, c *crypto.Ciphe
 }
 
 func TestEncryptedGraphQLRequest(t *testing.T) {
-	c := testCipher(t)
 	h, pool, sender, cleanup := buildTestHandler(t)
 	defer cleanup()
+	srv := newEncryptedTestServer(t, h)
+	client := newEncryptedClient(t, srv)
 
-	srv := httptest.NewServer(crypto.Middleware(h, c))
-	defer srv.Close()
-
-	res := gqlMutation(t, encryptedGraphQLRequest(t, srv, c, requestOTPQuery("+233537144161")), "requestOTP")
+	res := gqlMutation(t, client.gql(t, srv, requestOTPQuery("+233537144161")), "requestOTP")
 	if res["success"] != true {
 		t.Fatalf("expected encrypted requestOTP to succeed, got %+v", res)
 	}
 
 	code := waitForSMSCode(t, sender)
-	verify := gqlMutation(t, encryptedGraphQLRequest(t, srv, c, verifyOTPQuery("+233537144161", code)), "verifyOTP")
+	verify := gqlMutation(t, client.gql(t, srv, verifyOTPQuery("+233537144161", code)), "verifyOTP")
 	if verify["success"] != true {
 		t.Fatalf("expected encrypted verifyOTP to succeed, got %+v", verify)
 	}
@@ -139,16 +194,15 @@ func TestEncryptedGraphQLRequest(t *testing.T) {
 }
 
 func TestEncryptedMiddlewareRejectsGarbage(t *testing.T) {
-	c := testCipher(t)
 	h, _, _, cleanup := buildTestHandler(t)
 	defer cleanup()
+	srv := newEncryptedTestServer(t, h)
+	client := newEncryptedClient(t, srv)
 
-	srv := httptest.NewServer(crypto.Middleware(h, c))
-	defer srv.Close()
-
-	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/query", bytes.NewReader([]byte("not-ciphertext")))
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/v1/query", bytes.NewReader([]byte("not-ciphertext")))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set(crypto.EncryptedHeader, "1")
+	req.AddCookie(client.cookie)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -160,13 +214,32 @@ func TestEncryptedMiddlewareRejectsGarbage(t *testing.T) {
 	}
 }
 
-func TestEncryptedMiddlewareSkipsPlaintext(t *testing.T) {
-	c := testCipher(t)
+func TestEncryptedMiddlewareRequiresSession(t *testing.T) {
 	h, _, _, cleanup := buildTestHandler(t)
 	defer cleanup()
+	srv := newEncryptedTestServer(t, h)
 
-	srv := httptest.NewServer(crypto.Middleware(h, c))
-	defer srv.Close()
+	plain, _ := json.Marshal(map[string]any{"query": requestOTPQuery("+233537144161")})
+	c := testCipher(t)
+	body, _ := c.Encrypt(plain)
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/v1/query", bytes.NewReader([]byte(body)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(crypto.EncryptedHeader, "1")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected 401 without session cookie, got %d", resp.StatusCode)
+	}
+}
+
+func TestEncryptedMiddlewareSkipsPlaintext(t *testing.T) {
+	h, _, _, cleanup := buildTestHandler(t)
+	defer cleanup()
+	srv := newEncryptedTestServer(t, h)
 
 	res := gqlMutation(t, gqlQuery(t, srv, requestOTPQuery("+233537144161")), "requestOTP")
 	if res["success"] != true {
@@ -175,21 +248,43 @@ func TestEncryptedMiddlewareSkipsPlaintext(t *testing.T) {
 }
 
 func TestEncryptedRequestOTPStillThrottles(t *testing.T) {
-	c := testCipher(t)
 	h, _, sender, cleanup := buildTestHandler(t)
 	defer cleanup()
+	srv := newEncryptedTestServer(t, h)
+	client := newEncryptedClient(t, srv)
 
-	srv := httptest.NewServer(crypto.Middleware(h, c))
-	defer srv.Close()
-
-	first := gqlMutation(t, encryptedGraphQLRequest(t, srv, c, requestOTPQuery("+233537144161")), "requestOTP")
+	first := gqlMutation(t, client.gql(t, srv, requestOTPQuery("+233537144161")), "requestOTP")
 	if first["success"] != true {
 		t.Fatalf("first request should succeed, got %+v", first)
 	}
 	waitForSMSCode(t, sender)
 
-	second := gqlMutation(t, encryptedGraphQLRequest(t, srv, c, requestOTPQuery("+233537144161")), "requestOTP")
+	second := gqlMutation(t, client.gql(t, srv, requestOTPQuery("+233537144161")), "requestOTP")
 	if second["success"] == true {
 		t.Fatal("expected resend to be throttled via encrypted channel")
+	}
+}
+
+func TestSessionExpiry(t *testing.T) {
+	sessions := crypto.NewSessionStore(time.Millisecond)
+	token, key, _, err := sessions.Create()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := sessions.Lookup(token); !ok || string(got) != string(key) {
+		t.Fatal("expected fresh session to resolve")
+	}
+	time.Sleep(5 * time.Millisecond)
+	if _, ok := sessions.Lookup(token); ok {
+		t.Fatal("expected expired session to be rejected")
+	}
+}
+
+func TestSessionDelete(t *testing.T) {
+	sessions := crypto.NewSessionStore(time.Minute)
+	token, _, _, _ := sessions.Create()
+	sessions.Delete(token)
+	if _, ok := sessions.Lookup(token); ok {
+		t.Fatal("expected deleted session to be rejected")
 	}
 }
