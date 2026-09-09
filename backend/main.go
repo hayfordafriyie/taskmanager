@@ -34,7 +34,7 @@ func main() {
 	}
 	log.Println("database migrated")
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool)}))
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, nil)}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})

@@ -49,7 +49,7 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 		return nil, fmt.Errorf("store otp: %w", err)
 	}
 
-	if _, err := notif.SendSMSPayload(notif.SMSPayload{
+	if _, err := r.SMSSender.SendSMSPayload(notif.SMSPayload{
 		PhoneNumbers: []string{normalized},
 		Message:      otp.Message(code, otp.DefaultTTL),
 	}, ""); err != nil {

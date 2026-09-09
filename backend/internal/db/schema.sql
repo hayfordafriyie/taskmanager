@@ -136,7 +136,7 @@ BEGIN
 
     UPDATE otp_requests
     SET verified = false
-    WHERE phone = p_phone AND purpose = 'register' AND verified = true;
+    WHERE otp_requests.phone = p_phone AND purpose = 'register' AND verified = true;
 
     RETURN QUERY
     SELECT v_user.id, v_user.phone, v_user.first_name,

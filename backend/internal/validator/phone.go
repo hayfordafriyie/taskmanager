@@ -20,6 +20,7 @@ func NormalizeGhanaPhone(raw string) (string, error) {
 	s = strings.ReplaceAll(s, "(", "")
 	s = strings.ReplaceAll(s, ")", "")
 	s = strings.TrimPrefix(s, "+")
+	s = strings.TrimPrefix(s, "00")
 
 	switch {
 	case strings.HasPrefix(s, "00"):

@@ -10,20 +10,24 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func connect() string {
+// DSN builds a libpq connection string, optionally overriding the database name.
+func DSN(dbname string) string {
+	if dbname == "" {
+		dbname = os.Getenv("DB_NAME")
+	}
 	return fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
+		dbname,
 		os.Getenv("DB_SSLMODE"),
 	)
 }
 
 func Connect(ctx context.Context) (*pgxpool.Pool, error) {
-	cfg, err := pgxpool.ParseConfig(connect())
+	cfg, err := pgxpool.ParseConfig(DSN(""))
 	if err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
