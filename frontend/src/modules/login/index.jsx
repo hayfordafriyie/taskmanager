@@ -45,7 +45,7 @@ export default function Login() {
 
   return (
     <div className="max-w-md">
-      <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="font-display text-2xl font-bold t-ink">
         Login
       </h1>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -73,7 +73,7 @@ export default function Login() {
           No account?{" "}
           <Link
             to="/signup"
-            className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            className="accent-text font-medium hover:underline"
           >
             Sign up
           </Link>
@@ -82,7 +82,7 @@ export default function Login() {
           Don&apos;t remember your password?{" "}
           <Link
             to="/reset-password"
-            className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+            className="accent-text font-medium hover:underline"
           >
             Reset it
           </Link>

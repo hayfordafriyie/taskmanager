@@ -80,7 +80,7 @@ export function ReportsView() {
                     style={{ backgroundColor: s.color }}
                   />
                   <span className="text-zinc-600 dark:text-zinc-300">{s.label}</span>
-                  <span className="ml-auto pl-4 font-medium text-zinc-900 dark:text-zinc-100">
+                  <span className="ml-auto pl-4 font-medium t-ink">
                     {s.value}
                   </span>
                 </li>

@@ -70,7 +70,7 @@ function SectionHeader({ title, icon: Icon }) {
   return (
     <header className="flex items-center gap-2">
       <Icon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-      <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+      <h2 className="font-display text-sm font-semibold t-ink">
         {title}
       </h2>
     </header>
@@ -82,7 +82,7 @@ export function DashboardView() {
     <div>
       <header className="flex items-end justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="font-display text-2xl font-bold t-ink">
             {greeting()}, Hayford
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -104,7 +104,7 @@ export function DashboardView() {
               <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
               <Icon width={18} height={18} className={tint} />
             </div>
-            <p className="mt-2 font-display text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="mt-2 font-display text-3xl font-bold t-ink">
               {value}
             </p>
           </div>
@@ -121,7 +121,7 @@ export function DashboardView() {
                   {t.initial}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <p className="truncate text-sm font-medium t-ink">
                     {t.title}
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -144,7 +144,7 @@ export function DashboardView() {
             {projects.map((p) => (
               <li key={p.id}>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <span className="font-medium t-ink">
                     {p.name}
                   </span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">

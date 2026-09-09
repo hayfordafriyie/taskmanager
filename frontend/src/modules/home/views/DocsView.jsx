@@ -60,7 +60,7 @@ export function DocsView() {
         <Panel className="h-fit">
           <header className="flex items-center gap-2">
             <ReaderIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-            <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-display text-sm font-semibold t-ink">
               Pages
             </h2>
           </header>
@@ -100,7 +100,7 @@ export function DocsView() {
             <span className={`rounded p-1 ${selected.tint}`}>
               <FileTextIcon width={16} height={16} />
             </span>
-            <h2 className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-display text-xl font-bold t-ink">
               {selected.title}
             </h2>
           </header>

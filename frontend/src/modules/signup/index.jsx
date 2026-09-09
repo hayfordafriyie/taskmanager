@@ -114,7 +114,7 @@ export default function Signup() {
 
   return (
     <div className="max-w-md">
-      <h1 className="font-display text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+      <h1 className="font-display text-2xl font-bold t-ink">
         Signup
       </h1>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -207,7 +207,7 @@ export default function Signup() {
         Already have an account?{" "}
         <Link
           to="/login"
-          className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+          className="accent-text font-medium hover:underline"
         >
           Back to sign in
         </Link>

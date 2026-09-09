@@ -66,7 +66,7 @@ export function BoardView() {
                   key={t.id}
                   className="glass-tile p-3 transition-all hover:-translate-y-0.5 hover:bg-[var(--glass-hover)]"
                 >
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <p className="text-sm font-medium t-ink">
                     {t.title}
                   </p>
                   <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">

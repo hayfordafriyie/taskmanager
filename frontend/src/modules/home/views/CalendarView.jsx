@@ -52,7 +52,7 @@ export function CalendarView() {
       <ViewHeader title="Calendar" subtitle="Your schedule and task deadlines at a glance." />
       <Panel className="mt-6">
         <header className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="flex items-center gap-2 font-display text-sm font-semibold t-ink">
             <CalendarIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
             September 2026
           </h2>

@@ -83,7 +83,7 @@ export function MyTasksView() {
                   className={`truncate text-sm font-medium ${
                     t.done
                       ? "text-zinc-400 line-through dark:text-zinc-500"
-                      : "text-zinc-900 dark:text-zinc-100"
+                      : "t-ink"
                   }`}
                 >
                   {t.title}
@@ -111,7 +111,7 @@ function SectionTitleRow({ done, total }) {
   return (
     <header className="flex items-center gap-2">
       <CheckboxIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-      <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+      <h2 className="font-display text-sm font-semibold t-ink">
         Tasks
       </h2>
       <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">

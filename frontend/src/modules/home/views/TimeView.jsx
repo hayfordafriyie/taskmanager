@@ -24,7 +24,7 @@ export function TimeView() {
         {summaries.map((s) => (
           <Panel key={s.label}>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">{s.label}</p>
-            <p className="mt-2 font-display text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="mt-2 font-display text-2xl font-bold t-ink">
               {s.value}
             </p>
             <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{s.hint}</p>
@@ -35,7 +35,7 @@ export function TimeView() {
       <Panel className="mt-4">
         <header className="flex items-center gap-2">
           <StopwatchIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-          <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="font-display text-sm font-semibold t-ink">
             This week
           </h2>
           <span className="badge tone-indigo ml-auto px-2.5 py-1 text-xs">
@@ -65,7 +65,7 @@ export function TimeView() {
                         <span className={`flex h-6 w-6 items-center justify-center rounded text-[10px] font-semibold text-white ${r.color}`}>
                           {r.initials}
                         </span>
-                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                        <span className="font-medium t-ink">
                           {r.project}
                         </span>
                       </span>
@@ -75,7 +75,7 @@ export function TimeView() {
                         {h ? `${h}h` : "—"}
                       </td>
                     ))}
-                    <td className="py-3 text-right font-semibold text-zinc-900 dark:text-zinc-100">
+                    <td className="py-3 text-right font-semibold t-ink">
                       {total}h
                     </td>
                   </tr>

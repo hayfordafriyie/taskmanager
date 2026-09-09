@@ -119,7 +119,7 @@ export function InviteView() {
         <Panel className="mt-6">
           <header className="flex items-center gap-2">
             <ClockIcon width={16} height={16} className="text-amber-600 dark:text-amber-500" />
-            <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-display text-sm font-semibold t-ink">
               Invitations for you
             </h2>
           </header>
@@ -131,7 +131,7 @@ export function InviteView() {
               >
                 <Avatar initial={initialsOf(invite)} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <p className="text-sm font-medium t-ink">
                     {invite.teamName}
                   </p>
                   <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
@@ -157,7 +157,7 @@ export function InviteView() {
         <Panel>
           <header className="flex items-center gap-2">
             <PaperPlaneIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-            <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-display text-sm font-semibold t-ink">
               Invite people
             </h2>
           </header>
@@ -202,7 +202,7 @@ export function InviteView() {
         <Panel className="lg:col-span-2">
           <header className="flex items-center gap-2">
             <PersonIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-            <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-display text-sm font-semibold t-ink">
               Members ({members.length})
             </h2>
           </header>
@@ -211,7 +211,7 @@ export function InviteView() {
               <li key={m.id} className="flex items-center gap-3 py-3">
                 <Avatar initial={initialsOf(m)} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <p className="truncate text-sm font-medium t-ink">
                     {nameOf(m)}
                   </p>
                   <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
@@ -229,7 +229,7 @@ export function InviteView() {
         <Panel className="mt-4">
           <header className="flex items-center gap-2">
             <PaperPlaneIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-            <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-display text-sm font-semibold t-ink">
               Pending invites
             </h2>
           </header>
@@ -237,7 +237,7 @@ export function InviteView() {
             {pendingInvites.map((invite) => (
               <li key={invite.id} className="flex items-center gap-3 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <p className="truncate text-sm font-medium t-ink">
                     {invite.phone}
                   </p>
                   <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">

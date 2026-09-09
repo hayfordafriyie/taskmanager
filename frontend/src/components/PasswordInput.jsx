@@ -22,7 +22,7 @@ export default function PasswordInput({ value, onChange, placeholder, disabled }
         type="button"
         aria-label={visible ? "Hide password" : "Show password"}
         onClick={() => setVisible((v) => !v)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 transition-colors hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:text-zinc-300"
+        className="ring-accent absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 t-faint transition-colors hover:text-[var(--ink)]"
       >
         {visible ? (
           <EyeClosedIcon width={16} height={16} />

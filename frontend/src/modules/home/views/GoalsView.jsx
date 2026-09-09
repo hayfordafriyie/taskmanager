@@ -79,7 +79,7 @@ export function GoalsView() {
             <header className="flex items-start justify-between">
               <div className="flex items-center gap-2">
                 <TargetIcon width={16} height={16} className="text-zinc-400 dark:text-zinc-500" />
-                <h2 className="font-display text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <h2 className="font-display text-sm font-semibold t-ink">
                   {g.name}
                 </h2>
               </div>
@@ -89,7 +89,7 @@ export function GoalsView() {
               <ProgressRing value={g.progress} />
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">Owner</p>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-medium t-ink">
                   {g.owner}
                 </p>
               </div>
