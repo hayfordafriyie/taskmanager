@@ -1,0 +1,48 @@
+scalar UUID
+scalar Time
+
+type User {
+  id: UUID!
+  phone: String!
+  firstName: String!
+  surname: String!
+  otherNames: String
+  createdAt: Time!
+}
+
+type OTPResult {
+  success: Boolean!
+  message: String!
+  expiresInSeconds: Int
+  retryAfterSeconds: Int
+}
+
+type VerifyOTPResult {
+  success: Boolean!
+  message: String!
+}
+
+type CreateAccountResult {
+  success: Boolean!
+  message: String!
+  user: User
+}
+
+input CreateAccountInput {
+  phone: String!
+  firstName: String!
+  surname: String!
+  otherNames: String
+  password: String!
+  confirmPassword: String!
+}
+
+type Query {
+  health: String!
+}
+
+type Mutation {
+  requestOTP(phone: String!): OTPResult!
+  verifyOTP(phone: String!, code: String!): VerifyOTPResult!
+  createAccount(input: CreateAccountInput!): CreateAccountResult!
+}

@@ -6,11 +6,18 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 
+	"taskmanager/graph"
 	"taskmanager/internal/db"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 func main() {
@@ -22,17 +29,28 @@ func main() {
 	}
 	defer pool.Close()
 
+	if err := db.Migrate(ctx, pool); err != nil {
+		log.Fatalf("database migration failed: %v", err)
+	}
+	log.Println("database migrated")
+
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool)}))
+
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
+
+	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+
+	srv.Use(extension.Introspection{})
+	srv.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
+
 	mux := http.NewServeMux()
-
+	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	mux.Handle("/query", srv)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-
-		if err := pool.Ping(ctx); err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("db: unhealthy"))
-			return
-		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
@@ -43,6 +61,6 @@ func main() {
 	}
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("server listening on %s", addr)
+	log.Printf("GraphQL server listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
 }
