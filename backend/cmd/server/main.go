@@ -10,6 +10,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"taskmanager/graph"
+	"taskmanager/internal/crypto"
 	"taskmanager/internal/db"
 	"taskmanager/internal/notif"
 
@@ -51,13 +52,28 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
+	cipher, err := crypto.NewFromBase64(os.Getenv("ENCRYPTION_KEY"))
+	if err != nil {
+		log.Fatalf("invalid ENCRYPTION_KEY: %v", err)
+	}
+
 	mux := http.NewServeMux()
-	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	mux.Handle("/query", srv)
+
+	const apiV1 = "/api/v1"
+
+	mux.Handle(apiV1+"/", playground.Handler("GraphQL playground", apiV1+"/query"))
+	mux.Handle(apiV1+"/query", crypto.Middleware(srv, cipher))
+	mux.HandleFunc("GET "+apiV1+"/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+	// Unversioned liveness probe for load balancers / infrastructure checks.
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+
+	log.Printf("GraphQL API v1 available at %s/query", apiV1)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {

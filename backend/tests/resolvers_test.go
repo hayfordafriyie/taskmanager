@@ -78,22 +78,24 @@ func (f *fakeSMSSender) recordError(err error) {
 	f.errs = append(f.errs, err)
 }
 
-func newTestServer(t *testing.T) (*httptest.Server, *pgxpool.Pool, *fakeSMSSender, func()) {
+func buildTestHandler(t *testing.T) (*handler.Server, *pgxpool.Pool, *fakeSMSSender, func()) {
 	t.Helper()
 	pool, cleanup := PrepareTestDB(t)
 	sender := &fakeSMSSender{}
 
 	worker := notif.NewWorker(sender, 2, 16, sender.recordError)
-	exec := graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, worker)})
-	h := handler.New(exec)
+	h := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, worker)}))
 	h.AddTransport(transport.Options{})
 	h.AddTransport(transport.POST{})
+	t.Cleanup(worker.Close)
+	return h, pool, sender, cleanup
+}
 
+func newTestServer(t *testing.T) (*httptest.Server, *pgxpool.Pool, *fakeSMSSender, func()) {
+	t.Helper()
+	h, pool, sender, cleanup := buildTestHandler(t)
 	srv := httptest.NewServer(h)
-	t.Cleanup(func() {
-		srv.Close()
-		worker.Close()
-	})
+	t.Cleanup(srv.Close)
 	return srv, pool, sender, cleanup
 }
 
