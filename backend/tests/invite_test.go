@@ -198,7 +198,7 @@ func TestInviteToUnregisteredUser(t *testing.T) {
 	}
 }
 
-func TestInviteSelfAndDuplicatePending(t *testing.T) {
+func TestInviteSelfAndResendPending(t *testing.T) {
 	srv, _, sender, cleanup := newTestServer(t)
 	defer cleanup()
 
@@ -214,13 +214,33 @@ func TestInviteSelfAndDuplicatePending(t *testing.T) {
 	if first["success"] != true {
 		t.Fatalf("expected first invite to succeed, got %+v", first)
 	}
+	firstInvite := first["invite"].(map[string]any)
+	firstID, _ := firstInvite["id"].(string)
+	if firstID == "" {
+		t.Fatalf("expected invite id: %v", first)
+	}
 
 	second := gqlMutation(t, gqlQueryAuth(t, srv, inviteQuery("+233541230000", "GUEST"), ownerToken), "inviteToTeam")
-	if second["success"] == true {
-		t.Fatalf("expected duplicate pending invite to fail, got %+v", second)
+	if second["success"] != true {
+		t.Fatalf("expected resend of a pending invite to succeed, got %+v", second)
 	}
-	if msg, _ := second["message"].(string); msg == "" {
-		t.Errorf("expected a helpful message for duplicate invite, got %+v", second)
+	secondInvite := second["invite"].(map[string]any)
+	if secondInvite["id"] != firstID {
+		t.Errorf("expected resend to keep the original invite, got id %v vs %v", secondInvite["id"], firstID)
+	}
+	if secondInvite["role"] != "GUEST" {
+		t.Errorf("expected resend to update the role to GUEST, got %v", secondInvite["role"])
+	}
+
+	team := myTeamData(t, srv, ownerToken)
+	if n := pendingInviteCount(t, team); n != 1 {
+		t.Fatalf("expected exactly one pending invite after resend, got %d", n)
+	}
+	for _, inv := range team["invites"].([]any) {
+		row, _ := inv.(map[string]any)
+		if row["id"] != firstID || row["role"] != "GUEST" {
+			t.Errorf("expected the renewed invite visible in the team, got %v", row)
+		}
 	}
 }
 
