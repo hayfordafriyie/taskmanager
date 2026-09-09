@@ -1,20 +1,25 @@
 const priorityTint = {
-  High: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  Medium: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  Low: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+  High: "tone-red",
+  Medium: "tone-amber",
+  Low: "tone-neutral",
 };
 
 const statusTint = {
-  "To do": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-  "In progress": "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
-  Review: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  Done: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  "On track": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  "At risk": "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  Behind: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  Member: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-  Guest: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
-  Admin: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+  zinc: "tone-neutral",
+  indigo: "tone-indigo",
+  amber: "tone-amber",
+  emerald: "tone-emerald",
+  red: "tone-red",
+  "To do": "tone-neutral",
+  "In progress": "tone-indigo",
+  Review: "tone-amber",
+  Done: "tone-emerald",
+  "On track": "tone-emerald",
+  "At risk": "tone-red",
+  Behind: "tone-amber",
+  Member: "tone-neutral",
+  Guest: "tone-neutral",
+  Admin: "tone-indigo",
 };
 
 export function PolicyBadge({ children, tone = "zinc" }) {
