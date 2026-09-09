@@ -1,8 +1,18 @@
 package graph
 
 import (
+	"errors"
+
 	"taskmanager/graph/model"
 	"taskmanager/types"
+)
+
+var errNotAuthenticated = errors.New("not authenticated")
+
+const (
+	otpPurposeRegister      = "register"
+	otpPurposePasswordReset = "password_reset"
+	loginAccessAlert        = "Your Task Manager account was accessed via a new login. If this was not you, reset your password immediately."
 )
 
 func int32Ptr(v int32) *int32 {

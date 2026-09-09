@@ -23,6 +23,14 @@ type CreateAccountResult struct {
 	User    *User  `json:"user,omitempty"`
 }
 
+type LoginResult struct {
+	Success      bool    `json:"success"`
+	Message      string  `json:"message"`
+	User         *User   `json:"user,omitempty"`
+	AccessToken  *string `json:"accessToken,omitempty"`
+	RefreshToken *string `json:"refreshToken,omitempty"`
+}
+
 type Mutation struct {
 }
 
@@ -34,6 +42,19 @@ type OTPResult struct {
 }
 
 type Query struct {
+}
+
+type RefreshResult struct {
+	Success      bool    `json:"success"`
+	Message      string  `json:"message"`
+	User         *User   `json:"user,omitempty"`
+	AccessToken  *string `json:"accessToken,omitempty"`
+	RefreshToken *string `json:"refreshToken,omitempty"`
+}
+
+type ResetPasswordResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 type User struct {

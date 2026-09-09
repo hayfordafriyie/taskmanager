@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"taskmanager/internal/crypto"
-
-	"github.com/99designs/gqlgen/graphql/handler"
 )
 
 func testCipher(t *testing.T) *crypto.Cipher {
@@ -79,7 +77,7 @@ func TestCryptoRejectsBadKey(t *testing.T) {
 	}
 }
 
-func newEncryptedTestServer(t *testing.T, h *handler.Server) *httptest.Server {
+func newEncryptedTestServer(t *testing.T, h http.Handler) *httptest.Server {
 	t.Helper()
 	sessions := crypto.NewSessionStore(5 * time.Minute)
 	mux := http.NewServeMux()

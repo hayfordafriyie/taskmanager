@@ -44,3 +44,8 @@ type SessionEntry struct {
 	Key     []byte
 	Expires time.Time
 }
+
+type UserCredentials struct {
+	UserRow
+	PasswordHash string
+}

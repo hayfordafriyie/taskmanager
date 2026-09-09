@@ -10,6 +10,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"taskmanager/graph"
+	"taskmanager/internal/auth"
 	"taskmanager/internal/crypto"
 	"taskmanager/internal/db"
 	"taskmanager/internal/notif"
@@ -61,7 +62,7 @@ func main() {
 
 	mux.Handle(apiV1+"/", playground.Handler("GraphQL playground", apiV1+"/query"))
 	mux.HandleFunc(apiV1+"/session", crypto.SessionHandler(sessions))
-	mux.Handle(apiV1+"/query", sessions.Middleware(srv))
+	mux.Handle(apiV1+"/query", auth.ContextMiddleware(sessions.Middleware(srv)))
 	mux.HandleFunc("GET "+apiV1+"/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
@@ -75,6 +76,10 @@ func main() {
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
 		log.Fatal("SERVER_PORT is not set in .env")
+	}
+
+	if auth.JWTSecret() == "" || auth.JWTRefreshSecret() == "" {
+		log.Fatal("JWT_SECRET and JWT_REFRESH_SECRET must be set in .env")
 	}
 
 	httpServer := &http.Server{

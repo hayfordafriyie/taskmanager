@@ -28,6 +28,27 @@ type CreateAccountResult {
   user: User
 }
 
+type LoginResult {
+  success: Boolean!
+  message: String!
+  user: User
+  accessToken: String
+  refreshToken: String
+}
+
+type RefreshResult {
+  success: Boolean!
+  message: String!
+  user: User
+  accessToken: String
+  refreshToken: String
+}
+
+type ResetPasswordResult {
+  success: Boolean!
+  message: String!
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -39,10 +60,16 @@ input CreateAccountInput {
 
 type Query {
   health: String!
+  me: User!
 }
 
 type Mutation {
   requestOTP(phone: String!): OTPResult!
   verifyOTP(phone: String!, code: String!): VerifyOTPResult!
   createAccount(input: CreateAccountInput!): CreateAccountResult!
+  login(phone: String!, password: String!): LoginResult!
+  refreshToken(token: String!): RefreshResult!
+  logout: Boolean!
+  requestPasswordReset(phone: String!): OTPResult!
+  resetPassword(phone: String!, code: String!, password: String!, confirmPassword: String!): ResetPasswordResult!
 }

@@ -15,6 +15,8 @@ import (
 var (
 	ErrPhoneNotVerified       = errors.New("phone number is not verified")
 	ErrPhoneAlreadyRegistered = errors.New("phone number is already registered")
+	ErrUserNotFound           = errors.New("user not found")
+	ErrInvalidSession         = errors.New("invalid or expired session")
 )
 
 func RequestOTP(

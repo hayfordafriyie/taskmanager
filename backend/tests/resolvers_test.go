@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"taskmanager/graph"
+	"taskmanager/internal/auth"
 	"taskmanager/internal/db"
 	"taskmanager/internal/notif"
 	"taskmanager/internal/otp"
@@ -78,7 +79,7 @@ func (f *fakeSMSSender) recordError(err error) {
 	f.errs = append(f.errs, err)
 }
 
-func buildTestHandler(t *testing.T) (*handler.Server, *pgxpool.Pool, *fakeSMSSender, func()) {
+func buildTestHandler(t *testing.T) (http.Handler, *pgxpool.Pool, *fakeSMSSender, func()) {
 	t.Helper()
 	pool, cleanup := PrepareTestDB(t)
 	sender := &fakeSMSSender{}
@@ -88,7 +89,7 @@ func buildTestHandler(t *testing.T) (*handler.Server, *pgxpool.Pool, *fakeSMSSen
 	h.AddTransport(transport.Options{})
 	h.AddTransport(transport.POST{})
 	t.Cleanup(worker.Close)
-	return h, pool, sender, cleanup
+	return auth.ContextMiddleware(h), pool, sender, cleanup
 }
 
 func newTestServer(t *testing.T) (*httptest.Server, *pgxpool.Pool, *fakeSMSSender, func()) {
