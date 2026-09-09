@@ -252,7 +252,10 @@ export function InviteView() {
           </header>
           <ul className="divide-soft mt-3">
             {pendingInvites.map((invite) => (
-              <li key={invite.id} className="flex items-center gap-3 py-3">
+              <li
+                key={invite.id}
+                className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-3"
+              >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium t-ink">
                     {invite.phone}
@@ -261,26 +264,32 @@ export function InviteView() {
                     Invited by {nameOf(invite.invitedBy)} · {shortDate(invite.createdAt)}
                   </p>
                 </div>
-                <PolicyBadge tone={roleLabel[invite.role]}>{roleLabel[invite.role]}</PolicyBadge>
-                <span className="text-xs text-amber-600 dark:text-amber-400">Pending</span>
-                <button
-                  type="button"
-                  onClick={() => handleResend(invite)}
-                  disabled={inviteToTeam.isPending}
-                  aria-label={`Resend invite to ${invite.phone}`}
-                  className="accent-text ring-accent rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--accent-tint)] disabled:opacity-50"
-                >
-                  Resend
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRevoke(invite.id)}
-                  disabled={revokeInvite.isPending}
-                  aria-label={`Revoke invite for ${invite.phone}`}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
-                >
-                  Revoke
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <PolicyBadge tone={roleLabel[invite.role]}>{roleLabel[invite.role]}</PolicyBadge>
+                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                    Pending
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleResend(invite)}
+                      disabled={inviteToTeam.isPending}
+                      aria-label={`Resend invite to ${invite.phone}`}
+                      className="accent-text ring-accent rounded-full px-3 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--accent-tint)] disabled:opacity-50"
+                    >
+                      Resend
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRevoke(invite.id)}
+                      disabled={revokeInvite.isPending}
+                      aria-label={`Revoke invite for ${invite.phone}`}
+                      className="rounded-full px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 disabled:opacity-50 dark:text-red-400"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

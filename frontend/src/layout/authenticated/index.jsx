@@ -20,7 +20,7 @@ export default function AuthenticatedLayout() {
       </div>
       <div className="relative z-10">
         <WorkspaceProvider>
-          <header className="glass-nav sticky top-3 z-40 mx-auto mt-3 flex w-[calc(100%-1rem)] max-w-6xl items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:top-4 sm:mt-4 sm:w-[calc(100%-1.5rem)] sm:gap-3 sm:px-5 sm:py-2.5">
+          <header className="glass-nav fixed inset-x-0 top-3 z-50 mx-auto flex w-[calc(100%-1rem)] max-w-6xl items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:top-4 sm:w-[calc(100%-1.5rem)] sm:gap-3 sm:px-5 sm:py-2.5">
             <h1 className="min-w-0 shrink font-display text-base font-bold tracking-tight sm:text-lg">
               <span className="accent-text">Task</span>
               <span className="t-ink"> Manager</span>
@@ -61,7 +61,7 @@ export default function AuthenticatedLayout() {
               </Tooltip>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-6xl px-3 pt-6 pb-28 sm:px-6">
+          <main className="mx-auto w-full max-w-6xl px-3 pt-[5.5rem] pb-28 sm:px-6 sm:pt-24">
             <Outlet />
           </main>
           <Dock />
