@@ -12,6 +12,7 @@ import (
 	"taskmanager/internal/testutil"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -208,7 +209,66 @@ func TestCreateUserDuplicatePhone(t *testing.T) {
 	db.RequestOTP(ctx, pool, phone, "register", hash2, time.Now().Add(otp.DefaultTTL))
 	db.VerifyOTP(ctx, pool, phone, "register", code2)
 
-	if _, err := db.CreateUser(ctx, pool, phone, "Ama", "Mensah", "", string(passwordHash)); err == nil {
-		t.Fatal("expected duplicate phone error")
+	_, err := db.CreateUser(ctx, pool, phone, "Ama", "Mensah", "", string(passwordHash))
+	if !errors.Is(err, db.ErrPhoneAlreadyRegistered) {
+		t.Fatalf("expected ErrPhoneAlreadyRegistered, got %v", err)
 	}
+
+	count, err := countUsers(ctx, pool)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly 1 user, got %d", count)
+	}
+}
+
+func TestPhoneRegistered(t *testing.T) {
+	pool, cleanup := testutil.PrepareTestDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	phone := "+233537144161"
+
+	registered, err := db.PhoneRegistered(ctx, pool, phone)
+	if err != nil {
+		t.Fatalf("PhoneRegistered: %v", err)
+	}
+	if registered {
+		t.Fatal("expected not registered before creating user")
+	}
+
+	if _, err := registerUser(ctx, pool, phone); err != nil {
+		t.Fatal(err)
+	}
+
+	registered, err = db.PhoneRegistered(ctx, pool, phone)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !registered {
+		t.Fatal("expected registered after creating user")
+	}
+}
+
+func registerUser(ctx context.Context, pool *pgxpool.Pool, phone string) (*db.UserRow, error) {
+	code, codeHash, _ := otp.Generate()
+	if _, err := db.RequestOTP(ctx, pool, phone, "register", codeHash, time.Now().Add(otp.DefaultTTL)); err != nil {
+		return nil, err
+	}
+	valid, _, err := db.VerifyOTP(ctx, pool, phone, "register", code)
+	if err != nil {
+		return nil, err
+	}
+	if !valid {
+		return nil, errors.New("otp not verified")
+	}
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("StrongPass1!"), bcrypt.DefaultCost)
+	return db.CreateUser(ctx, pool, phone, "Kojo", "Asante", "", string(passwordHash))
+}
+
+func countUsers(ctx context.Context, pool *pgxpool.Pool) (int64, error) {
+	var count int64
+	err := pool.QueryRow(ctx, "SELECT count(*) FROM users").Scan(&count)
+	return count, err
 }

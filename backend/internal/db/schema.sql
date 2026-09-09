@@ -108,6 +108,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- phone_registered: true when an account already exists for the phone.
+CREATE OR REPLACE FUNCTION phone_registered(p_phone TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE v_exists BOOLEAN;
+BEGIN
+    SELECT EXISTS (SELECT 1 FROM users WHERE phone = p_phone) INTO v_exists;
+    RETURN v_exists;
+END;
+$$ LANGUAGE plpgsql;
+
 -- create_user: registers a user only after phone verification succeeds.
 CREATE OR REPLACE FUNCTION create_user(
     p_phone         TEXT,
@@ -125,6 +135,11 @@ CREATE OR REPLACE FUNCTION create_user(
 ) AS $$
 DECLARE v_user users%ROWTYPE;
 BEGIN
+    IF phone_registered(p_phone) THEN
+        RAISE EXCEPTION 'phone number is already registered'
+            USING ERRCODE = '45002';
+    END IF;
+
     IF NOT phone_verified(p_phone, 'register', interval '30 minutes') THEN
         RAISE EXCEPTION 'phone number is not verified'
             USING ERRCODE = '45001';

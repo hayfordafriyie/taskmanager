@@ -7,6 +7,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -24,6 +25,17 @@ func (r *mutationResolver) RequestOtp(ctx context.Context, phone string) (*model
 	normalized, err := validator.NormalizeGhanaPhone(phone)
 	if err != nil {
 		return nil, err
+	}
+
+	registered, err := db.PhoneRegistered(ctx, r.Pool, normalized)
+	if err != nil {
+		return nil, fmt.Errorf("check phone registered: %w", err)
+	}
+	if registered {
+		return &model.OTPResult{
+			Success: false,
+			Message: "an account with this phone number already exists",
+		}, nil
 	}
 
 	lastOTP, ok, err := db.LatestOTPTime(ctx, r.Pool, normalized, otpPurposeRegister)
@@ -123,10 +135,16 @@ func (r *mutationResolver) CreateAccount(ctx context.Context, input model.Create
 		normalized, input.FirstName, input.Surname, otherNames, string(passwordHash),
 	)
 	if err != nil {
-		if err == db.ErrPhoneNotVerified {
+		if errors.Is(err, db.ErrPhoneNotVerified) {
 			return &model.CreateAccountResult{
 				Success: false,
 				Message: "phone number must be verified first",
+			}, nil
+		}
+		if errors.Is(err, db.ErrPhoneAlreadyRegistered) {
+			return &model.CreateAccountResult{
+				Success: false,
+				Message: "an account with this phone number already exists",
 			}, nil
 		}
 		return nil, fmt.Errorf("create user: %w", err)

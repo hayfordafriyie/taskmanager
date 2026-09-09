@@ -5,11 +5,15 @@ import (
 	"errors"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"taskmanager/graph/model"
+	"taskmanager/internal/db"
 	"taskmanager/internal/notif"
+	"taskmanager/internal/otp"
 	"taskmanager/internal/testutil"
 )
 
@@ -48,6 +52,16 @@ func (f *fakeSMSSender) lastCode() string {
 	}
 	m := codeRe.FindString(f.messages[len(f.messages)-1])
 	return m
+}
+
+func (f *fakeSMSSender) sentCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.messages)
+}
+
+func contains(haystack, needle string) bool {
+	return strings.Contains(haystack, needle)
 }
 
 func resolver(t *testing.T) (*Resolver, *fakeSMSSender, func()) {
@@ -185,6 +199,111 @@ func TestCreateAccountResolverRequiresVerification(t *testing.T) {
 	}
 	if res.Success {
 		t.Fatal("expected account creation without verification to fail")
+	}
+}
+
+func createUserThroughResolver(t *testing.T, r *Resolver, phone string) *model.User {
+	t.Helper()
+	ctx := context.Background()
+	m := &mutationResolver{r}
+
+	code, hash, err := otp.Generate()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.RequestOTP(ctx, r.Pool, phone, "register", hash, time.Now().Add(otp.DefaultTTL)); err != nil {
+		t.Fatal(err)
+	}
+	if valid, _, _ := db.VerifyOTP(ctx, r.Pool, phone, "register", code); !valid {
+		t.Fatal("could not verify fallback otp")
+	}
+
+	res, err := m.CreateAccount(ctx, model.CreateAccountInput{
+		Phone:           phone,
+		FirstName:       "Kojo",
+		Surname:         "Asante",
+		Password:        "StrongPass1!",
+		ConfirmPassword: "StrongPass1!",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.Success || res.User == nil {
+		t.Fatalf("expected successful create, got %+v", res)
+	}
+	return res.User
+}
+
+func countUsersIn(t *testing.T, r *Resolver) int64 {
+	t.Helper()
+	var count int64
+	if err := r.Pool.QueryRow(context.Background(), "SELECT count(*) FROM users").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	return count
+}
+
+func TestCreateAccountResolverDuplicatePhone(t *testing.T) {
+	r, _, cleanup := resolver(t)
+	defer cleanup()
+
+	phone := "+233537144161"
+	createUserThroughResolver(t, r, phone)
+
+	// Try to register the same number again, with a fresh verified OTP.
+	code2, hash2, _ := otp.Generate()
+	ctx := context.Background()
+	if _, err := db.RequestOTP(ctx, r.Pool, phone, "register", hash2, time.Now().Add(otp.DefaultTTL)); err != nil {
+		t.Fatal(err)
+	}
+	if valid, _, _ := db.VerifyOTP(ctx, r.Pool, phone, "register", code2); !valid {
+		t.Fatal("could not verify second otp")
+	}
+
+	res, err := (&mutationResolver{r}).CreateAccount(ctx, model.CreateAccountInput{
+		Phone:           phone,
+		FirstName:       "Ama",
+		Surname:         "Mensah",
+		Password:        "StrongPass1!",
+		ConfirmPassword: "StrongPass1!",
+	})
+	if err != nil {
+		t.Fatalf("expected friendly result, got error: %v", err)
+	}
+	if res.Success {
+		t.Fatal("expected duplicate registration to fail")
+	}
+	if res.User != nil {
+		t.Fatal("expected no user in duplicate result")
+	}
+	if want := "already exists"; !contains(res.Message, want) {
+		t.Errorf("expected message containing %q, got %q", want, res.Message)
+	}
+
+	if count := countUsersIn(t, r); count != 1 {
+		t.Fatalf("expected exactly 1 user after duplicate attempt, got %d", count)
+	}
+}
+
+func TestRequestOTPBlocksRegisteredPhone(t *testing.T) {
+	r, sender, cleanup := resolver(t)
+	defer cleanup()
+
+	phone := "+233537144161"
+	createUserThroughResolver(t, r, phone)
+
+	res, err := (&mutationResolver{r}).RequestOtp(context.Background(), phone)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Success {
+		t.Fatal("expected requestOTP to be blocked for an existing account")
+	}
+	if want := "already exists"; !contains(res.Message, want) {
+		t.Errorf("expected message containing %q, got %q", want, res.Message)
+	}
+	if sender.sentCount() != 0 {
+		t.Errorf("expected no SMS to be sent, got %d", sender.sentCount())
 	}
 }
 

@@ -10,7 +10,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var ErrPhoneNotVerified = errors.New("phone number is not verified")
+var (
+	ErrPhoneNotVerified     = errors.New("phone number is not verified")
+	ErrPhoneAlreadyRegistered = errors.New("phone number is already registered")
+)
 
 func RequestOTP(
 	ctx context.Context,
@@ -55,6 +58,20 @@ func VerifyOTP(
 	return valid, reason, err
 }
 
+func PhoneRegistered(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	phone string,
+) (bool, error) {
+	var registered bool
+	if err := pool.QueryRow(
+		ctx, "SELECT phone_registered($1)", phone,
+	).Scan(&registered); err != nil {
+		return false, err
+	}
+	return registered, nil
+}
+
 type UserRow struct {
 	ID         uuid.UUID
 	Phone      string
@@ -76,10 +93,19 @@ func CreateUser(
 		phone, firstName, surname, otherNames, passwordHash,
 	).Scan(&u.ID, &u.Phone, &u.FirstName, &u.Surname, &u.OtherNames, &u.CreatedAt)
 	if err != nil {
-		const errCodePhoneNotVerified = "45001"
+		const (
+			errCodePhoneNotVerified  = "45001"
+			errCodePhoneRegistered   = "45002"
+			errCodeDuplicatePhone    = "23505"
+		)
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == errCodePhoneNotVerified {
-			return nil, ErrPhoneNotVerified
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case errCodePhoneNotVerified:
+				return nil, ErrPhoneNotVerified
+			case errCodePhoneRegistered, errCodeDuplicatePhone:
+				return nil, ErrPhoneAlreadyRegistered
+			}
 		}
 		return nil, err
 	}
