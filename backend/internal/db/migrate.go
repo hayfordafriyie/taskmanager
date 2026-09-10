@@ -30,12 +30,17 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 	defer pool.Exec(context.Background(), "SELECT pg_advisory_unlock($1)", migrationLockID)
 
-	entries, err := fs.ReadDir(migrationsFS, "migrations")
+	dir, err := fs.Sub(migrationsFS, "migrations")
+	if err != nil {
+		return fmt.Errorf("open migrations dir: %w", err)
+	}
+
+	entries, err := fs.ReadDir(dir, ".")
 	if err != nil {
 		return fmt.Errorf("list migrations: %w", err)
 	}
 
-	list, err := parseMigrations(entries)
+	list, err := parseMigrations(dir, entries)
 	if err != nil {
 		return err
 	}
@@ -84,8 +89,9 @@ type migration struct {
 	sql     string
 }
 
-func parseMigrations(entries []fs.DirEntry) ([]migration, error) {
+func parseMigrations(fsys fs.FS, entries []fs.DirEntry) ([]migration, error) {
 	var list []migration
+	seen := make(map[int]string)
 	for _, e := range entries {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".sql") {
 			continue
@@ -98,7 +104,17 @@ func parseMigrations(entries []fs.DirEntry) ([]migration, error) {
 		if err != nil {
 			return nil, fmt.Errorf("migration %q: invalid version prefix: %w", e.Name(), err)
 		}
-		content, err := migrationsFS.ReadFile("migrations/" + e.Name())
+		// Two files sharing a version means only the first one ever runs (the
+		// version is marked applied), silently swallowing the second — fail loudly
+		// instead so it is renumbered before it can hide a missing change.
+		if other, dup := seen[version]; dup {
+			return nil, fmt.Errorf(
+				"migrations %q and %q share version %d: renumber one of them",
+				other, e.Name(), version,
+			)
+		}
+		seen[version] = e.Name()
+		content, err := fs.ReadFile(fsys, e.Name())
 		if err != nil {
 			return nil, fmt.Errorf("read migration %q: %w", e.Name(), err)
 		}

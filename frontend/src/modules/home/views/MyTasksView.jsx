@@ -4,6 +4,7 @@ import { Panel, ViewHeader, PriorityBadge } from "../ui";
 import { useAuth } from "../../auth/AuthContext";
 import { useTeamTasks, useSetTaskStatus, toApiStatus } from "../../tasks/hooks";
 import { useToast } from "../../../components/Toast";
+import { formatWindow } from "../../tasks/dates";
 
 const filters = ["All", "Open", "Done"];
 
@@ -132,6 +133,9 @@ export function MyTasksView() {
                       <PersonIcon width={11} height={11} />
                       Assigned by {creatorName(t)}
                       {t.dueAt ? ` · Due ${new Date(t.dueAt).toLocaleDateString()}` : ""}
+                      {formatWindow(t.startDate, t.endDate)
+                        ? ` · ${formatWindow(t.startDate, t.endDate)}`
+                        : ""}
                     </p>
                   </div>
                   <PriorityBadge>{PRIORITY_LABEL[t.priority] || t.priority}</PriorityBadge>

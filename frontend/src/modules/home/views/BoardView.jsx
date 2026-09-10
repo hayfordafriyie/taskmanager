@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlusIcon, PersonIcon, Pencil2Icon } from "@radix-ui/react-icons";
+import { PlusIcon, PersonIcon, Pencil2Icon, CalendarIcon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, Avatar } from "../ui";
 import Select from "../../../components/Select";
 import Modal from "../../../components/Modal";
@@ -13,6 +13,12 @@ import {
   toApiStatus,
 } from "../../tasks/hooks";
 import { useToast } from "../../../components/Toast";
+import {
+  buildDatePayload,
+  formatWindow,
+  isWindowReversed,
+  toDateInput,
+} from "../../tasks/dates";
 
 const COLUMNS = [
   { key: "TODO", label: "To do", dot: "bg-zinc-400", tint: "text-zinc-400" },
@@ -72,6 +78,8 @@ export function BoardView() {
   const [priority, setPriority] = useState("MEDIUM");
   const [status, defineStatus] = useState("TODO");
   const [assigneeId, setAssigneeId] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [dragId, setDragId] = useState(null);
   const [overCol, setOverCol] = useState(null);
 
@@ -85,6 +93,8 @@ export function BoardView() {
     setPriority("MEDIUM");
     defineStatus("TODO");
     setAssigneeId("");
+    setStartDate("");
+    setEndDate("");
     setModalOpen(true);
   }
 
@@ -95,6 +105,8 @@ export function BoardView() {
     setPriority(task.priority || "MEDIUM");
     defineStatus(task.status || "TODO");
     setAssigneeId(task.assignee?.id ?? "");
+    setStartDate(toDateInput(task.startDate));
+    setEndDate(toDateInput(task.endDate));
     setModalOpen(true);
   }
 
@@ -109,11 +121,21 @@ export function BoardView() {
       toast.error("Enter a task title first.");
       return;
     }
+    if (isWindowReversed(startDate, endDate)) {
+      toast.error("The end date cannot be before the start date.");
+      return;
+    }
     const input = {
       title: title.trim(),
       description: description.trim(),
       priority,
       assigneeId: assigneeId || null,
+      ...buildDatePayload({
+        start: startDate,
+        end: endDate,
+        previous: editingTask,
+        isEdit: Boolean(editingTask),
+      }),
     };
     const options = {
       onSuccess: (res) => {
@@ -253,6 +275,39 @@ export function BoardView() {
               </div>
             )}
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium t-soft">
+                Start date <span className="t-faint">(optional)</span>
+              </span>
+              <input
+                type="date"
+                value={startDate}
+                max={endDate || undefined}
+                onChange={(e) => setStartDate(e.target.value)}
+                aria-label="Start date"
+                className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium t-soft">
+                End date <span className="t-faint">(optional)</span>
+              </span>
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(e) => setEndDate(e.target.value)}
+                aria-label="End date"
+                className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+              />
+            </label>
+          </div>
+          {isWindowReversed(startDate, endDate) && (
+            <p className="text-xs text-red-500" role="alert">
+              The end date cannot be before the start date.
+            </p>
+          )}
         </form>
       </Modal>
 
@@ -364,6 +419,13 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
 
       {task.description && (
         <p className="mt-0.5 line-clamp-3 text-xs t-soft">{task.description}</p>
+      )}
+
+      {formatWindow(task.startDate, task.endDate) && (
+        <p className="mt-1.5 flex items-center gap-1 text-xs t-faint">
+          <CalendarIcon width={12} height={12} />
+          {formatWindow(task.startDate, task.endDate)}
+        </p>
       )}
 
       <div className="mt-2 flex items-center justify-between gap-2">

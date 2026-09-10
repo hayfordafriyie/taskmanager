@@ -13,11 +13,12 @@ import (
 )
 
 var (
-	ErrTaskNotFound         = errors.New("task not found")
-	ErrNotWorkspaceMember   = errors.New("you are not a member of this workspace")
-	ErrAssigneeNotMember    = errors.New("assignee is not a member of this workspace")
-	ErrInvalidTaskStatus    = errors.New("invalid task status")
-	ErrInvalidTaskPriority  = errors.New("invalid task priority")
+	ErrTaskNotFound        = errors.New("task not found")
+	ErrNotWorkspaceMember  = errors.New("you are not a member of this workspace")
+	ErrAssigneeNotMember   = errors.New("assignee is not a member of this workspace")
+	ErrInvalidTaskStatus   = errors.New("invalid task status")
+	ErrInvalidTaskPriority = errors.New("invalid task priority")
+	ErrInvalidTaskDates    = errors.New("task end date cannot be before its start date")
 )
 
 func mapTaskError(err error) (error, bool) {
@@ -36,25 +37,31 @@ func mapTaskError(err error) (error, bool) {
 		return ErrInvalidTaskStatus, true
 	case "45024":
 		return ErrInvalidTaskPriority, true
+	case "45025":
+		return ErrInvalidTaskDates, true
 	}
 	return nil, false
 }
 
 // scanTaskCore reads the columns returned by the task mutation functions
-// (create_task / assign_task / set_task_status). People details are filled by
-// the resolver from the team roster.
+// (create_task / update_task / assign_task / set_task_status). People details
+// are filled by the resolver from the team roster.
 func scanTaskCore(row pgxRow) (*types.TaskRow, error) {
 	var t types.TaskRow
 	err := row.Scan(
 		&t.ID, &t.TeamID, &t.CreatedBy, &t.AssigneeID,
 		&t.Title, &t.Description, &t.Status, &t.Priority,
-		&t.DueAt, &t.CompletedAt, &t.CreatedAt, &t.UpdatedAt,
+		&t.DueAt, &t.StartDate, &t.EndDate, &t.CompletedAt, &t.CreatedAt, &t.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &t, nil
 }
+
+// taskCoreColumns is the projection shared by every task mutation function.
+const taskCoreColumns = `id, team_id, created_by, assignee_id, title, description, status,
+		        priority, due_at, start_date, end_date, completed_at, created_at, updated_at`
 
 func CreateTask(
 	ctx context.Context,
@@ -63,13 +70,13 @@ func CreateTask(
 	assignee *uuid.UUID,
 	title, description, priority string,
 	dueAt *time.Time,
+	startDate, endDate *time.Time,
 ) (*types.TaskRow, error) {
 	row := pool.QueryRow(
 		ctx,
-		`SELECT id, team_id, created_by, assignee_id, title, description, status,
-		        priority, due_at, completed_at, created_at, updated_at
-		   FROM create_task($1, $2, $3, $4, $5, $6, $7)`,
-		teamID, createdBy, assignee, title, description, priority, dueAt,
+		`SELECT `+taskCoreColumns+`
+		   FROM create_task($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		teamID, createdBy, assignee, title, description, priority, dueAt, startDate, endDate,
 	)
 	t, err := scanTaskCore(row)
 	if err != nil {
@@ -89,8 +96,7 @@ func AssignTask(
 ) (*types.TaskRow, error) {
 	row := pool.QueryRow(
 		ctx,
-		`SELECT id, team_id, created_by, assignee_id, title, description, status,
-		        priority, due_at, completed_at, created_at, updated_at
+		`SELECT `+taskCoreColumns+`
 		   FROM assign_task($1, $2, $3)`,
 		taskID, actor, assignee,
 	)
@@ -112,8 +118,7 @@ func SetTaskStatus(
 ) (*types.TaskRow, error) {
 	row := pool.QueryRow(
 		ctx,
-		`SELECT id, team_id, created_by, assignee_id, title, description, status,
-		        priority, due_at, completed_at, created_at, updated_at
+		`SELECT `+taskCoreColumns+`
 		   FROM set_task_status($1, $2, $3)`,
 		taskID, userID, status,
 	)
@@ -136,8 +141,7 @@ func UpdateTaskDescription(
 ) (*types.TaskRow, error) {
 	row := pool.QueryRow(
 		ctx,
-		`SELECT id, team_id, created_by, assignee_id, title, description, status,
-		        priority, due_at, completed_at, created_at, updated_at
+		`SELECT `+taskCoreColumns+`
 		   FROM update_task_description($1, $2, $3)`,
 		taskID, actor, description,
 	)
@@ -152,7 +156,8 @@ func UpdateTaskDescription(
 }
 
 // UpdateTask patches a task's fields. A nil pointer keeps the current value;
-// a nil assignee clears the assignment.
+// a nil assignee clears the assignment. Passing clearStart/clearEnd removes the
+// planned window dates outright.
 func UpdateTask(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -161,13 +166,15 @@ func UpdateTask(
 	assignee *uuid.UUID,
 	status *string,
 	dueAt *time.Time,
+	startDate, endDate *time.Time,
+	clearStart, clearEnd bool,
 ) (*types.TaskRow, error) {
 	row := pool.QueryRow(
 		ctx,
-		`SELECT id, team_id, created_by, assignee_id, title, description, status,
-		        priority, due_at, completed_at, created_at, updated_at
-		   FROM update_task($1, $2, $3, $4, $5, $6, $7, $8)`,
+		`SELECT `+taskCoreColumns+`
+		   FROM update_task($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 		taskID, actor, title, description, priority, assignee, status, dueAt,
+		startDate, endDate, clearStart, clearEnd,
 	)
 	t, err := scanTaskCore(row)
 	if err != nil {
@@ -188,7 +195,7 @@ func TeamTasks(
 	rows, err := pool.Query(
 		ctx,
 		`SELECT task_id, team_id, title, description, status, priority, due_at,
-		        completed_at, created_at, updated_at,
+		        start_date, end_date, completed_at, created_at, updated_at,
 		        creator_id, creator_first, creator_surname,
 		        assignee_id, assignee_phone, assignee_first, assignee_surname
 		   FROM tasks_for_team($1, $2)`,
@@ -204,7 +211,7 @@ func TeamTasks(
 		var t types.TaskRow
 		if err := rows.Scan(
 			&t.ID, &t.TeamID, &t.Title, &t.Description, &t.Status, &t.Priority,
-			&t.DueAt, &t.CompletedAt, &t.CreatedAt, &t.UpdatedAt,
+			&t.DueAt, &t.StartDate, &t.EndDate, &t.CompletedAt, &t.CreatedAt, &t.UpdatedAt,
 			&t.CreatedBy, &t.CreatorFirst, &t.CreatorSurname,
 			&t.AssigneeID, &t.AssigneePhone, &t.AssigneeFirst, &t.AssigneeSurname,
 		); err != nil {

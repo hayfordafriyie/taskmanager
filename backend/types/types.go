@@ -89,6 +89,8 @@ type TaskRow struct {
 	Status      string
 	Priority    string
 	DueAt       *time.Time
+	StartDate   *time.Time
+	EndDate     *time.Time
 	CompletedAt *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

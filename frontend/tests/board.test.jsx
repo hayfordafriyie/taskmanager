@@ -34,6 +34,8 @@ vi.mock('../src/modules/tasks/hooks', () => {
           description: 'Draft the notes for v2.',
           status: 'TODO',
           priority: 'HIGH',
+          startDate: '2026-09-15T00:00:00Z',
+          endDate: '2026-09-20T00:00:00Z',
           createdAt: '2026-09-01T00:00:00Z',
           updatedAt: '2026-09-01T00:00:00Z',
           createdBy: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
@@ -115,6 +117,73 @@ describe('BoardView', () => {
     await user.click(await screen.findByRole('option', { name: 'Done' }))
     expect(taskHooks.statusMutate).toHaveBeenCalledWith(
       expect.objectContaining({ taskId: 't-1', status: 'DONE' }),
+      expect.any(Object),
+    )
+  })
+
+  it('shows the planned window on a card', () => {
+    renderWithProviders(<BoardView />)
+    expect(screen.getByText('15 Sep → 20 Sep')).toBeInTheDocument()
+  })
+
+  it('sends start and end dates when creating a task', async () => {
+    taskHooks.createMutate.mockClear()
+    renderWithProviders(<BoardView />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /Add task/ }))
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Plan the sprint')
+    await user.type(screen.getByLabelText('Start date'), '2026-10-01')
+    await user.type(screen.getByLabelText('End date'), '2026-10-15')
+    await user.click(screen.getByRole('button', { name: 'Add task' }))
+
+    expect(taskHooks.createMutate).toHaveBeenCalledWith(
+      {
+        input: expect.objectContaining({
+          title: 'Plan the sprint',
+          startDate: '2026-10-01T00:00:00.000Z',
+          endDate: '2026-10-15T00:00:00.000Z',
+        }),
+      },
+      expect.any(Object),
+    )
+  })
+
+  it('blocks a task whose end date is before its start date', async () => {
+    taskHooks.createMutate.mockClear()
+    renderWithProviders(<BoardView />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /Add task/ }))
+    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Backwards window')
+    await user.type(screen.getByLabelText('Start date'), '2026-10-20')
+    await user.type(screen.getByLabelText('End date'), '2026-10-01')
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'The end date cannot be before the start date.',
+    )
+    await user.click(screen.getByRole('button', { name: 'Add task' }))
+    expect(taskHooks.createMutate).not.toHaveBeenCalled()
+  })
+
+  it('pre-fills the dates when editing and clears one when blanked', async () => {
+    taskHooks.updateMutate.mockClear()
+    renderWithProviders(<BoardView />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Edit task Ship release notes' }))
+    expect(screen.getByLabelText('Start date')).toHaveValue('2026-09-15')
+    expect(screen.getByLabelText('End date')).toHaveValue('2026-09-20')
+
+    await user.clear(screen.getByLabelText('Start date'))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(taskHooks.updateMutate).toHaveBeenCalledWith(
+      {
+        taskId: 't-1',
+        input: expect.objectContaining({
+          startDate: null,
+          clearStartDate: true,
+          endDate: '2026-09-20T00:00:00.000Z',
+        }),
+      },
       expect.any(Object),
     )
   })

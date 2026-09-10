@@ -315,8 +315,10 @@ type ComplexityRoot struct {
 		CreatedBy   func(childComplexity int) int
 		Description func(childComplexity int) int
 		DueAt       func(childComplexity int) int
+		EndDate     func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Priority    func(childComplexity int) int
+		StartDate   func(childComplexity int) int
 		Status      func(childComplexity int) int
 		TeamID      func(childComplexity int) int
 		Title       func(childComplexity int) int
@@ -1827,6 +1829,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Task.DueAt(childComplexity), true
+	case "Task.endDate":
+		if e.ComplexityRoot.Task.EndDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Task.EndDate(childComplexity), true
 	case "Task.id":
 		if e.ComplexityRoot.Task.ID == nil {
 			break
@@ -1839,6 +1847,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Task.Priority(childComplexity), true
+	case "Task.startDate":
+		if e.ComplexityRoot.Task.StartDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Task.StartDate(childComplexity), true
 	case "Task.status":
 		if e.ComplexityRoot.Task.Status == nil {
 			break
@@ -2649,6 +2663,10 @@ func (ec *executionContext) childFields_Task(ctx context.Context, field graphql.
 		return ec.fieldContext_Task_priority(ctx, field)
 	case "dueAt":
 		return ec.fieldContext_Task_dueAt(ctx, field)
+	case "startDate":
+		return ec.fieldContext_Task_startDate(ctx, field)
+	case "endDate":
+		return ec.fieldContext_Task_endDate(ctx, field)
 	case "completedAt":
 		return ec.fieldContext_Task_completedAt(ctx, field)
 	case "createdAt":
@@ -9262,6 +9280,52 @@ func (ec *executionContext) fieldContext_Task_dueAt(_ context.Context, field gra
 	return graphql.NewScalarFieldContext("Task", field, false, false, errors.New("field of type Time does not have child fields"))
 }
 
+func (ec *executionContext) _Task_startDate(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Task_startDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Task_startDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Task", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Task_endDate(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Task_endDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Task_endDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Task", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
 func (ec *executionContext) _Task_completedAt(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11535,7 +11599,7 @@ func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, o
 		asMap["priority"] = "MEDIUM"
 	}
 
-	fieldsInOrder := [...]string{"title", "description", "priority", "dueAt", "assigneeId"}
+	fieldsInOrder := [...]string{"title", "description", "priority", "dueAt", "startDate", "endDate", "assigneeId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -11570,6 +11634,20 @@ func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.DueAt = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
 		case "assigneeId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assigneeId"))
 			data, err := ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
@@ -11651,7 +11729,14 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"title", "description", "priority", "status", "assigneeId"}
+	if _, present := asMap["clearStartDate"]; !present {
+		asMap["clearStartDate"] = false
+	}
+	if _, present := asMap["clearEndDate"]; !present {
+		asMap["clearEndDate"] = false
+	}
+
+	fieldsInOrder := [...]string{"title", "description", "priority", "status", "assigneeId", "startDate", "endDate", "clearStartDate", "clearEndDate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -11693,6 +11778,34 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.AssigneeID = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "clearStartDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearStartDate"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearStartDate = data
+		case "clearEndDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearEndDate"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearEndDate = data
 		}
 	}
 	return it, nil
@@ -13975,6 +14088,16 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "dueAt":
 			out.Values[i] = ec._Task_dueAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "startDate":
+			out.Values[i] = ec._Task_startDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "endDate":
+			out.Values[i] = ec._Task_endDate(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}

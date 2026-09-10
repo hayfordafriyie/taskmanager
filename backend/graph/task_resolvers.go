@@ -2,8 +2,10 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"taskmanager/graph/model"
 	"taskmanager/internal/db"
@@ -72,6 +74,8 @@ func (r *Resolver) taskModel(t *types.TaskRow, roster map[uuid.UUID]types.TeamMe
 		Status:      st,
 		Priority:    pr,
 		DueAt:       t.DueAt,
+		StartDate:   t.StartDate,
+		EndDate:     t.EndDate,
 		CompletedAt: t.CompletedAt,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,
@@ -189,7 +193,11 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input model.CreateTas
 		return nil, fmt.Errorf("load team: %w", err)
 	}
 
-	created, err := db.CreateTask(ctx, r.Pool, teamID, user.ID, input.AssigneeID, input.Title, description, priority, input.DueAt)
+	if err := validateTaskDates(input.StartDate, input.EndDate); err != nil {
+		return r.taskFail(err.Error()), nil
+	}
+
+	created, err := db.CreateTask(ctx, r.Pool, teamID, user.ID, input.AssigneeID, input.Title, description, priority, input.DueAt, input.StartDate, input.EndDate)
 	if err != nil {
 		switch err {
 		case db.ErrAssigneeNotMember, db.ErrNotWorkspaceMember:
@@ -324,6 +332,18 @@ func (r *mutationResolver) SetTaskStatus(ctx context.Context, taskID uuid.UUID, 
 	return &model.TaskResult{Success: true, Message: "task updated", Task: task}, nil
 }
 
+// validateTaskDates rejects a planned window that ends before it starts. Both
+// bounds are optional, so a nil side is always allowed.
+func validateTaskDates(start, end *time.Time) error {
+	if start == nil || end == nil {
+		return nil
+	}
+	if end.Before(*start) {
+		return errors.New("task end date cannot be before its start date")
+	}
+	return nil
+}
+
 // notifyTaskUser creates an in-app notification; failures are non-fatal.
 func (r *Resolver) notifyTaskUser(ctx context.Context, userID uuid.UUID, kind, title, body string, taskID *uuid.UUID) {
 	if _, err := db.CreateNotification(ctx, r.Pool, userID, kind, title, body, taskID); err != nil {
@@ -358,10 +378,21 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, taskID uuid.UUID, inp
 		status = &s
 	}
 
-	updated, err := db.UpdateTask(ctx, r.Pool, taskID, user.ID, title, description, priority, input.AssigneeID, status, nil)
+	// Dates are validated here for a friendly message; update_task re-checks the
+	// resulting window so a keep-existing value can never break the ordering rule.
+	clearStart := input.ClearStartDate != nil && *input.ClearStartDate
+	clearEnd := input.ClearEndDate != nil && *input.ClearEndDate
+	if !clearStart && !clearEnd {
+		if err := validateTaskDates(input.StartDate, input.EndDate); err != nil {
+			return r.taskFail(err.Error()), nil
+		}
+	}
+
+	updated, err := db.UpdateTask(ctx, r.Pool, taskID, user.ID, title, description, priority, input.AssigneeID, status, nil,
+		input.StartDate, input.EndDate, clearStart, clearEnd)
 	if err != nil {
 		switch err {
-		case db.ErrTaskNotFound, db.ErrNotWorkspaceMember, db.ErrAssigneeNotMember, db.ErrInvalidTaskStatus, db.ErrInvalidTaskPriority:
+		case db.ErrTaskNotFound, db.ErrNotWorkspaceMember, db.ErrAssigneeNotMember, db.ErrInvalidTaskStatus, db.ErrInvalidTaskPriority, db.ErrInvalidTaskDates:
 			return r.taskFail(err.Error()), nil
 		default:
 			return nil, fmt.Errorf("update task: %w", err)

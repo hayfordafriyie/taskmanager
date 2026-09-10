@@ -9,6 +9,7 @@ import {
 } from "@radix-ui/react-icons";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../dashboard/hooks";
+import { formatWindow } from "../tasks/dates";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -169,6 +170,9 @@ export function DashboardView() {
                     </p>
                     <p className="truncate text-xs t-soft">
                       {STATUS_LABEL[t.status] || t.status} · Due {dueLabel(t.dueAt)}
+                      {formatWindow(t.startDate, t.endDate)
+                        ? ` · ${formatWindow(t.startDate, t.endDate)}`
+                        : ""}
                     </p>
                   </div>
                   <span

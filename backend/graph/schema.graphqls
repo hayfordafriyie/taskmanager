@@ -118,6 +118,8 @@ type Task {
   status: TaskStatus!
   priority: Priority!
   dueAt: Time
+  startDate: Time
+  endDate: Time
   completedAt: Time
   createdAt: Time!
   updatedAt: Time!
@@ -136,6 +138,8 @@ input CreateTaskInput {
   description: String = ""
   priority: Priority = MEDIUM
   dueAt: Time
+  startDate: Time
+  endDate: Time
   assigneeId: UUID
 }
 
@@ -145,6 +149,12 @@ input UpdateTaskInput {
   priority: Priority
   status: TaskStatus
   assigneeId: UUID
+  startDate: Time
+  endDate: Time
+  "Removes the start date instead of leaving it untouched."
+  clearStartDate: Boolean = false
+  "Removes the end date instead of leaving it untouched."
+  clearEndDate: Boolean = false
 }
 
 type Notification {

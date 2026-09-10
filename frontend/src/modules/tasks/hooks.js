@@ -12,6 +12,8 @@ const taskFields = `
   status
   priority
   dueAt
+  startDate
+  endDate
   completedAt
   createdAt
   updatedAt

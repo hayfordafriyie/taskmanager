@@ -56,6 +56,8 @@ type CreateTaskInput struct {
 	Description *string    `json:"description,omitempty"`
 	Priority    *Priority  `json:"priority,omitempty"`
 	DueAt       *time.Time `json:"dueAt,omitempty"`
+	StartDate   *time.Time `json:"startDate,omitempty"`
+	EndDate     *time.Time `json:"endDate,omitempty"`
 	AssigneeID  *uuid.UUID `json:"assigneeId,omitempty"`
 }
 
@@ -269,6 +271,8 @@ type Task struct {
 	Status      TaskStatus `json:"status"`
 	Priority    Priority   `json:"priority"`
 	DueAt       *time.Time `json:"dueAt,omitempty"`
+	StartDate   *time.Time `json:"startDate,omitempty"`
+	EndDate     *time.Time `json:"endDate,omitempty"`
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
@@ -331,6 +335,12 @@ type UpdateTaskInput struct {
 	Priority    *Priority   `json:"priority,omitempty"`
 	Status      *TaskStatus `json:"status,omitempty"`
 	AssigneeID  *uuid.UUID  `json:"assigneeId,omitempty"`
+	StartDate   *time.Time  `json:"startDate,omitempty"`
+	EndDate     *time.Time  `json:"endDate,omitempty"`
+	// Removes the start date instead of leaving it untouched.
+	ClearStartDate *bool `json:"clearStartDate,omitempty"`
+	// Removes the end date instead of leaving it untouched.
+	ClearEndDate *bool `json:"clearEndDate,omitempty"`
 }
 
 type User struct {
