@@ -37,14 +37,3 @@ export const STATUS_COLOR = {
   DONE: "#10b981",
 };
 
-export function donutGradient(slices) {
-  let acc = 0;
-  const stops = slices
-    .filter((s) => s.percent > 0)
-    .map((s) => {
-      const from = acc;
-      acc += s.percent;
-      return `${STATUS_COLOR[s.key] || "#a1a1aa"} ${from}% ${acc}%`;
-    });
-  return stops.length ? `conic-gradient(${stops.join(", ")})` : "conic-gradient(#e4e4e7 0% 100%)";
-}

@@ -8,10 +8,6 @@ vi.mock('../src/modules/auth/AuthContext', () => ({
 }))
 
 vi.mock('../src/modules/reports/hooks', () => ({
-  donutGradient: (slices) =>
-    slices.some((s) => s.percent > 0)
-      ? `conic-gradient(#0ea5e9 0% 40%, #10b981 40% 100%)`
-      : 'conic-gradient(#e4e4e7 0% 100%)',
   useReports: () => ({
     isLoading: false,
     data: {
@@ -41,11 +37,14 @@ describe('ReportsView', () => {
   it('renders API headline totals', () => {
     renderWithProviders(<ReportsView />)
     expect(screen.getByRole('heading', { name: 'Reports' })).toBeInTheDocument()
-    expect(screen.getByText('Total tasks')).toBeInTheDocument()
-    expect(screen.getByText('10')).toBeInTheDocument()
-    expect(screen.getByText('Completion rate')).toBeInTheDocument()
-    expect(screen.getByText('60%')).toBeInTheDocument()
-    expect(screen.getByText('Overdue')).toBeInTheDocument()
+
+    // Read each headline through its own card: the donut centre and legend reuse
+    // the same numbers, so a bare text query would be ambiguous.
+    const stat = (label) => screen.getByText(label).parentElement.textContent
+    expect(stat('Total tasks')).toContain('10')
+    expect(stat('Completed')).toContain('6')
+    expect(stat('Overdue')).toContain('1')
+    expect(stat('Completion rate')).toContain('60%')
   })
 
   it('renders the completion chart, status mix and workload rows', () => {

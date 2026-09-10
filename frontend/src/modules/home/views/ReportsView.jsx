@@ -1,7 +1,8 @@
 import { BarChartIcon, PieChartIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader } from "../ui";
 import { useAuth } from "../../auth/AuthContext";
-import { useReports, donutGradient } from "../../reports/hooks";
+import { useReports } from "../../reports/hooks";
+import DonutChart from "../../../components/DonutChart";
 
 const WORKLOAD_BAR = ["bg-sky-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-zinc-400"];
 
@@ -73,24 +74,17 @@ export function ReportsView() {
             <PieChartIcon width={16} height={16} className="t-faint" />
             <h2 className="font-display text-sm font-semibold t-ink">Tasks by status</h2>
           </header>
-          <div className="mt-4 flex items-center gap-6">
-            <div
-              className="h-32 w-32 shrink-0 rounded-full"
-              style={{ background: donutGradient(byStatus) }}
-              aria-hidden="true"
+          <div className="mt-4">
+            <DonutChart
+              ariaLabel="Tasks by status"
+              centerCaption="tasks"
+              data={byStatus.map((s) => ({
+                key: s.key,
+                label: s.label,
+                count: s.count,
+                color: SLICE_COLOR[s.key] || "#a1a1aa",
+              }))}
             />
-            <ul className="space-y-2">
-              {byStatus.map((s) => (
-                <li key={s.key} className="flex items-center gap-2 text-sm">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: SLICE_COLOR[s.key] || "#a1a1aa" }}
-                  />
-                  <span className="t-soft">{s.label}</span>
-                  <span className="ml-auto pl-4 font-medium t-ink">{s.count}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </Panel>
 
