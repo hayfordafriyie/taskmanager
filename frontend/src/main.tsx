@@ -6,9 +6,14 @@ import '@fontsource-variable/space-grotesk'
 import '@fontsource-variable/jetbrains-mono'
 import './index.css'
 import { queryClient } from './lib/queryClient'
-import App from './App.jsx'
+import App from './App'
 
-createRoot(document.getElementById('root')).render(
+const container = document.getElementById('root')
+if (!container) {
+  throw new Error('root element not found')
+}
+
+createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />

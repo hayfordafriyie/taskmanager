@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { gql, setTokens } from "../../../lib/api";
+import type { ApiResponse } from "../../../types/api";
+import type { LoginData, LoginVariables } from "../../../types/auth";
 
 export function useLogin() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ phone, password }) =>
-      gql(
+  return useMutation<ApiResponse<LoginData>, Error, LoginVariables>({
+    mutationFn: ({ phone, password }: LoginVariables) =>
+      gql<LoginData>(
         `mutation ($phone: String!, $password: String!) {
           login(phone: $phone, password: $password) {
             success message accessToken refreshToken user { id phone firstName surname otherNames }

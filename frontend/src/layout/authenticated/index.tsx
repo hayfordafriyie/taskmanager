@@ -41,7 +41,9 @@ export default function AuthenticatedLayout() {
               <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
                 <Tooltip
                   content={
-                    theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+                    theme === "dark"
+                      ? "Switch to light mode"
+                      : "Switch to dark mode"
                   }
                 >
                   <Button
