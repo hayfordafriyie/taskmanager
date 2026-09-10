@@ -56,17 +56,23 @@ func TestSwitchBetweenOwnAndJoinedTeamKeepsDataSeparate(t *testing.T) {
 	if len(teams) != 2 {
 		t.Fatalf("expected the invitee to belong to 2 workspaces, got %v", teams)
 	}
-	activeID, ownedID, joinedRole := "", "", ""
+	activeID, ownedID, joinedRole, joinedOwner := "", "", "", ""
 	for _, raw := range teams {
 		ws := raw.(map[string]any)
 		id, _ := ws["id"].(string)
 		if ws["isActive"] == true {
 			activeID = id
 			joinedRole, _ = ws["role"].(string)
+			joinedOwner, _ = ws["ownerName"].(string)
 		}
 		if ws["isOwner"] == true {
 			ownedID = id
 		}
+	}
+	// The generic team name cannot distinguish workspaces, so the owner's name
+	// must be exposed for joined teams (it is what the UI labels them with).
+	if joinedOwner == "" {
+		t.Errorf("expected the joined workspace to report its owner's name: %v", teams)
 	}
 	if activeID != ownerTeamID {
 		t.Errorf("expected the joined team to be active, got %q want %q", activeID, ownerTeamID)

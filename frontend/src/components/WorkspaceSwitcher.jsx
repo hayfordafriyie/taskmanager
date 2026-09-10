@@ -4,6 +4,16 @@ import { useMyTeams, useSwitchTeam } from "../modules/invite/hooks";
 import { useToast } from "./Toast";
 import { initialsOf } from "../modules/home/ui";
 
+// Every account's private workspace is created as "Personal Workspace", so a
+// joined team is labelled with its owner's name instead — otherwise the switcher
+// would list several identical entries with no way to tell them apart.
+export function workspaceLabel(team) {
+  if (!team) return "";
+  if (team.isOwner) return team.name;
+  if (team.ownerName) return `${team.ownerName}'s workspace`;
+  return team.name;
+}
+
 /**
  * Workspace switcher: a user keeps a workspace of their own and can belong to
  * other teams, so the header needs a way to move between them. Switching swaps
@@ -40,7 +50,7 @@ export default function WorkspaceSwitcher() {
   return (
     <Popover.Root>
       <Popover.Trigger
-        aria-label={`Workspace: ${active?.name ?? "none"}. Switch workspace`}
+        aria-label={`Workspace: ${workspaceLabel(active) || "none"}. Switch workspace`}
         className="control flex min-w-0 items-center gap-2 rounded-full py-1.5 pl-1.5 pr-2.5 text-left text-xs sm:text-sm"
       >
         <span
@@ -49,8 +59,11 @@ export default function WorkspaceSwitcher() {
         >
           {initialsOf({ firstName: active?.name }, "?")}
         </span>
-        <span className="hidden min-w-0 max-w-[8rem] truncate sm:inline" title={active?.name}>
-          {active?.name}
+        <span
+          className="hidden min-w-0 max-w-[9rem] truncate sm:inline"
+          title={active ? `${workspaceLabel(active)} (${active.name})` : ""}
+        >
+          {workspaceLabel(active)}
         </span>
         <span className="shrink-0 text-[10px] uppercase tracking-wide t-faint">
           {active?.isOwner ? "Owner" : active?.role}
@@ -73,7 +86,7 @@ export default function WorkspaceSwitcher() {
                 <button
                   type="button"
                   onClick={() => handleSwitch(team)}
-                  aria-label={`Switch to ${team.name}`}
+                  aria-label={`Switch to ${workspaceLabel(team)}`}
                   className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-[var(--accent-tint)]"
                 >
                   <span
@@ -83,8 +96,11 @@ export default function WorkspaceSwitcher() {
                     {initialsOf({ firstName: team.name }, "?")}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm t-ink" title={team.name}>
-                      {team.name}
+                    <span
+                      className="block truncate text-sm t-ink"
+                      title={team.isOwner ? team.name : `${workspaceLabel(team)} (${team.name})`}
+                    >
+                      {workspaceLabel(team)}
                     </span>
                     <span className="block text-[11px] t-faint">
                       {team.isOwner ? "My workspace" : `${team.role} · ${team.memberCount} member${team.memberCount === 1 ? "" : "s"}`}

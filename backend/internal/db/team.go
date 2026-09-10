@@ -215,10 +215,12 @@ func mapInviteError(err error) (error, bool) {
 }
 
 // TeamsForUser lists every workspace the user belongs to (owned or joined),
-// flagging which one is active so the UI can offer a switcher.
+// flagging which one is active and naming the owner — every account's private
+// workspace is called "Personal Workspace", so the owner's name is what makes a
+// joined team distinguishable in the UI.
 func TeamsForUser(ctx context.Context, pool *pgxpool.Pool, userID uuid.UUID) ([]types.TeamSummaryRow, error) {
 	rows, err := pool.Query(ctx,
-		`SELECT out_team_id, out_name, out_role, out_is_owner, out_is_active, out_members, out_created_at
+		`SELECT out_team_id, out_name, out_role, out_is_owner, out_is_active, out_members, out_owner_name, out_created_at
 		   FROM teams_for_user($1)`, userID)
 	if err != nil {
 		return nil, err
@@ -228,7 +230,7 @@ func TeamsForUser(ctx context.Context, pool *pgxpool.Pool, userID uuid.UUID) ([]
 	list := make([]types.TeamSummaryRow, 0, 4)
 	for rows.Next() {
 		var r types.TeamSummaryRow
-		if err := rows.Scan(&r.ID, &r.Name, &r.Role, &r.IsOwner, &r.IsActive, &r.MemberCount, &r.CreatedAt); err != nil {
+		if err := rows.Scan(&r.ID, &r.Name, &r.Role, &r.IsOwner, &r.IsActive, &r.MemberCount, &r.OwnerName, &r.CreatedAt); err != nil {
 			return nil, err
 		}
 		list = append(list, r)

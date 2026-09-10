@@ -316,6 +316,7 @@ type TeamSummary struct {
 	IsOwner     bool      `json:"isOwner"`
 	IsActive    bool      `json:"isActive"`
 	MemberCount int32     `json:"memberCount"`
+	OwnerName   *string   `json:"ownerName,omitempty"`
 }
 
 type TimeEntry struct {

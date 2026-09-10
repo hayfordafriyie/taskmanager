@@ -23,8 +23,9 @@ vi.mock('../src/components/Toast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
 
-const OWN = { id: 'team-own', name: 'Personal Workspace', role: 'ADMIN', isOwner: true, isActive: false, memberCount: 1 }
-const JOINED = { id: 'team-joined', name: 'Akosua Trading', role: 'MEMBER', isOwner: false, isActive: true, memberCount: 3 }
+// Both workspaces share the generated name, exactly like production.
+const OWN = { id: 'team-own', name: 'Personal Workspace', role: 'ADMIN', isOwner: true, isActive: false, memberCount: 1, ownerName: 'Ama Osei' }
+const JOINED = { id: 'team-joined', name: 'Personal Workspace', role: 'MEMBER', isOwner: false, isActive: true, memberCount: 3, ownerName: 'Hayford Afriyie' }
 
 describe('WorkspaceSwitcher', () => {
   beforeEach(() => {
@@ -41,8 +42,9 @@ describe('WorkspaceSwitcher', () => {
   it('shows the active workspace and its role', () => {
     teamsState.data = [JOINED, OWN]
     renderWithProviders(<WorkspaceSwitcher />)
-    const trigger = screen.getByRole('button', { name: /Workspace: Akosua Trading/ })
-    expect(trigger).toHaveTextContent('Akosua Trading')
+    // A joined workspace is named after its owner, not the generic team name.
+    const trigger = screen.getByRole('button', { name: /Workspace: Hayford Afriyie's workspace/ })
+    expect(trigger).toHaveTextContent("Hayford Afriyie's workspace")
     expect(trigger).toHaveTextContent(/member/i)
   })
 
@@ -54,7 +56,7 @@ describe('WorkspaceSwitcher', () => {
 
     const own = await screen.findByRole('button', { name: 'Switch to Personal Workspace' })
     expect(own).toHaveTextContent('My workspace')
-    const joined = screen.getByRole('button', { name: 'Switch to Akosua Trading' })
+    const joined = screen.getByRole('button', { name: "Switch to Hayford Afriyie's workspace" })
     expect(joined).toHaveTextContent('MEMBER')
     expect(joined).toHaveTextContent('3 members')
   })
@@ -75,7 +77,7 @@ describe('WorkspaceSwitcher', () => {
     renderWithProviders(<WorkspaceSwitcher />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Workspace:/ }))
-    await user.click(await screen.findByRole('button', { name: 'Switch to Akosua Trading' }))
+    await user.click(await screen.findByRole('button', { name: "Switch to Hayford Afriyie's workspace" }))
 
     expect(switchMutate).not.toHaveBeenCalled()
   })

@@ -102,7 +102,7 @@ export function useMyTeams() {
   return useQuery({
     queryKey: TEAMS_KEY,
     queryFn: async () => {
-      const res = await gql(`query { myTeams { id name role isOwner isActive memberCount } }`);
+      const res = await gql(`query { myTeams { id name role isOwner isActive memberCount ownerName } }`);
       return res?.data?.myTeams ?? [];
     },
     retry: false,

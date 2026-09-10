@@ -36,6 +36,7 @@ func (r *queryResolver) MyTeams(ctx context.Context) ([]*model.TeamSummary, erro
 			IsOwner:     rows[i].IsOwner,
 			IsActive:    rows[i].IsActive,
 			MemberCount: rows[i].MemberCount,
+			OwnerName:   &rows[i].OwnerName,
 		})
 	}
 	return teams, nil

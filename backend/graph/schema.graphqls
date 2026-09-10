@@ -79,6 +79,7 @@ type TeamSummary {
   isOwner: Boolean!
   isActive: Boolean!
   memberCount: Int!
+  ownerName: String
 }
 
 type SwitchTeamResult {

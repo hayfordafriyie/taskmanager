@@ -227,5 +227,6 @@ type TeamSummaryRow struct {
 	IsOwner     bool
 	IsActive    bool
 	MemberCount int32
+	OwnerName   string
 	CreatedAt   time.Time
 }
