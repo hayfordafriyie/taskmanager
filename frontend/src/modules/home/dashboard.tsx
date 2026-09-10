@@ -9,9 +9,21 @@ import {
 } from "@radix-ui/react-icons";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../dashboard/hooks";
+import { initialsOf } from "./ui";
 import { formatWindow, taskDateLabel } from "../tasks/dates";
+import type { ISODateString } from "../../types/common";
+import type {
+  DashboardActivity,
+  DashboardDay,
+  DashboardSectionHeaderProps,
+  DashboardSlice,
+  DashboardStat,
+  DashboardTask,
+  TaskPriority,
+  TaskStatus,
+} from "../../types/dashboard";
 
-function greeting() {
+function greeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
@@ -19,7 +31,7 @@ function greeting() {
   return "Good night";
 }
 
-function todayLabel() {
+function todayLabel(): string {
   return new Date().toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
@@ -27,29 +39,29 @@ function todayLabel() {
   });
 }
 
-const PRIORITY_LABEL = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
-const STATUS_LABEL = {
+const PRIORITY_LABEL: Record<TaskPriority, string> = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
+const STATUS_LABEL: Record<TaskStatus, string> = {
   TODO: "To do",
   IN_PROGRESS: "In progress",
   REVIEW: "Review",
   DONE: "Done",
 };
 
-const BREAKDOWN_BAR = {
+const BREAKDOWN_BAR: Record<string, string> = {
   IN_PROGRESS: "bg-sky-500",
   REVIEW: "bg-amber-500",
   TODO: "bg-zinc-400",
   DONE: "bg-emerald-500",
 };
 
-const priorityTint = {
+const priorityTint: Record<string, string> = {
   High: "tone-red",
   Medium: "tone-amber",
   Low: "tone-neutral",
 };
 
 
-function relativeTime(iso) {
+function relativeTime(iso: ISODateString): string {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const min = Math.floor(diff / 60000);
   if (min < 1) return "just now";
@@ -59,12 +71,7 @@ function relativeTime(iso) {
   return `${Math.floor(hr / 24)}d ago`;
 }
 
-function initialsOf(person) {
-  if (!person) return "?";
-  return `${person.firstName?.[0] ?? ""}${person.surname?.[0] ?? ""}`.toUpperCase() || "?";
-}
-
-function SectionHeader({ title, icon: Icon }) {
+function SectionHeader({ title, icon: Icon }: DashboardSectionHeaderProps) {
   return (
     <header className="flex items-center gap-2">
       <Icon width={16} height={16} className="t-faint" />
@@ -79,7 +86,7 @@ export function DashboardView() {
   const { user } = useAuth();
   const { data, isLoading } = useDashboard({ enabled: !!user?.id });
 
-  const stats = [
+  const stats: DashboardStat[] = [
     {
       label: "Tasks done today",
       value: data?.stats?.doneToday ?? 0,
@@ -106,11 +113,11 @@ export function DashboardView() {
     },
   ];
 
-  const upcoming = data?.upcomingTasks ?? [];
-  const breakdown = data?.statusBreakdown ?? [];
-  const activity = data?.activity ?? [];
-  const week = data?.dueThisWeek ?? [];
-  const completedToday = data?.completedToday ?? 0;
+  const upcoming: DashboardTask[] = data?.upcomingTasks ?? [];
+  const breakdown: DashboardSlice[] = data?.statusBreakdown ?? [];
+  const activity: DashboardActivity[] = data?.activity ?? [];
+  const week: DashboardDay[] = data?.dueThisWeek ?? [];
+  const completedToday: number = data?.completedToday ?? 0;
 
   return (
     <div>

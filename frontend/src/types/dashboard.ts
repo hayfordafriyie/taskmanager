@@ -7,8 +7,10 @@
  * the home cards render, so they get their own shape here instead of the full
  * `Task` entity.
  */
+import type { ReactNode } from "react";
 import type { ID, ISODateString, User } from "./common";
 import type { NotificationKind } from "./notifications";
+import type { IconComponent } from "./ui";
 
 /** Task states, mirroring the GraphQL `TaskStatus` enum. */
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
@@ -80,4 +82,23 @@ export interface Dashboard {
 /** Response data of the `dashboard` query. */
 export interface DashboardData {
   dashboard: Dashboard;
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard view (`modules/home/dashboard`)
+// ---------------------------------------------------------------------------
+
+/** One headline counter card in the dashboard's stat grid. */
+export interface DashboardStat {
+  label: string;
+  value: number;
+  Icon: IconComponent;
+  /** Tailwind text-colour classes applied to the card's icon. */
+  tint: string;
+}
+
+/** Props of the dashboard's local section header (icon + title row). */
+export interface DashboardSectionHeaderProps {
+  title: ReactNode;
+  icon: IconComponent;
 }

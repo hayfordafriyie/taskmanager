@@ -3,37 +3,44 @@ import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react
 import { Panel, ViewHeader } from "../ui";
 import { useAuth } from "../../auth/AuthContext";
 import { useTeamTasks, toApiStatus } from "../../tasks/hooks";
+import type {
+  CalendarDayCellProps,
+  CalendarFilter,
+  CalendarFilterOption,
+  DatedTask,
+} from "../../../types/dates";
+import type { Task, TaskStatus } from "../../../types/tasks";
 
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const weekdays: readonly string[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const FILTERS = [
+const FILTERS: readonly CalendarFilterOption[] = [
   { key: "all", label: "All" },
   { key: "assigned", label: "Assigned to me" },
   { key: "created", label: "Created by me" },
 ];
 
-const STATUS_LABEL = {
+const STATUS_LABEL: Record<TaskStatus, string> = {
   TODO: "To do",
   IN_PROGRESS: "In progress",
   REVIEW: "Review",
   DONE: "Done",
 };
 
-const STATUS_TONE = {
+const STATUS_TONE: Record<TaskStatus, string> = {
   TODO: "tone-neutral",
   IN_PROGRESS: "tone-indigo",
   REVIEW: "tone-amber",
   DONE: "tone-emerald",
 };
 
-const STATUS_DOT = {
+const STATUS_DOT: Record<TaskStatus, string> = {
   TODO: "bg-zinc-400/80",
   IN_PROGRESS: "bg-sky-400/80",
   REVIEW: "bg-amber-400/80",
   DONE: "bg-emerald-400/80",
 };
 
-function sameDay(a, b) {
+function sameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
@@ -41,11 +48,11 @@ function sameDay(a, b) {
   );
 }
 
-function statusOf(task) {
+function statusOf(task: Task): TaskStatus {
   return toApiStatus(task.status);
 }
 
-function DayCell({ day, tasks, isToday }) {
+function DayCell({ day, tasks, isToday }: CalendarDayCellProps) {
   if (day == null) {
     return <div aria-hidden="true" />;
   }
@@ -112,10 +119,12 @@ export function CalendarView() {
   const { data: tasks = [], isLoading } = useTeamTasks({ enabled: !!user?.id });
 
   const today = useMemo(() => new Date(), []);
-  const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const [filter, setFilter] = useState("all");
+  const [cursor, setCursor] = useState<Date>(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  );
+  const [filter, setFilter] = useState<CalendarFilter>("all");
 
-  const visibleTasks = useMemo(() => {
+  const visibleTasks = useMemo<Task[]>(() => {
     return tasks.filter((t) => {
       if (filter === "assigned") return t.assignee?.id === user?.id;
       if (filter === "created") return t.createdBy?.id === user?.id;
@@ -124,16 +133,17 @@ export function CalendarView() {
   }, [tasks, filter, user?.id]);
 
   // Tasks are placed on their due date; tasks without one are summarised below.
-  const dated = visibleTasks.filter((t) => t.dueAt);
+  const dated = visibleTasks.filter((t): t is DatedTask => Boolean(t.dueAt));
   const undated = visibleTasks.length - dated.length;
 
-  const byDay = useMemo(() => {
-    const map = new Map();
+  const byDay = useMemo<Map<string, Task[]>>(() => {
+    const map = new Map<string, Task[]>();
     for (const t of dated) {
       const d = new Date(t.dueAt);
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
       if (!map.has(key)) map.set(key, []);
-      map.get(key).push(t);
+      const bucket = map.get(key);
+      if (bucket) bucket.push(t);
     }
     return map;
   }, [dated]);
@@ -151,7 +161,7 @@ export function CalendarView() {
   });
   const doneThisMonth = dueThisMonth.filter((t) => statusOf(t) === "DONE").length;
 
-  function shiftMonth(delta) {
+  function shiftMonth(delta: number): void {
     setCursor((c) => new Date(c.getFullYear(), c.getMonth() + delta, 1));
   }
 
