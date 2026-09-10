@@ -94,8 +94,8 @@ describe('InboxView', () => {
   it('opens the existing conversation instead of creating a new one', async () => {
     const user = userEvent.setup()
     renderWithProviders(<InboxView />)
-    await user.click(screen.getByRole('combobox', { name: 'New chat' }))
-    await user.click(await screen.findByRole('option', { name: 'Kojo Afriyie · open chat' }))
+    await user.click(screen.getByRole('button', { name: 'New chat' }))
+    await user.click(screen.getByRole('button', { name: 'Continue chat with Kojo Afriyie' }))
     expect(chatHooks.startSpy).not.toHaveBeenCalled()
     expect(screen.getByText('Hello there')).toBeInTheDocument()
   })
@@ -103,8 +103,8 @@ describe('InboxView', () => {
   it('creates a conversation for a teammate with no existing chat', async () => {
     const user = userEvent.setup()
     renderWithProviders(<InboxView />)
-    await user.click(screen.getByRole('combobox', { name: 'New chat' }))
-    await user.click(await screen.findByRole('option', { name: 'Yaw Mensah' }))
+    await user.click(screen.getByRole('button', { name: 'New chat' }))
+    await user.click(screen.getByRole('button', { name: 'Start chat with Yaw Mensah' }))
     expect(chatHooks.startSpy).toHaveBeenCalledWith('u-3', expect.any(Object))
   })
 })

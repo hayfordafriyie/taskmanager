@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { PlusIcon, PersonIcon } from "@radix-ui/react-icons";
+import { PlusIcon, PersonIcon, Pencil2Icon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, Avatar } from "../ui";
 import Select from "../../../components/Select";
+import Modal from "../../../components/Modal";
 import { useMyTeam } from "../../invite/hooks";
 import {
   useTeamTasks,
   useCreateTask,
   useAssignTask,
   useSetTaskStatus,
-  useUpdateTaskDescription,
+  useUpdateTask,
   toApiStatus,
 } from "../../tasks/hooks";
 import { useToast } from "../../../components/Toast";
@@ -62,12 +63,14 @@ export function BoardView() {
   const createTask = useCreateTask();
   const assignTask = useAssignTask();
   const setStatus = useSetTaskStatus();
-  const updateDescription = useUpdateTaskDescription();
+  const updateTask = useUpdateTask();
 
-  const [showAdd, setShowAdd] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
+  const [status, defineStatus] = useState("TODO");
   const [assigneeId, setAssigneeId] = useState("");
   const [dragId, setDragId] = useState(null);
   const [overCol, setOverCol] = useState(null);
@@ -75,37 +78,60 @@ export function BoardView() {
   const members = team?.members ?? [];
   const busy = createTask.isPending || setStatus.isPending || assignTask.isPending;
 
-  function handleAdd(e) {
+  function openAdd() {
+    setEditingTask(null);
+    setTitle("");
+    setDescription("");
+    setPriority("MEDIUM");
+    defineStatus("TODO");
+    setAssigneeId("");
+    setModalOpen(true);
+  }
+
+  function openEdit(task) {
+    setEditingTask(task);
+    setTitle(task.title);
+    setDescription(task.description || "");
+    setPriority(task.priority || "MEDIUM");
+    defineStatus(task.status || "TODO");
+    setAssigneeId(task.assignee?.id ?? "");
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditingTask(null);
+  }
+
+  function handleSubmit(e) {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Enter a task title first.");
       return;
     }
-    createTask.mutate(
-      {
-        input: {
-          title: title.trim(),
-          description: description.trim(),
-          priority,
-          assigneeId: assigneeId || null,
-        },
+    const input = {
+      title: title.trim(),
+      description: description.trim(),
+      priority,
+      assigneeId: assigneeId || null,
+    };
+    const options = {
+      onSuccess: (res) => {
+        const r = editingTask ? res?.data?.updateTask : res?.data?.createTask;
+        if (r?.success) {
+          closeModal();
+          toast.success(r.message);
+        } else {
+          toast.error(r?.message || "Could not save the task.");
+        }
       },
-      {
-        onSuccess: (res) => {
-          const r = res?.data?.createTask;
-          if (r?.success) {
-            setTitle("");
-            setDescription("");
-            setAssigneeId("");
-            setShowAdd(false);
-            toast.success(r.message);
-          } else {
-            toast.error(r?.message || "Could not create the task.");
-          }
-        },
-        onError: (err) => toast.error(err.message),
-      },
-    );
+      onError: (err) => toast.error(err.message),
+    };
+    if (editingTask) {
+      updateTask.mutate({ taskId: editingTask.id, input: { ...input, status } }, options);
+    } else {
+      createTask.mutate({ input }, options);
+    }
   }
 
   function dropOn(columnKey) {
@@ -132,9 +158,9 @@ export function BoardView() {
         <div className="seg">
           <button
             type="button"
-            onClick={() => setShowAdd((s) => !s)}
+            onClick={openAdd}
             className="seg-btn"
-            aria-expanded={showAdd}
+            aria-haspopup="dialog"
           >
             <PlusIcon width={14} height={14} />
             Add task
@@ -142,34 +168,55 @@ export function BoardView() {
         </div>
       </div>
 
-      {showAdd && (
-        <Panel className="mt-3">
-          <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex min-w-0 flex-1 flex-col gap-3">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium t-soft">Title</span>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="What needs doing?"
-                  aria-label="Task title"
-                  className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium t-soft">
-                  Description <span className="t-faint">(optional)</span>
-                </span>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Add more detail…"
-                  aria-label="Description"
-                  rows={2}
-                  className="control w-full resize-y rounded-[0.85rem] px-3.5 py-2.5 text-sm"
-                />
-              </label>
-            </div>
+      <Modal
+        open={modalOpen}
+        onOpenChange={(o) => {
+          if (!o) closeModal();
+        }}
+        title={editingTask ? "Edit task" : "New task"}
+        description={editingTask ? "Update the task details." : "Describe the work to be done."}
+        footer={
+          <>
+            <button type="button" onClick={closeModal} className="btn-gloss-ghost rounded-full px-5 py-2.5 text-sm">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="task-form"
+              disabled={busy}
+              className="btn-gloss-primary rounded-full px-5 py-2.5 text-sm"
+            >
+              {busy ? "Saving…" : editingTask ? "Save changes" : "Add task"}
+            </button>
+          </>
+        }
+      >
+        <form id="task-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium t-soft">Title</span>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="What needs doing?"
+              aria-label="Task title"
+              autoFocus
+              className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs font-medium t-soft">
+              Description <span className="t-faint">(optional)</span>
+            </span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add more detail…"
+              aria-label="Description"
+              rows={3}
+              className="control w-full resize-y rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">Priority</span>
               <Select
@@ -193,16 +240,21 @@ export function BoardView() {
                 size="md"
               />
             </div>
-            <button
-              type="submit"
-              disabled={createTask.isPending}
-              className="btn-gloss-primary rounded-full px-5 py-2.5 text-sm"
-            >
-              {createTask.isPending ? "Adding…" : "Add task"}
-            </button>
-          </form>
-        </Panel>
-      )}
+            {editingTask && (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">Status</span>
+                <Select
+                  value={status}
+                  onValueChange={defineStatus}
+                  options={STATUS_SELECT_OPTIONS}
+                  ariaLabel="Status"
+                  size="md"
+                />
+              </div>
+            )}
+          </div>
+        </form>
+      </Modal>
 
       {isLoading ? (
         <p className="t-soft mt-6 text-sm">Loading tasks…</p>
@@ -246,6 +298,7 @@ export function BoardView() {
                           setDragId(null);
                           setOverCol(null);
                         }}
+                        onEdit={() => openEdit(t)}
                         onStatus={(status) =>
                           setStatus.mutate(
                             { taskId: t.id, status },
@@ -255,12 +308,6 @@ export function BoardView() {
                         onAssignee={(memberId) =>
                           assignTask.mutate(
                             { taskId: t.id, assigneeId: memberId || null },
-                            { onError: (err) => toast.error(err.message) },
-                          )
-                        }
-                        onDescribe={(nextDescription) =>
-                          updateDescription.mutate(
-                            { taskId: t.id, description: nextDescription },
                             { onError: (err) => toast.error(err.message) },
                           )
                         }
@@ -287,11 +334,9 @@ export function BoardView() {
   );
 }
 
-function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onAssignee, onDescribe }) {
+function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onStatus, onAssignee }) {
   const assignee = task.assignee;
   const dragging = dragId === task.id;
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(task.description || "");
   return (
     <li
       draggable
@@ -305,66 +350,20 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onA
         dragging ? "opacity-40" : "hover:-translate-y-0.5 hover:bg-[var(--glass-hover)]"
       }`}
     >
-      <p className="text-sm font-medium t-ink">{task.title}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-medium t-ink">{task.title}</p>
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit task ${task.title}`}
+          className="btn-gloss-ghost grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs"
+        >
+          <Pencil2Icon width={13} height={13} />
+        </button>
+      </div>
 
-      {editing ? (
-        <div className="mt-2 space-y-2">
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Add more detail…"
-            aria-label={`Edit description of ${task.title}`}
-            rows={3}
-            className="control w-full resize-y rounded-xl px-2.5 py-2 text-xs"
-          />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                onDescribe(draft);
-                setEditing(false);
-              }}
-              className="btn-gloss-primary rounded-full px-3 py-1 text-xs"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setDraft(task.description || "");
-                setEditing(false);
-              }}
-              className="btn-gloss-ghost rounded-full px-3 py-1 text-xs"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : task.description ? (
-        <button
-          type="button"
-          onClick={() => {
-            setDraft(task.description);
-            setEditing(true);
-          }}
-          aria-label={`Edit description of ${task.title}`}
-          title={task.description}
-          className="mt-0.5 line-clamp-3 w-full text-left text-xs t-soft transition-colors hover:text-[var(--ink)]"
-        >
-          {task.description}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() => {
-            setDraft("");
-            setEditing(true);
-          }}
-          aria-label={`Add description to ${task.title}`}
-          className="mt-0.5 text-xs t-faint transition-colors hover:text-[var(--ink)]"
-        >
-          + Add description
-        </button>
+      {task.description && (
+        <p className="mt-0.5 line-clamp-3 text-xs t-soft">{task.description}</p>
       )}
 
       <div className="mt-2 flex items-center justify-between gap-2">

@@ -20,7 +20,7 @@ vi.mock('../src/modules/invite/hooks', () => ({
 
 vi.mock('../src/modules/tasks/hooks', () => {
   const statusMutate = vi.fn()
-  const describeMutate = vi.fn()
+  const updateMutate = vi.fn()
   const createMutate = vi.fn()
   return {
     TASKS_KEY: ['teamTasks'],
@@ -57,15 +57,15 @@ vi.mock('../src/modules/tasks/hooks', () => {
     useSetTaskStatus: () => ({ mutate: statusMutate, isPending: false }),
     useAssignTask: () => ({ mutate: vi.fn(), isPending: false }),
     useCreateTask: () => ({ mutate: createMutate, isPending: false }),
-    useUpdateTaskDescription: () => ({ mutate: describeMutate, isPending: false }),
+    useUpdateTask: () => ({ mutate: updateMutate, isPending: false }),
     statusMutate,
-    describeMutate,
+    updateMutate,
     createMutate,
   }
 })
 
 describe('BoardView', () => {
-  it('groups real tasks into columns and opens the add-task composer', async () => {
+  it('groups real tasks into columns and opens the add-task modal', async () => {
     renderWithProviders(<BoardView />)
     expect(screen.getByRole('heading', { name: 'To do' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'In progress' })).toBeInTheDocument()
@@ -75,21 +75,35 @@ describe('BoardView', () => {
 
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Add task/ }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('What needs doing?')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Priority' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Assignee' })).toBeInTheDocument()
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
   })
 
-  it('edits a task description and syncs it through the API', async () => {
+  it('edits a task in a modal pre-filled with its details and syncs via the API', async () => {
     renderWithProviders(<BoardView />)
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Edit description of Ship release notes' }))
-    const area = screen.getByLabelText('Edit description of Ship release notes')
+    await user.click(screen.getByRole('button', { name: 'Edit task Ship release notes' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByLabelText('Task title')).toHaveValue('Ship release notes')
+    expect(screen.getByLabelText('Description')).toHaveValue('Draft the notes for v2.')
+    expect(screen.getByRole('combobox', { name: 'Status' })).toBeInTheDocument()
+
+    const area = screen.getByLabelText('Description')
     await user.clear(area)
     await user.type(area, 'Add the changelog link')
-    await user.click(screen.getByRole('button', { name: 'Save' }))
-    expect(taskHooks.describeMutate).toHaveBeenCalledWith(
-      { taskId: 't-1', description: 'Add the changelog link' },
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(taskHooks.updateMutate).toHaveBeenCalledWith(
+      {
+        taskId: 't-1',
+        input: expect.objectContaining({
+          title: 'Ship release notes',
+          description: 'Add the changelog link',
+          status: 'TODO',
+        }),
+      },
       expect.any(Object),
     )
   })

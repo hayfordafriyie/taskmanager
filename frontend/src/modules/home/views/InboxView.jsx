@@ -4,9 +4,10 @@ import {
   MagnifyingGlassIcon,
   PersonIcon,
   ArrowLeftIcon,
+  PlusIcon,
+  Cross2Icon,
 } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, Avatar } from "../ui";
-import Select from "../../../components/Select";
 import { useAuth } from "../../auth/AuthContext";
 import { useMyTeam } from "../../invite/hooks";
 import {
@@ -61,6 +62,7 @@ export function InboxView() {
 
   const [activeId, setActiveId] = useState(null);
   const [search, setSearch] = useState("");
+  const [showNew, setShowNew] = useState(false);
 
   const members = team?.members ?? [];
   const active = conversations.find((c) => c.id === activeId) || null;
@@ -75,15 +77,7 @@ export function InboxView() {
     return map;
   }, [conversations]);
 
-  const startOptions = [
-    { value: "__pick", label: "New chat…" },
-    ...members
-      .filter((m) => m.id !== user?.id)
-      .map((m) => ({
-        value: m.id,
-        label: conversationByPeer.has(m.id) ? `${nameOf(m)} · open chat` : nameOf(m),
-      })),
-  ];
+  const otherMembers = members.filter((m) => m.id !== user?.id);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -96,18 +90,18 @@ export function InboxView() {
     markRead.mutate(id);
   }
 
-  function handlePick(memberId) {
+  // Picking a teammate: continue the existing chat if there is one, otherwise
+  // create it (startConversation is idempotent server-side too).
+  function pickMember(memberId) {
     if (!memberId || memberId === "__pick") return;
+    setShowNew(false);
 
-    // Already chatting? Continue the existing conversation — never create a new one.
     const existing = conversationByPeer.get(memberId);
     if (existing) {
       openConversation(existing.id);
       return;
     }
 
-    // No thread yet: startConversation is idempotent server-side too, so this
-    // still returns the existing chat if one appears in the meantime.
     startConversation.mutate(memberId, {
       onSuccess: (res) => {
         const conv = res?.data?.startConversation;
@@ -125,7 +119,17 @@ export function InboxView() {
         <Panel className={`h-fit ${active ? "hidden lg:block" : ""}`}>
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-display text-sm font-semibold t-ink">Chats</h2>
-            <span className="badge badge-tint px-2 py-0.5 text-xs">{conversations.length}</span>
+            <div className="flex items-center gap-2">
+              <span className="badge badge-tint px-2 py-0.5 text-xs">{conversations.length}</span>
+              <button
+                type="button"
+                onClick={() => setShowNew(true)}
+                className="btn-gloss-primary flex items-center gap-1 rounded-full px-3 py-1.5 text-xs"
+              >
+                <PlusIcon width={12} height={12} />
+                New chat
+              </button>
+            </div>
           </div>
 
           <div className="relative mt-3">
@@ -140,17 +144,6 @@ export function InboxView() {
               placeholder="Search chats…"
               aria-label="Search chats"
               className="control w-full rounded-full py-2 pl-9 pr-3 text-sm"
-            />
-          </div>
-
-          <div className="mt-3">
-            <Select
-              value="__pick"
-              onValueChange={handlePick}
-              options={startOptions}
-              ariaLabel="New chat"
-              size="md"
-              className="w-full"
             />
           </div>
 
@@ -204,6 +197,66 @@ export function InboxView() {
           )}
         </Panel>
       </div>
+
+      {showNew && (
+        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm">
+          <div className="glass-pop mt-16 w-full max-w-md rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-display text-sm font-semibold t-ink">New chat</h3>
+              <button
+                type="button"
+                onClick={() => setShowNew(false)}
+                aria-label="Close new chat"
+                className="ring-accent rounded-lg p-1.5 t-faint transition-colors hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
+              >
+                <Cross2Icon width={14} height={14} />
+              </button>
+            </div>
+            <p className="mt-1 text-xs t-soft">
+              Pick a teammate. If you already chat with them, their existing conversation opens.
+            </p>
+
+            {otherMembers.length === 0 ? (
+              <p className="py-8 text-center text-sm t-soft">
+                No other teammates yet — invite someone from the Invite page.
+              </p>
+            ) : (
+              <ul className="divide-soft mt-3 max-h-[22rem] overflow-y-auto">
+                {otherMembers.map((m) => {
+                  const existing = conversationByPeer.get(m.id);
+                  return (
+                    <li key={m.id}>
+                      <button
+                        type="button"
+                        onClick={() => pickMember(m.id)}
+                        aria-label={
+                          existing
+                            ? `Continue chat with ${nameOf(m)}`
+                            : `Start chat with ${nameOf(m)}`
+                        }
+                        className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors hover:bg-[var(--glass-b)]"
+                      >
+                        <Avatar initial={initialsOf(m)} />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium t-ink">{nameOf(m)}</p>
+                          <p className="truncate text-xs t-soft">{m.phone}</p>
+                        </div>
+                        <span
+                          className={`badge px-2 py-0.5 text-xs ${
+                            existing ? "badge-tint" : "tone-indigo"
+                          }`}
+                        >
+                          {existing ? "Open chat" : "New"}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
