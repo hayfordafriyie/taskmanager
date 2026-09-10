@@ -85,13 +85,15 @@ describe('Select with a custom value renderer', () => {
         options={options}
         ariaLabel="Assignee"
         renderValue={<MemberChip member={null} compact />}
-        renderOption={(o) => <MemberChip member={o.member} />}
+        renderOption={(o) => <span className="block truncate">{o.label}</span>}
       />,
     )
     const user = userEvent.setup()
     await user.click(screen.getByRole('combobox', { name: 'Assignee' }))
     const row = await screen.findByRole('option', { name: /Kwabena Nkrumah-Agyeman Mensah/ })
     expect(row).toBeInTheDocument()
-    expect(row).toHaveTextContent('KN')
+    // Options list the plain name — no icons or initials in the dropdown.
+    expect(row).toHaveTextContent('Kwabena Nkrumah-Agyeman Mensah')
+    expect(row.textContent).not.toContain('KN')
   })
 })

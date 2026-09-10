@@ -89,9 +89,12 @@ export function BoardView() {
 
   // Options carry the member object so rows can render an initials chip; long
   // names therefore truncate instead of stretching the select.
+  // Deduped by id so a select can never list the same person twice; options
+  // carry the name only (no icons or initials) to stay readable.
+  const uniqueMembers = Array.from(new Map(members.map((m) => [m.id, m])).values());
   const assigneeOptions = [
     { value: UNASSIGNED, label: "Unassigned", member: null },
-    ...members.map((m) => ({ value: m.id, label: personLabel(m), member: m })),
+    ...uniqueMembers.map((m) => ({ value: m.id, label: personLabel(m), member: m })),
   ];
   const selectedMember = members.find((m) => m.id === assigneeId) ?? null;
 
@@ -266,8 +269,12 @@ export function BoardView() {
                 options={assigneeOptions}
                 ariaLabel="Assignee"
                 size="md"
-                renderValue={<MemberChip member={selectedMember} />}
-                renderOption={(o) => <MemberChip member={o.member} />}
+                renderValue={<MemberChip member={selectedMember} compact />}
+                renderOption={(o) => (
+                  <span className="block truncate" title={o.label}>
+                    {o.label}
+                  </span>
+                )}
               />
             </div>
             {editingTask && (
@@ -283,7 +290,7 @@ export function BoardView() {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">
                 Start date <span className="t-faint">(optional)</span>
@@ -467,12 +474,20 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
           onValueChange={(v) => onAssignee(v === UNASSIGNED ? "" : v)}
           options={[
             { value: UNASSIGNED, label: "Unassigned", member: null },
-            ...members.map((m) => ({ value: m.id, label: personLabel(m), member: m })),
+            ...Array.from(new Map(members.map((m) => [m.id, m])).values()).map((m) => ({
+              value: m.id,
+              label: personLabel(m),
+              member: m,
+            })),
           ]}
           size="sm"
           className="w-full"
-          renderValue={<MemberChip member={assignee} />}
-          renderOption={(o) => <MemberChip member={o.member} />}
+          renderValue={<MemberChip member={assignee} compact />}
+          renderOption={(o) => (
+            <span className="block truncate" title={o.label}>
+              {o.label}
+            </span>
+          )}
         />
       </div>
     </li>

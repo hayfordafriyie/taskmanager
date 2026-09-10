@@ -78,3 +78,29 @@ export function buildDatePayload({ start, end, previous, isEdit = false }) {
   }
   return payload;
 }
+
+/** Friendly day label: "Today", "Tomorrow", "Yesterday", else "12 Sep". */
+export function relativeDayLabel(value) {
+  const iso = toDateInput(value);
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const target = Date.UTC(y, m - 1, d);
+  const now = new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const diffDays = Math.round((target - today) / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays === -1) return "Yesterday";
+  return `${d} ${MONTHS[m - 1]}`;
+}
+
+/**
+ * One label for a task's dates: its deadline when it has one, otherwise the
+ * planned window. A task with a window but no due date must never read
+ * "No due date".
+ */
+export function taskDateLabel(task) {
+  if (task?.dueAt) return `Due ${relativeDayLabel(task.dueAt)}`;
+  const window = formatWindow(task?.startDate, task?.endDate);
+  return window || "No date set";
+}

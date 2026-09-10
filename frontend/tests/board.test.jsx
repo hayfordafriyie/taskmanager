@@ -176,9 +176,10 @@ describe('BoardView', () => {
     const badge = after.querySelector('span.rounded-full')
     expect(badge).not.toBeNull()
     expect(badge.textContent.trim()).toBe('KN')
+    // The closed select lays out the initials only (name is in the title/a11y).
     const wrapper = badge.closest('.truncate')
     expect(wrapper).not.toBeNull()
-    expect(wrapper.textContent).toContain('Kwabena')
+    expect(wrapper.textContent.trim()).toBe('KN')
   })
 
   it('shows the planned window on a card', () => {

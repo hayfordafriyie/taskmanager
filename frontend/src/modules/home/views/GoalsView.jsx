@@ -316,7 +316,11 @@ export function GoalsView() {
                   ariaLabel="Goal owner"
                   value={ownerId || user?.id || ""}
                   onValueChange={setOwnerId}
-                  options={members.map((m) => ({ value: m.id, label: nameOf(m), member: m }))}
+                  options={Array.from(new Map(members.map((m) => [m.id, m])).values()).map((m) => ({
+                    value: m.id,
+                    label: nameOf(m),
+                    member: m,
+                  }))}
                   size="md"
                   className="w-full"
                   // Long names stay in the dropdown (truncated); the trigger
@@ -324,7 +328,11 @@ export function GoalsView() {
                   renderValue={
                     <MemberChip member={members.find((m) => m.id === (ownerId || user?.id))} />
                   }
-                  renderOption={(o) => <MemberChip member={o.member} />}
+                  renderOption={(o) => (
+                    <span className="block truncate" title={o.label}>
+                      {o.label}
+                    </span>
+                  )}
                 />
               </div>
               <div className="flex flex-col gap-1">

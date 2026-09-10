@@ -14,6 +14,8 @@ const dashboardQuery = `
         status
         priority
         dueAt
+        startDate
+        endDate
         assignee { id firstName surname }
         createdBy { id firstName surname }
       }
@@ -32,6 +34,11 @@ export function useDashboard(options = {}) {
       return res?.data?.dashboard ?? null;
     },
     retry: false,
+    // Tasks move between people and columns on other devices, so never trust a
+    // cached dashboard: refetch whenever the view mounts or regains focus.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     ...options,
   });
 }

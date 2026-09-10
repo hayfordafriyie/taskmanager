@@ -3,6 +3,7 @@ import {
   buildDatePayload,
   formatWindow,
   isWindowReversed,
+  taskDateLabel,
   toDateInput,
   toIsoDate,
 } from '../src/modules/tasks/dates'
@@ -72,5 +73,27 @@ describe('task date helpers', () => {
     })
     expect(payload.clearStartDate).toBeUndefined()
     expect(payload.clearEndDate).toBeUndefined()
+  })
+})
+
+describe('taskDateLabel', () => {
+  it('prefers the deadline when there is one', () => {
+    expect(taskDateLabel({ dueAt: '2026-09-20T00:00:00Z' })).toBe('Due 20 Sep')
+  })
+
+  it('falls back to the planned window instead of "No due date"', () => {
+    expect(
+      taskDateLabel({ startDate: '2026-09-15T00:00:00Z', endDate: '2026-09-18T00:00:00Z' }),
+    ).toBe('15 Sep → 18 Sep')
+  })
+
+  it('uses a single-sided window too', () => {
+    expect(taskDateLabel({ startDate: '2026-09-15T00:00:00Z' })).toBe('Starts 15 Sep')
+    expect(taskDateLabel({ endDate: '2026-09-18T00:00:00Z' })).toBe('Ends 18 Sep')
+  })
+
+  it('only says "No date set" when there is genuinely nothing', () => {
+    expect(taskDateLabel({})).toBe('No date set')
+    expect(taskDateLabel(null)).toBe('No date set')
   })
 })

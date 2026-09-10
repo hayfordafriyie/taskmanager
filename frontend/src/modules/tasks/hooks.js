@@ -37,6 +37,11 @@ export function useTeamTasks(options = {}) {
       return res?.data?.teamTasks ?? [];
     },
     retry: false,
+    // Other people reassign and move cards, so a cached list would keep showing
+    // the previous assignee: refetch whenever the view mounts or refocuses.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     ...options,
   });
 }
@@ -82,6 +87,10 @@ function useTaskMutation(mutationDoc, { optimistic } = {}) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TASKS_KEY });
       queryClient.invalidateQueries({ queryKey: TEAM_KEY });
+      // My tasks and the dashboard read the same tasks through other queries, so
+      // an edit here must not leave them showing the previous assignee.
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["myTasks"] });
     },
   });
 }

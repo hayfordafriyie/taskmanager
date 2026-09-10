@@ -9,7 +9,7 @@ import {
 } from "@radix-ui/react-icons";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../dashboard/hooks";
-import { formatWindow } from "../tasks/dates";
+import { formatWindow, taskDateLabel } from "../tasks/dates";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -48,17 +48,6 @@ const priorityTint = {
   Low: "tone-neutral",
 };
 
-function dueLabel(dueAt) {
-  if (!dueAt) return "No due date";
-  const due = new Date(dueAt);
-  const now = new Date();
-  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const diffDays = Math.round((startOfDay(due) - startOfDay(now)) / 86400000);
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Tomorrow";
-  if (diffDays === -1) return "Yesterday";
-  return due.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
 
 function relativeTime(iso) {
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
@@ -169,10 +158,7 @@ export function DashboardView() {
                       {t.title}
                     </p>
                     <p className="truncate text-xs t-soft">
-                      {STATUS_LABEL[t.status] || t.status} · Due {dueLabel(t.dueAt)}
-                      {formatWindow(t.startDate, t.endDate)
-                        ? ` · ${formatWindow(t.startDate, t.endDate)}`
-                        : ""}
+                      {STATUS_LABEL[t.status] || t.status} · {taskDateLabel(t)}
                     </p>
                   </div>
                   <span

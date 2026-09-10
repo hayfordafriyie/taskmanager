@@ -124,16 +124,26 @@ func (r *queryResolver) Dashboard(ctx context.Context) (*model.Dashboard, error)
 	}
 	sort.SliceStable(openRows, func(a, b int) bool {
 		ra, rb := rows[openRows[a]], rows[openRows[b]]
-		if ra.DueAt == nil && rb.DueAt == nil {
+		// Order open work by its deadline, falling back to the start of its
+		// planned window (a task with dates but no due_at is not "undated").
+		da, oka := ra.DueAt, ra.DueAt != nil
+		if !oka && ra.StartDate != nil {
+			da, oka = ra.StartDate, true
+		}
+		dbTime, okb := rb.DueAt, rb.DueAt != nil
+		if !okb && rb.StartDate != nil {
+			dbTime, okb = rb.StartDate, true
+		}
+		if !oka && !okb {
 			return ra.CreatedAt.After(rb.CreatedAt)
 		}
-		if ra.DueAt == nil {
+		if !oka {
 			return false
 		}
-		if rb.DueAt == nil {
+		if !okb {
 			return true
 		}
-		return ra.DueAt.Before(*rb.DueAt)
+		return da.Before(*dbTime)
 	})
 	for _, idx := range openRows {
 		if len(upcoming) >= 5 {
