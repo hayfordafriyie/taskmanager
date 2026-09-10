@@ -7,6 +7,7 @@
  */
 import type { GqlVariables } from "./api";
 import type { ID, ISODateString, Role, TeamMember } from "./common";
+import type { PersonNameFields } from "./home";
 
 /** Lifecycle of an invitation, as stored by the backend (a plain string). */
 export type InviteStatus = "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
@@ -122,4 +123,15 @@ export interface RevokeInviteData {
 /** Response data of the `switchTeam` mutation. */
 export interface SwitchTeamData {
   switchTeam: SwitchTeamResult;
+}
+
+/**
+ * Anything the invite screen renders as an avatar: an invitation (whose
+ * initials come from the inviter) or a workspace member.
+ *
+ * The name fields are optional because an invitation carries no name of its
+ * own, so `initialsOf` falls back to "U" for one whose inviter was not sent.
+ */
+export interface InviteAvatarSource extends PersonNameFields {
+  invitedBy?: InviteSender | null;
 }

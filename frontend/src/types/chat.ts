@@ -6,7 +6,7 @@
  * `modules/chat/realtime.ts` patches into the React Query caches.
  */
 import type { GqlVariables } from "./api";
-import type { ID, ISODateString, User } from "./common";
+import type { CurrentUser, ID, ISODateString, TeamMember, User } from "./common";
 
 /** Conversation kinds the backend stores; unknown strings are passed through. */
 export type ConversationKind = "direct" | "group" | (string & {});
@@ -102,4 +102,24 @@ export interface SendMessageVariables extends GqlVariables {
 /** Variables of the `markConversationRead` mutation. */
 export interface MarkConversationReadVariables extends GqlVariables {
   id: ID;
+}
+
+/** A person the inbox can list: a conversation peer or a workspace member. */
+export type InboxPerson = ChatPerson | TeamMember;
+
+/**
+ * One row of the inbox list: either an existing conversation (whose peer the
+ * server may have trimmed away) or a teammate with no chat yet.
+ */
+export interface InboxRow {
+  member: InboxPerson | null;
+  conv: ChatConversation | null;
+}
+
+/** Props of the thread pane rendered inside the inbox view. */
+export interface InboxThreadProps {
+  conversation: ChatConversation;
+  /** The signed-in user, used to decide which side a bubble sits on. */
+  currentUser: CurrentUser | null;
+  onBack: () => void;
 }

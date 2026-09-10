@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import {
   Root,
   Trigger,
@@ -18,6 +19,7 @@ import {
   CheckIcon,
 } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PolicyBadge, Avatar } from "../ui";
+import { errorMessage } from "../../../lib/errors";
 import { useToast } from "../../../components/Toast";
 import {
   useMyTeam,
@@ -26,43 +28,56 @@ import {
   useAcceptInvite,
   useRevokeInvite,
 } from "../../invite/hooks";
+import type { ID, ISODateString, Role } from "../../../types/common";
+import type {
+  InviteAvatarSource,
+  TeamInvite,
+} from "../../../types/invite";
+import type { PersonNameFields } from "../../../types/home";
 
-const roleOptions = ["ADMIN", "MEMBER", "GUEST"];
+const roleOptions: Role[] = ["ADMIN", "MEMBER", "GUEST"];
 
-const roleLabel = {
+const roleLabel: Record<Role, string> = {
   ADMIN: "Admin",
   MEMBER: "Member",
   GUEST: "Guest",
 };
 
-function nameOf(member) {
+function nameOf(member?: PersonNameFields | null): string {
   return `${member?.firstName ?? ""} ${member?.surname ?? ""}`.trim() || "Member";
 }
 
-function initialsOf(candidate) {
+function initialsOf(candidate?: InviteAvatarSource | null): string {
   if (candidate?.invitedBy) {
     return `${candidate.invitedBy.firstName?.[0] ?? ""}${candidate.invitedBy.surname?.[0] ?? ""}`.toUpperCase();
   }
   return `${candidate?.firstName?.[0] ?? ""}${candidate?.surname?.[0] ?? ""}`.toUpperCase() || "U";
 }
 
-function shortDate(value) {
+function shortDate(value: ISODateString): string {
   const d = new Date(value);
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 export function InviteView() {
   const toast = useToast();
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("MEMBER");
+  const [phone, setPhone] = useState<string>("");
+  const [role, setRole] = useState<Role>("MEMBER");
 
   const { data: team, isPending, isError, error } = useMyTeam();
-  const { data: invites, isPending: invitesPending } = useMyInvites();
+  const { data: invites = [], isPending: invitesPending } = useMyInvites();
   const inviteToTeam = useInviteToTeam();
   const acceptInvite = useAcceptInvite();
   const revokeInvite = useRevokeInvite();
 
-  async function handleInvite(e) {
+  // Radix reports the picked option as a plain string; only the three role
+  // values are ever rendered, so anything else leaves the selection alone.
+  function handleRoleChange(value: string): void {
+    const next = roleOptions.find((option) => option === value);
+    if (next) setRole(next);
+  }
+
+  async function handleInvite(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!phone.trim()) {
       toast.error("Enter a phone number to invite.");
@@ -78,11 +93,11 @@ export function InviteView() {
         toast.error(result?.message || "Unable to send the invitation.");
       }
     } catch (err) {
-      toast.error(err?.message || "Unable to send the invitation.");
+      toast.error(errorMessage(err, "Unable to send the invitation."));
     }
   }
 
-  async function handleAccept(id) {
+  async function handleAccept(id: ID): Promise<void> {
     try {
       const res = await acceptInvite.mutateAsync(id);
       const result = res?.data?.acceptInvite;
@@ -92,11 +107,11 @@ export function InviteView() {
         toast.error(result?.message || "Unable to accept the invitation.");
       }
     } catch (err) {
-      toast.error(err?.message || "Unable to accept the invitation.");
+      toast.error(errorMessage(err, "Unable to accept the invitation."));
     }
   }
 
-  async function handleRevoke(id) {
+  async function handleRevoke(id: ID): Promise<void> {
     try {
       const res = await revokeInvite.mutateAsync(id);
       if (res?.data?.revokeInvite) {
@@ -105,11 +120,11 @@ export function InviteView() {
         toast.error("This invitation could not be revoked.");
       }
     } catch (err) {
-      toast.error(err?.message || "Unable to revoke the invitation.");
+      toast.error(errorMessage(err, "Unable to revoke the invitation."));
     }
   }
 
-  async function handleResend(invite) {
+  async function handleResend(invite: TeamInvite): Promise<void> {
     try {
       const res = await inviteToTeam.mutateAsync({
         phone: invite.phone,
@@ -122,7 +137,7 @@ export function InviteView() {
         toast.error(result?.message || "Unable to resend the invitation.");
       }
     } catch (err) {
-      toast.error(err?.message || "Unable to resend the invitation.");
+      toast.error(errorMessage(err, "Unable to resend the invitation."));
     }
   }
 
@@ -149,7 +164,7 @@ export function InviteView() {
     <div>
       <ViewHeader title="Invite" subtitle="Bring teammates into your workspace." />
 
-      {invitesPending ? null : invites?.length > 0 ? (
+      {invitesPending ? null : invites.length > 0 ? (
         <Panel className="mt-6">
           <header className="flex items-center gap-2">
             <ClockIcon width={16} height={16} className="text-amber-600 dark:text-amber-500" />
@@ -200,12 +215,12 @@ export function InviteView() {
               type="tel"
               inputMode="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
               placeholder="+233541230000"
               aria-label="Phone number"
               className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
             />
-            <Root value={role} onValueChange={setRole}>
+            <Root value={role} onValueChange={handleRoleChange}>
               <Trigger
                 aria-label="Member role"
                 className="control flex w-full items-center justify-between gap-2 rounded-[0.85rem] px-3.5 py-2.5 text-sm"

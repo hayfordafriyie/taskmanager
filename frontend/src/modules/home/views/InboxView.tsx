@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { errorMessage } from "../../../lib/errors";
 import {
   PaperPlaneIcon,
@@ -17,18 +18,25 @@ import {
   useMarkConversationRead,
 } from "../../chat/hooks";
 import { useToast } from "../../../components/Toast";
+import type { ID, ISODateString } from "../../../types/common";
+import type {
+  ChatConversation,
+  InboxRow,
+  InboxThreadProps,
+} from "../../../types/chat";
+import type { PersonNameFields } from "../../../types/home";
 
-function nameOf(user) {
+function nameOf(user?: PersonNameFields | null): string {
   if (!user) return "Unknown";
   return `${user.firstName ?? ""} ${user.surname ?? ""}`.trim() || "Teammate";
 }
 
-function initialsOf(user) {
+function initialsOf(user?: PersonNameFields | null): string {
   if (!user) return "?";
   return `${user.firstName?.[0] ?? ""}${user.surname?.[0] ?? ""}`.toUpperCase() || "?";
 }
 
-function timeAgo(iso) {
+function timeAgo(iso?: ISODateString | null): string {
   if (!iso) return "";
   const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const min = Math.floor(diff / 60000);
@@ -39,7 +47,7 @@ function timeAgo(iso) {
   return `${Math.floor(hr / 24)}d`;
 }
 
-function dayKey(iso) {
+function dayKey(iso: ISODateString): string {
   return new Date(iso).toLocaleDateString(undefined, {
     weekday: "long",
     month: "short",
@@ -47,7 +55,7 @@ function dayKey(iso) {
   });
 }
 
-function clockTime(iso) {
+function clockTime(iso: ISODateString): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 
@@ -59,16 +67,16 @@ export function InboxView() {
   const startConversation = useStartConversation();
   const markRead = useMarkConversationRead();
 
-  const [activeId, setActiveId] = useState(null);
-  const [search, setSearch] = useState("");
+  const [activeId, setActiveId] = useState<ID | null>(null);
+  const [search, setSearch] = useState<string>("");
 
   const members = team?.members ?? [];
   const active = conversations.find((c) => c.id === activeId) || null;
 
   // peer id -> existing conversation, so picking a teammate we already talk to
   // opens that thread instead of creating a duplicate conversation.
-  const conversationByPeer = useMemo(() => {
-    const map = new Map();
+  const conversationByPeer = useMemo<Map<ID, ChatConversation>>(() => {
+    const map = new Map<ID, ChatConversation>();
     for (const c of conversations) {
       if (c.peer?.id) map.set(c.peer.id, c);
     }
@@ -79,9 +87,9 @@ export function InboxView() {
 
   // One row per teammate: their existing chat if there is one, otherwise a row
   // that starts a fresh chat. No "new chat" button or picker modal needed.
-  const rows = useMemo(() => {
-    const listed = new Set();
-    const out = [];
+  const rows = useMemo<InboxRow[]>(() => {
+    const listed = new Set<ID>();
+    const out: InboxRow[] = [];
     for (const c of conversations) {
       if (c.peer?.id) listed.add(c.peer.id);
       out.push({ member: c.peer, conv: c });
@@ -94,14 +102,14 @@ export function InboxView() {
     return out.filter((r) => nameOf(r.member).toLowerCase().includes(q));
   }, [conversations, otherMembers, search]);
 
-  function openConversation(id) {
+  function openConversation(id: ID): void {
     setActiveId(id);
     markRead.mutate(id);
   }
 
   // Picking a teammate: continue the existing chat if there is one, otherwise
   // create it (startConversation is idempotent server-side too).
-  function pickMember(memberId) {
+  function pickMember(memberId?: ID | null): void {
     if (!memberId || memberId === "__pick") return;
 
     const existing = conversationByPeer.get(memberId);
@@ -138,7 +146,7 @@ export function InboxView() {
             />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
               placeholder="Search chats…"
               aria-label="Search chats"
               className="control w-full rounded-full py-2 pl-9 pr-3 text-sm"
@@ -150,7 +158,7 @@ export function InboxView() {
               <li key={member?.id ?? conv?.id}>
                 <button
                   type="button"
-                  onClick={() => (conv ? openConversation(conv.id) : pickMember(member.id))}
+                  onClick={() => (conv ? openConversation(conv.id) : pickMember(member?.id))}
                   aria-label={
                     conv ? `Continue chat with ${nameOf(member)}` : `Start chat with ${nameOf(member)}`
                   }
@@ -171,7 +179,7 @@ export function InboxView() {
                     ) : (
                       <span className="badge tone-indigo px-2 py-0.5 text-xs">New</span>
                     )}
-                    {conv?.unreadCount > 0 && (
+                    {conv && conv.unreadCount > 0 && (
                       <span
                         aria-label={`${conv.unreadCount} unread messages`}
                         className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-rose-500 px-1 text-[10px] font-semibold text-white"
@@ -209,18 +217,18 @@ export function InboxView() {
   );
 }
 
-function Thread({ conversation, currentUser, onBack }) {
+function Thread({ conversation, currentUser, onBack }: InboxThreadProps) {
   const toast = useToast();
   const { data: messages = [], isLoading } = useConversationMessages(conversation.id);
   const sendMessage = useSendMessage(conversation.id);
-  const [draft, setDraft] = useState("");
-  const bottomRef = useRef(null);
+  const [draft, setDraft] = useState<string>("");
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, conversation.id]);
 
-  function submit(e) {
+  function submit(e?: FormEvent<HTMLFormElement>): void {
     e?.preventDefault();
     const body = draft.trim();
     if (!body) return;
@@ -233,7 +241,7 @@ function Thread({ conversation, currentUser, onBack }) {
     });
   }
 
-  let lastDay = null;
+  let lastDay: string | null = null;
 
   return (
     <div className="flex min-h-[24rem] flex-col">
@@ -296,8 +304,8 @@ function Thread({ conversation, currentUser, onBack }) {
       >
         <textarea
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDraft(e.target.value)}
+          onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               submit();
