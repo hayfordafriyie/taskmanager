@@ -125,6 +125,9 @@ export function MyTasksView() {
                     >
                       {t.title}
                     </p>
+                    {t.description && (
+                      <p className="truncate text-xs t-faint">{t.description}</p>
+                    )}
                     <p className="flex items-center gap-1 truncate text-xs t-soft">
                       <PersonIcon width={11} height={11} />
                       Assigned by {creatorName(t)}

@@ -41,6 +41,43 @@ type CreateTaskInput struct {
 	AssigneeID  *uuid.UUID `json:"assigneeId,omitempty"`
 }
 
+type Dashboard struct {
+	Stats           *DashboardStats      `json:"stats"`
+	CompletedToday  int32                `json:"completedToday"`
+	UpcomingTasks   []*Task              `json:"upcomingTasks"`
+	StatusBreakdown []*DashboardSlice    `json:"statusBreakdown"`
+	Activity        []*DashboardActivity `json:"activity"`
+	DueThisWeek     []*DashboardDay      `json:"dueThisWeek"`
+}
+
+type DashboardActivity struct {
+	ID        uuid.UUID `json:"id"`
+	Kind      string    `json:"kind"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type DashboardDay struct {
+	Day   string `json:"day"`
+	Label string `json:"label"`
+	Count int32  `json:"count"`
+}
+
+type DashboardSlice struct {
+	Key     string `json:"key"`
+	Label   string `json:"label"`
+	Count   int32  `json:"count"`
+	Percent int32  `json:"percent"`
+}
+
+type DashboardStats struct {
+	DoneToday         int32 `json:"doneToday"`
+	InProgress        int32 `json:"inProgress"`
+	Overdue           int32 `json:"overdue"`
+	CompletedThisWeek int32 `json:"completedThisWeek"`
+}
+
 type Invite struct {
 	ID        uuid.UUID `json:"id"`
 	TeamName  string    `json:"teamName"`
@@ -140,6 +177,14 @@ type TeamMember struct {
 	Surname   string    `json:"surname"`
 	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type UpdateTaskInput struct {
+	Title       *string     `json:"title,omitempty"`
+	Description *string     `json:"description,omitempty"`
+	Priority    *Priority   `json:"priority,omitempty"`
+	Status      *TaskStatus `json:"status,omitempty"`
+	AssigneeID  *uuid.UUID  `json:"assigneeId,omitempty"`
 }
 
 type User struct {

@@ -20,6 +20,8 @@ vi.mock('../src/modules/invite/hooks', () => ({
 
 vi.mock('../src/modules/tasks/hooks', () => {
   const statusMutate = vi.fn()
+  const describeMutate = vi.fn()
+  const createMutate = vi.fn()
   return {
     TASKS_KEY: ['teamTasks'],
     toApiStatus: (s) => String(s || 'TODO').toUpperCase(),
@@ -29,7 +31,7 @@ vi.mock('../src/modules/tasks/hooks', () => {
           id: 't-1',
           teamId: 'team-1',
           title: 'Ship release notes',
-          description: '',
+          description: 'Draft the notes for v2.',
           status: 'TODO',
           priority: 'HIGH',
           createdAt: '2026-09-01T00:00:00Z',
@@ -54,8 +56,11 @@ vi.mock('../src/modules/tasks/hooks', () => {
     }),
     useSetTaskStatus: () => ({ mutate: statusMutate, isPending: false }),
     useAssignTask: () => ({ mutate: vi.fn(), isPending: false }),
-    useCreateTask: () => ({ mutate: vi.fn(), isPending: false }),
+    useCreateTask: () => ({ mutate: createMutate, isPending: false }),
+    useUpdateTaskDescription: () => ({ mutate: describeMutate, isPending: false }),
     statusMutate,
+    describeMutate,
+    createMutate,
   }
 })
 
@@ -72,6 +77,21 @@ describe('BoardView', () => {
     await user.click(screen.getByRole('button', { name: /Add task/ }))
     expect(screen.getByPlaceholderText('What needs doing?')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Assignee' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Description')).toBeInTheDocument()
+  })
+
+  it('edits a task description and syncs it through the API', async () => {
+    renderWithProviders(<BoardView />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Edit description of Ship release notes' }))
+    const area = screen.getByLabelText('Edit description of Ship release notes')
+    await user.clear(area)
+    await user.type(area, 'Add the changelog link')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(taskHooks.describeMutate).toHaveBeenCalledWith(
+      { taskId: 't-1', description: 'Add the changelog link' },
+      expect.any(Object),
+    )
   })
 
   it('calls setTaskStatus when a card is moved via its status control', async () => {

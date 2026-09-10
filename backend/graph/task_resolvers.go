@@ -331,6 +331,65 @@ func (r *Resolver) notifyTaskUser(ctx context.Context, userID uuid.UUID, kind, t
 	}
 }
 
+// UpdateTask is the resolver for the updateTask field.
+func (r *mutationResolver) UpdateTask(ctx context.Context, taskID uuid.UUID, input model.UpdateTaskInput) (*model.TaskResult, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if input.Title != nil && strings.TrimSpace(*input.Title) == "" {
+		return r.taskFail("task title is required"), nil
+	}
+
+	var title, description, priority, status *string
+	if input.Title != nil {
+		t := strings.TrimSpace(*input.Title)
+		title = &t
+	}
+	if input.Description != nil {
+		description = input.Description
+	}
+	if input.Priority != nil {
+		p := strings.ToLower(string(*input.Priority))
+		priority = &p
+	}
+	if input.Status != nil {
+		s := strings.ToLower(string(*input.Status))
+		status = &s
+	}
+
+	updated, err := db.UpdateTask(ctx, r.Pool, taskID, user.ID, title, description, priority, input.AssigneeID, status, nil)
+	if err != nil {
+		switch err {
+		case db.ErrTaskNotFound, db.ErrNotWorkspaceMember, db.ErrAssigneeNotMember, db.ErrInvalidTaskStatus, db.ErrInvalidTaskPriority:
+			return r.taskFail(err.Error()), nil
+		default:
+			return nil, fmt.Errorf("update task: %w", err)
+		}
+	}
+
+	teamID, err := r.myTeamID(ctx, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("load team: %w", err)
+	}
+	roster, err := r.rosterOf(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+	task, err := r.taskModel(updated, roster)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := fmt.Sprintf("%s updated “%s”.", personName(roster[user.ID]), updated.Title)
+	r.notifyTaskUser(ctx, updated.CreatedBy, "task_updated", "Task details updated", msg, &updated.ID)
+	if updated.AssigneeID != nil && *updated.AssigneeID != updated.CreatedBy {
+		r.notifyTaskUser(ctx, *updated.AssigneeID, "task_updated", "Task details updated", msg, &updated.ID)
+	}
+
+	return &model.TaskResult{Success: true, Message: "task updated", Task: task}, nil
+}
+
 // UpdateTaskDescription is the resolver for the updateTaskDescription field.
 func (r *mutationResolver) UpdateTaskDescription(ctx context.Context, taskID uuid.UUID, description string) (*model.TaskResult, error) {
 	user, err := r.currentUser(ctx)

@@ -8,6 +8,7 @@ import {
   useCreateTask,
   useAssignTask,
   useSetTaskStatus,
+  useUpdateTaskDescription,
   toApiStatus,
 } from "../../tasks/hooks";
 import { useToast } from "../../../components/Toast";
@@ -61,9 +62,11 @@ export function BoardView() {
   const createTask = useCreateTask();
   const assignTask = useAssignTask();
   const setStatus = useSetTaskStatus();
+  const updateDescription = useUpdateTaskDescription();
 
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
   const [assigneeId, setAssigneeId] = useState("");
   const [dragId, setDragId] = useState(null);
@@ -82,6 +85,7 @@ export function BoardView() {
       {
         input: {
           title: title.trim(),
+          description: description.trim(),
           priority,
           assigneeId: assigneeId || null,
         },
@@ -91,6 +95,7 @@ export function BoardView() {
           const r = res?.data?.createTask;
           if (r?.success) {
             setTitle("");
+            setDescription("");
             setAssigneeId("");
             setShowAdd(false);
             toast.success(r.message);
@@ -140,16 +145,31 @@ export function BoardView() {
       {showAdd && (
         <Panel className="mt-3">
           <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <label className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-xs font-medium t-soft">Title</span>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What needs doing?"
-                aria-label="Task title"
-                className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
-              />
-            </label>
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">Title</span>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="What needs doing?"
+                  aria-label="Task title"
+                  className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">
+                  Description <span className="t-faint">(optional)</span>
+                </span>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add more detail…"
+                  aria-label="Description"
+                  rows={2}
+                  className="control w-full resize-y rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+                />
+              </label>
+            </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">Priority</span>
               <Select
@@ -238,6 +258,12 @@ export function BoardView() {
                             { onError: (err) => toast.error(err.message) },
                           )
                         }
+                        onDescribe={(nextDescription) =>
+                          updateDescription.mutate(
+                            { taskId: t.id, description: nextDescription },
+                            { onError: (err) => toast.error(err.message) },
+                          )
+                        }
                       />
                     ))}
                     {colTasks.length === 0 && (
@@ -261,9 +287,11 @@ export function BoardView() {
   );
 }
 
-function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onAssignee }) {
+function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onAssignee, onDescribe }) {
   const assignee = task.assignee;
   const dragging = dragId === task.id;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(task.description || "");
   return (
     <li
       draggable
@@ -278,7 +306,66 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onA
       }`}
     >
       <p className="text-sm font-medium t-ink">{task.title}</p>
-      <p className="mt-0.5 truncate text-xs t-soft">{task.description}</p>
+
+      {editing ? (
+        <div className="mt-2 space-y-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Add more detail…"
+            aria-label={`Edit description of ${task.title}`}
+            rows={3}
+            className="control w-full resize-y rounded-xl px-2.5 py-2 text-xs"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onDescribe(draft);
+                setEditing(false);
+              }}
+              className="btn-gloss-primary rounded-full px-3 py-1 text-xs"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(task.description || "");
+                setEditing(false);
+              }}
+              className="btn-gloss-ghost rounded-full px-3 py-1 text-xs"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : task.description ? (
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(task.description);
+            setEditing(true);
+          }}
+          aria-label={`Edit description of ${task.title}`}
+          title={task.description}
+          className="mt-0.5 line-clamp-3 w-full text-left text-xs t-soft transition-colors hover:text-[var(--ink)]"
+        >
+          {task.description}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setDraft("");
+            setEditing(true);
+          }}
+          aria-label={`Add description to ${task.title}`}
+          className="mt-0.5 text-xs t-faint transition-colors hover:text-[var(--ink)]"
+        >
+          + Add description
+        </button>
+      )}
 
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className={`badge rounded-full px-2 py-0.5 text-xs ${priorityClass(task.priority)}`}>

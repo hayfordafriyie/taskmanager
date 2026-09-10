@@ -74,6 +74,14 @@ export function useSetTaskStatus() {
   `);
 }
 
+export function useUpdateTaskDescription() {
+  return useTaskMutation(`
+    mutation ($taskId: UUID!, $description: String!) {
+      updateTaskDescription(taskId: $taskId, description: $description) { ${taskResult} }
+    }
+  `);
+}
+
 export function toApiStatus(dbStatus) {
   return String(dbStatus || "TODO").toUpperCase();
 }

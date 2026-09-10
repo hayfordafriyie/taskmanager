@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	ErrTaskNotFound       = errors.New("task not found")
-	ErrNotWorkspaceMember = errors.New("you are not a member of this workspace")
-	ErrAssigneeNotMember  = errors.New("assignee is not a member of this workspace")
-	ErrInvalidTaskStatus  = errors.New("invalid task status")
+	ErrTaskNotFound         = errors.New("task not found")
+	ErrNotWorkspaceMember   = errors.New("you are not a member of this workspace")
+	ErrAssigneeNotMember    = errors.New("assignee is not a member of this workspace")
+	ErrInvalidTaskStatus    = errors.New("invalid task status")
+	ErrInvalidTaskPriority  = errors.New("invalid task priority")
 )
 
 func mapTaskError(err error) (error, bool) {
@@ -33,6 +34,8 @@ func mapTaskError(err error) (error, bool) {
 		return ErrTaskNotFound, true
 	case "45023":
 		return ErrInvalidTaskStatus, true
+	case "45024":
+		return ErrInvalidTaskPriority, true
 	}
 	return nil, false
 }
@@ -137,6 +140,34 @@ func UpdateTaskDescription(
 		        priority, due_at, completed_at, created_at, updated_at
 		   FROM update_task_description($1, $2, $3)`,
 		taskID, actor, description,
+	)
+	t, err := scanTaskCore(row)
+	if err != nil {
+		if mapped, ok := mapTaskError(err); ok {
+			return nil, mapped
+		}
+		return nil, err
+	}
+	return t, nil
+}
+
+// UpdateTask patches a task's fields. A nil pointer keeps the current value;
+// a nil assignee clears the assignment.
+func UpdateTask(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	taskID, actor uuid.UUID,
+	title, description, priority *string,
+	assignee *uuid.UUID,
+	status *string,
+	dueAt *time.Time,
+) (*types.TaskRow, error) {
+	row := pool.QueryRow(
+		ctx,
+		`SELECT id, team_id, created_by, assignee_id, title, description, status,
+		        priority, due_at, completed_at, created_at, updated_at
+		   FROM update_task($1, $2, $3, $4, $5, $6, $7, $8)`,
+		taskID, actor, title, description, priority, assignee, status, dueAt,
 	)
 	t, err := scanTaskCore(row)
 	if err != nil {

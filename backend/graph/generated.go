@@ -51,6 +51,43 @@ type ComplexityRoot struct {
 		User    func(childComplexity int) int
 	}
 
+	Dashboard struct {
+		Activity        func(childComplexity int) int
+		CompletedToday  func(childComplexity int) int
+		DueThisWeek     func(childComplexity int) int
+		Stats           func(childComplexity int) int
+		StatusBreakdown func(childComplexity int) int
+		UpcomingTasks   func(childComplexity int) int
+	}
+
+	DashboardActivity struct {
+		Body      func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Kind      func(childComplexity int) int
+		Title     func(childComplexity int) int
+	}
+
+	DashboardDay struct {
+		Count func(childComplexity int) int
+		Day   func(childComplexity int) int
+		Label func(childComplexity int) int
+	}
+
+	DashboardSlice struct {
+		Count   func(childComplexity int) int
+		Key     func(childComplexity int) int
+		Label   func(childComplexity int) int
+		Percent func(childComplexity int) int
+	}
+
+	DashboardStats struct {
+		CompletedThisWeek func(childComplexity int) int
+		DoneToday         func(childComplexity int) int
+		InProgress        func(childComplexity int) int
+		Overdue           func(childComplexity int) int
+	}
+
 	Invite struct {
 		CreatedAt func(childComplexity int) int
 		ExpiresAt func(childComplexity int) int
@@ -98,6 +135,7 @@ type ComplexityRoot struct {
 		ResetPassword              func(childComplexity int, phone string, code string, password string, confirmPassword string) int
 		RevokeInvite               func(childComplexity int, inviteID uuid.UUID) int
 		SetTaskStatus              func(childComplexity int, taskID uuid.UUID, status model.TaskStatus) int
+		UpdateTask                 func(childComplexity int, taskID uuid.UUID, input model.UpdateTaskInput) int
 		UpdateTaskDescription      func(childComplexity int, taskID uuid.UUID, description string) int
 		VerifyOtp                  func(childComplexity int, phone string, code string) int
 	}
@@ -120,6 +158,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Dashboard               func(childComplexity int) int
 		Health                  func(childComplexity int) int
 		Me                      func(childComplexity int) int
 		MyInvites               func(childComplexity int) int
@@ -212,6 +251,7 @@ type MutationResolver interface {
 	AcceptInvite(ctx context.Context, inviteID uuid.UUID) (*model.AcceptInviteResult, error)
 	RevokeInvite(ctx context.Context, inviteID uuid.UUID) (bool, error)
 	CreateTask(ctx context.Context, input model.CreateTaskInput) (*model.TaskResult, error)
+	UpdateTask(ctx context.Context, taskID uuid.UUID, input model.UpdateTaskInput) (*model.TaskResult, error)
 	AssignTask(ctx context.Context, taskID uuid.UUID, assigneeID *uuid.UUID) (*model.TaskResult, error)
 	SetTaskStatus(ctx context.Context, taskID uuid.UUID, status model.TaskStatus) (*model.TaskResult, error)
 	UpdateTaskDescription(ctx context.Context, taskID uuid.UUID, description string) (*model.TaskResult, error)
@@ -230,6 +270,7 @@ type QueryResolver interface {
 	TeamTasks(ctx context.Context) ([]*model.Task, error)
 	Notifications(ctx context.Context) ([]*model.Notification, error)
 	UnreadNotificationCount(ctx context.Context) (int32, error)
+	Dashboard(ctx context.Context) (*model.Dashboard, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -287,6 +328,143 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CreateAccountResult.User(childComplexity), true
+
+	case "Dashboard.activity":
+		if e.ComplexityRoot.Dashboard.Activity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dashboard.Activity(childComplexity), true
+	case "Dashboard.completedToday":
+		if e.ComplexityRoot.Dashboard.CompletedToday == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dashboard.CompletedToday(childComplexity), true
+	case "Dashboard.dueThisWeek":
+		if e.ComplexityRoot.Dashboard.DueThisWeek == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dashboard.DueThisWeek(childComplexity), true
+	case "Dashboard.stats":
+		if e.ComplexityRoot.Dashboard.Stats == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dashboard.Stats(childComplexity), true
+	case "Dashboard.statusBreakdown":
+		if e.ComplexityRoot.Dashboard.StatusBreakdown == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dashboard.StatusBreakdown(childComplexity), true
+	case "Dashboard.upcomingTasks":
+		if e.ComplexityRoot.Dashboard.UpcomingTasks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Dashboard.UpcomingTasks(childComplexity), true
+
+	case "DashboardActivity.body":
+		if e.ComplexityRoot.DashboardActivity.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardActivity.Body(childComplexity), true
+	case "DashboardActivity.createdAt":
+		if e.ComplexityRoot.DashboardActivity.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardActivity.CreatedAt(childComplexity), true
+	case "DashboardActivity.id":
+		if e.ComplexityRoot.DashboardActivity.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardActivity.ID(childComplexity), true
+	case "DashboardActivity.kind":
+		if e.ComplexityRoot.DashboardActivity.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardActivity.Kind(childComplexity), true
+	case "DashboardActivity.title":
+		if e.ComplexityRoot.DashboardActivity.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardActivity.Title(childComplexity), true
+
+	case "DashboardDay.count":
+		if e.ComplexityRoot.DashboardDay.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardDay.Count(childComplexity), true
+	case "DashboardDay.day":
+		if e.ComplexityRoot.DashboardDay.Day == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardDay.Day(childComplexity), true
+	case "DashboardDay.label":
+		if e.ComplexityRoot.DashboardDay.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardDay.Label(childComplexity), true
+
+	case "DashboardSlice.count":
+		if e.ComplexityRoot.DashboardSlice.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardSlice.Count(childComplexity), true
+	case "DashboardSlice.key":
+		if e.ComplexityRoot.DashboardSlice.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardSlice.Key(childComplexity), true
+	case "DashboardSlice.label":
+		if e.ComplexityRoot.DashboardSlice.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardSlice.Label(childComplexity), true
+	case "DashboardSlice.percent":
+		if e.ComplexityRoot.DashboardSlice.Percent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardSlice.Percent(childComplexity), true
+
+	case "DashboardStats.completedThisWeek":
+		if e.ComplexityRoot.DashboardStats.CompletedThisWeek == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardStats.CompletedThisWeek(childComplexity), true
+	case "DashboardStats.doneToday":
+		if e.ComplexityRoot.DashboardStats.DoneToday == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardStats.DoneToday(childComplexity), true
+	case "DashboardStats.inProgress":
+		if e.ComplexityRoot.DashboardStats.InProgress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardStats.InProgress(childComplexity), true
+	case "DashboardStats.overdue":
+		if e.ComplexityRoot.DashboardStats.Overdue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DashboardStats.Overdue(childComplexity), true
 
 	case "Invite.createdAt":
 		if e.ComplexityRoot.Invite.CreatedAt == nil {
@@ -588,6 +766,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetTaskStatus(childComplexity, args["taskId"].(uuid.UUID), args["status"].(model.TaskStatus)), true
+	case "Mutation.updateTask":
+		if e.ComplexityRoot.Mutation.UpdateTask == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTask_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateTask(childComplexity, args["taskId"].(uuid.UUID), args["input"].(model.UpdateTaskInput)), true
 	case "Mutation.updateTaskDescription":
 		if e.ComplexityRoot.Mutation.UpdateTaskDescription == nil {
 			break
@@ -679,6 +868,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.OTPResult.Success(childComplexity), true
 
+	case "Query.dashboard":
+		if e.ComplexityRoot.Query.Dashboard == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.Dashboard(childComplexity), true
 	case "Query.health":
 		if e.ComplexityRoot.Query.Health == nil {
 			break
@@ -987,6 +1182,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateAccountInput,
 		ec.unmarshalInputCreateTaskInput,
+		ec.unmarshalInputUpdateTaskInput,
 	)
 	first := true
 
@@ -1103,6 +1299,80 @@ func (ec *executionContext) childFields_CreateAccountResult(ctx context.Context,
 		return ec.fieldContext_CreateAccountResult_user(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CreateAccountResult", field.Name)
+}
+
+func (ec *executionContext) childFields_Dashboard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "stats":
+		return ec.fieldContext_Dashboard_stats(ctx, field)
+	case "completedToday":
+		return ec.fieldContext_Dashboard_completedToday(ctx, field)
+	case "upcomingTasks":
+		return ec.fieldContext_Dashboard_upcomingTasks(ctx, field)
+	case "statusBreakdown":
+		return ec.fieldContext_Dashboard_statusBreakdown(ctx, field)
+	case "activity":
+		return ec.fieldContext_Dashboard_activity(ctx, field)
+	case "dueThisWeek":
+		return ec.fieldContext_Dashboard_dueThisWeek(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Dashboard", field.Name)
+}
+
+func (ec *executionContext) childFields_DashboardActivity(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DashboardActivity_id(ctx, field)
+	case "kind":
+		return ec.fieldContext_DashboardActivity_kind(ctx, field)
+	case "title":
+		return ec.fieldContext_DashboardActivity_title(ctx, field)
+	case "body":
+		return ec.fieldContext_DashboardActivity_body(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DashboardActivity_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DashboardActivity", field.Name)
+}
+
+func (ec *executionContext) childFields_DashboardDay(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "day":
+		return ec.fieldContext_DashboardDay_day(ctx, field)
+	case "label":
+		return ec.fieldContext_DashboardDay_label(ctx, field)
+	case "count":
+		return ec.fieldContext_DashboardDay_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DashboardDay", field.Name)
+}
+
+func (ec *executionContext) childFields_DashboardSlice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_DashboardSlice_key(ctx, field)
+	case "label":
+		return ec.fieldContext_DashboardSlice_label(ctx, field)
+	case "count":
+		return ec.fieldContext_DashboardSlice_count(ctx, field)
+	case "percent":
+		return ec.fieldContext_DashboardSlice_percent(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DashboardSlice", field.Name)
+}
+
+func (ec *executionContext) childFields_DashboardStats(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "doneToday":
+		return ec.fieldContext_DashboardStats_doneToday(ctx, field)
+	case "inProgress":
+		return ec.fieldContext_DashboardStats_inProgress(ctx, field)
+	case "overdue":
+		return ec.fieldContext_DashboardStats_overdue(ctx, field)
+	case "completedThisWeek":
+		return ec.fieldContext_DashboardStats_completedThisWeek(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DashboardStats", field.Name)
 }
 
 func (ec *executionContext) childFields_Invite(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1727,6 +1997,28 @@ func (ec *executionContext) field_Mutation_updateTaskDescription_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateTask_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "taskId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["taskId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.UpdateTaskInput, error) {
+			return ec.unmarshalNUpdateTaskInput2taskmanagerᚋgraphᚋmodelᚐUpdateTaskInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_verifyOTP_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1977,6 +2269,557 @@ func (ec *executionContext) fieldContext_CreateAccountResult_user(_ context.Cont
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _Dashboard_stats(ctx context.Context, field graphql.CollectedField, obj *model.Dashboard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dashboard_stats(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Stats, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.DashboardStats) graphql.Marshaler {
+			return ec.marshalNDashboardStats2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardStats(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dashboard_stats(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Dashboard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DashboardStats(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Dashboard_completedToday(ctx context.Context, field graphql.CollectedField, obj *model.Dashboard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dashboard_completedToday(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompletedToday, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dashboard_completedToday(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Dashboard", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Dashboard_upcomingTasks(ctx context.Context, field graphql.CollectedField, obj *model.Dashboard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dashboard_upcomingTasks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpcomingTasks, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Task) graphql.Marshaler {
+			return ec.marshalNTask2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐTaskᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dashboard_upcomingTasks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Dashboard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Task(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Dashboard_statusBreakdown(ctx context.Context, field graphql.CollectedField, obj *model.Dashboard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dashboard_statusBreakdown(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StatusBreakdown, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.DashboardSlice) graphql.Marshaler {
+			return ec.marshalNDashboardSlice2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDashboardSliceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dashboard_statusBreakdown(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Dashboard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DashboardSlice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Dashboard_activity(ctx context.Context, field graphql.CollectedField, obj *model.Dashboard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dashboard_activity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Activity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.DashboardActivity) graphql.Marshaler {
+			return ec.marshalNDashboardActivity2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDashboardActivityᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dashboard_activity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Dashboard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DashboardActivity(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Dashboard_dueThisWeek(ctx context.Context, field graphql.CollectedField, obj *model.Dashboard) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Dashboard_dueThisWeek(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DueThisWeek, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.DashboardDay) graphql.Marshaler {
+			return ec.marshalNDashboardDay2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDashboardDayᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Dashboard_dueThisWeek(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Dashboard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DashboardDay(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DashboardActivity_id(ctx context.Context, field graphql.CollectedField, obj *model.DashboardActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardActivity_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardActivity_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardActivity", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardActivity_kind(ctx context.Context, field graphql.CollectedField, obj *model.DashboardActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardActivity_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardActivity_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardActivity", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardActivity_title(ctx context.Context, field graphql.CollectedField, obj *model.DashboardActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardActivity_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardActivity_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardActivity", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardActivity_body(ctx context.Context, field graphql.CollectedField, obj *model.DashboardActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardActivity_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardActivity_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardActivity", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardActivity_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.DashboardActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardActivity_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardActivity_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardActivity", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardDay_day(ctx context.Context, field graphql.CollectedField, obj *model.DashboardDay) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardDay_day(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Day, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardDay_day(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardDay", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardDay_label(ctx context.Context, field graphql.CollectedField, obj *model.DashboardDay) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardDay_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardDay_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardDay", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardDay_count(ctx context.Context, field graphql.CollectedField, obj *model.DashboardDay) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardDay_count(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardDay_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardDay", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardSlice_key(ctx context.Context, field graphql.CollectedField, obj *model.DashboardSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardSlice_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardSlice_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardSlice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardSlice_label(ctx context.Context, field graphql.CollectedField, obj *model.DashboardSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardSlice_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardSlice_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardSlice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardSlice_count(ctx context.Context, field graphql.CollectedField, obj *model.DashboardSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardSlice_count(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardSlice_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardSlice_percent(ctx context.Context, field graphql.CollectedField, obj *model.DashboardSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardSlice_percent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Percent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardSlice_percent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardStats_doneToday(ctx context.Context, field graphql.CollectedField, obj *model.DashboardStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardStats_doneToday(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DoneToday, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardStats_doneToday(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardStats_inProgress(ctx context.Context, field graphql.CollectedField, obj *model.DashboardStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardStats_inProgress(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InProgress, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardStats_inProgress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardStats_overdue(ctx context.Context, field graphql.CollectedField, obj *model.DashboardStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardStats_overdue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Overdue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardStats_overdue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DashboardStats_completedThisWeek(ctx context.Context, field graphql.CollectedField, obj *model.DashboardStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DashboardStats_completedThisWeek(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompletedThisWeek, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DashboardStats_completedThisWeek(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DashboardStats", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _Invite_id(ctx context.Context, field graphql.CollectedField, obj *model.Invite) (ret graphql.Marshaler) {
@@ -2927,6 +3770,50 @@ func (ec *executionContext) fieldContext_Mutation_createTask(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateTask(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateTask(ctx, fc.Args["taskId"].(uuid.UUID), fc.Args["input"].(model.UpdateTaskInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.TaskResult) graphql.Marshaler {
+			return ec.marshalNTaskResult2ᚖtaskmanagerᚋgraphᚋmodelᚐTaskResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateTask(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TaskResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTask_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_assignTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3717,6 +4604,38 @@ func (ec *executionContext) _Query_unreadNotificationCount(ctx context.Context, 
 }
 func (ec *executionContext) fieldContext_Query_unreadNotificationCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Query", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Query_dashboard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_dashboard(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().Dashboard(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Dashboard) graphql.Marshaler {
+			return ec.marshalNDashboard2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboard(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_dashboard(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Dashboard(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5981,6 +6900,64 @@ func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, obj any) (model.UpdateTaskInput, error) {
+	var it model.UpdateTaskInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "description", "priority", "status", "assigneeId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalOPriority2ᚖtaskmanagerᚋgraphᚋmodelᚐPriority(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOTaskStatus2ᚖtaskmanagerᚋgraphᚋmodelᚐTaskStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "assigneeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assigneeId"))
+			data, err := ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssigneeID = data
+		}
+	}
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -6062,6 +7039,281 @@ func (ec *executionContext) _CreateAccountResult(ctx context.Context, sel ast.Se
 		case "user":
 			out.Values[i] = ec._CreateAccountResult_user(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dashboardImplementors = []string{"Dashboard"}
+
+func (ec *executionContext) _Dashboard(ctx context.Context, sel ast.SelectionSet, obj *model.Dashboard) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Dashboard")
+		case "stats":
+			out.Values[i] = ec._Dashboard_stats(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completedToday":
+			out.Values[i] = ec._Dashboard_completedToday(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "upcomingTasks":
+			out.Values[i] = ec._Dashboard_upcomingTasks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "statusBreakdown":
+			out.Values[i] = ec._Dashboard_statusBreakdown(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "activity":
+			out.Values[i] = ec._Dashboard_activity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dueThisWeek":
+			out.Values[i] = ec._Dashboard_dueThisWeek(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dashboardActivityImplementors = []string{"DashboardActivity"}
+
+func (ec *executionContext) _DashboardActivity(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardActivity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardActivityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardActivity")
+		case "id":
+			out.Values[i] = ec._DashboardActivity_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._DashboardActivity_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._DashboardActivity_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._DashboardActivity_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DashboardActivity_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dashboardDayImplementors = []string{"DashboardDay"}
+
+func (ec *executionContext) _DashboardDay(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardDay) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardDayImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardDay")
+		case "day":
+			out.Values[i] = ec._DashboardDay_day(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._DashboardDay_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._DashboardDay_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dashboardSliceImplementors = []string{"DashboardSlice"}
+
+func (ec *executionContext) _DashboardSlice(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardSlice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardSliceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardSlice")
+		case "key":
+			out.Values[i] = ec._DashboardSlice_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._DashboardSlice_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._DashboardSlice_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "percent":
+			out.Values[i] = ec._DashboardSlice_percent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dashboardStatsImplementors = []string{"DashboardStats"}
+
+func (ec *executionContext) _DashboardStats(ctx context.Context, sel ast.SelectionSet, obj *model.DashboardStats) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dashboardStatsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DashboardStats")
+		case "doneToday":
+			out.Values[i] = ec._DashboardStats_doneToday(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inProgress":
+			out.Values[i] = ec._DashboardStats_inProgress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "overdue":
+			out.Values[i] = ec._DashboardStats_overdue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completedThisWeek":
+			out.Values[i] = ec._DashboardStats_completedThisWeek(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -6374,6 +7626,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createTask":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createTask(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateTask":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTask(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6745,6 +8004,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_unreadNotificationCount(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "dashboard":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_dashboard(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -7699,6 +8980,104 @@ func (ec *executionContext) unmarshalNCreateTaskInput2taskmanagerᚋgraphᚋmode
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNDashboard2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboard(ctx context.Context, sel ast.SelectionSet, v *model.Dashboard) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Dashboard(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardActivity2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDashboardActivityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardActivity) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDashboardActivity2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardActivity(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardActivity2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardActivity(ctx context.Context, sel ast.SelectionSet, v *model.DashboardActivity) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardActivity(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardDay2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDashboardDayᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardDay) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDashboardDay2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardDay(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardDay2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardDay(ctx context.Context, sel ast.SelectionSet, v *model.DashboardDay) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardDay(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardSlice2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDashboardSliceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DashboardSlice) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDashboardSlice2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardSlice(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDashboardSlice2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardSlice(ctx context.Context, sel ast.SelectionSet, v *model.DashboardSlice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardSlice(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDashboardStats2ᚖtaskmanagerᚋgraphᚋmodelᚐDashboardStats(ctx context.Context, sel ast.SelectionSet, v *model.DashboardStats) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DashboardStats(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v any) (int32, error) {
 	res, err := graphql.UnmarshalInt32(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7967,6 +9346,11 @@ func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx
 	return res
 }
 
+func (ec *executionContext) unmarshalNUpdateTaskInput2taskmanagerᚋgraphᚋmodelᚐUpdateTaskInput(ctx context.Context, v any) (model.UpdateTaskInput, error) {
+	res, err := ec.unmarshalInputUpdateTaskInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNUser2ᚖtaskmanagerᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8221,6 +9605,22 @@ func (ec *executionContext) marshalOTask2ᚖtaskmanagerᚋgraphᚋmodelᚐTask(c
 		return graphql.Null
 	}
 	return ec._Task(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTaskStatus2ᚖtaskmanagerᚋgraphᚋmodelᚐTaskStatus(ctx context.Context, v any) (*model.TaskStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.TaskStatus)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTaskStatus2ᚖtaskmanagerᚋgraphᚋmodelᚐTaskStatus(ctx context.Context, sel ast.SelectionSet, v *model.TaskStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalOTeam2ᚖtaskmanagerᚋgraphᚋmodelᚐTeam(ctx context.Context, sel ast.SelectionSet, v *model.Team) graphql.Marshaler {

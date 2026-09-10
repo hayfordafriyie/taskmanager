@@ -139,6 +139,14 @@ input CreateTaskInput {
   assigneeId: UUID
 }
 
+input UpdateTaskInput {
+  title: String
+  description: String
+  priority: Priority
+  status: TaskStatus
+  assigneeId: UUID
+}
+
 type Notification {
   id: UUID!
   kind: String!
@@ -147,6 +155,43 @@ type Notification {
   taskId: UUID
   read: Boolean!
   createdAt: Time!
+}
+
+type DashboardStats {
+  doneToday: Int!
+  inProgress: Int!
+  overdue: Int!
+  completedThisWeek: Int!
+}
+
+type DashboardSlice {
+  key: String!
+  label: String!
+  count: Int!
+  percent: Int!
+}
+
+type DashboardActivity {
+  id: UUID!
+  kind: String!
+  title: String!
+  body: String!
+  createdAt: Time!
+}
+
+type DashboardDay {
+  day: String!
+  label: String!
+  count: Int!
+}
+
+type Dashboard {
+  stats: DashboardStats!
+  completedToday: Int!
+  upcomingTasks: [Task!]!
+  statusBreakdown: [DashboardSlice!]!
+  activity: [DashboardActivity!]!
+  dueThisWeek: [DashboardDay!]!
 }
 
 input CreateAccountInput {
@@ -166,6 +211,7 @@ type Query {
   teamTasks: [Task!]!
   notifications: [Notification!]!
   unreadNotificationCount: Int!
+  dashboard: Dashboard!
 }
 
 type Mutation {
@@ -181,6 +227,7 @@ type Mutation {
   acceptInvite(inviteId: UUID!): AcceptInviteResult!
   revokeInvite(inviteId: UUID!): Boolean!
   createTask(input: CreateTaskInput!): TaskResult!
+  updateTask(taskId: UUID!, input: UpdateTaskInput!): TaskResult!
   assignTask(taskId: UUID!, assigneeId: UUID): TaskResult!
   setTaskStatus(taskId: UUID!, status: TaskStatus!): TaskResult!
   updateTaskDescription(taskId: UUID!, description: String!): TaskResult!
