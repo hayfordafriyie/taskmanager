@@ -42,7 +42,7 @@ cp .env.example .env                   # see §2
 npm run dev                            # http://localhost:5173
 ```
 
-Vite proxies `/api` → `http://localhost:8080` (`vite.config.js`), which means an
+Vite proxies `/api` → `http://localhost:8080` (`vite.config.ts`), which means an
 **empty `VITE_API_URL`** is the simplest setting during development — requests go
 to the same origin and are proxied to the backend.
 
@@ -144,8 +144,8 @@ npm test
 - `tests/test-utils.tsx` renders a UI inside `QueryClientProvider` +
   `ToastProvider`.
 - Feature tests **mock their own hooks module** (`vi.mock('.../hooks')`) and assert
-  on the API calls the UI makes — e.g. `tests/board.test.jsx`, `tests/docs.test.jsx`,
-  `tests/calendar.test.jsx`, `tests/inbox.test.jsx`.
+  on the API calls the UI makes — e.g. `tests/board.test.tsx`, `tests/docs.test.tsx`,
+  `tests/calendar.test.tsx`, `tests/inbox.test.tsx`.
 - No network or backend is required to run the suite.
 
 ---
@@ -155,8 +155,8 @@ npm test
 ```
 frontend/
   index.html
-  vite.config.js        dev server + /api proxy
-  vitest.config.js      jsdom + setup file
+  vite.config.ts        dev server + /api proxy
+  vitest.config.ts      jsdom + setup file
   tsconfig.json         TS config (src + tests, strict)
   Caddyfile             Docker serving (SPA fallback + /api proxy, internal HTTP)
   src/
