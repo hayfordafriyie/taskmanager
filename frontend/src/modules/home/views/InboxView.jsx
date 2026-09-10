@@ -200,7 +200,7 @@ export function InboxView() {
       </div>
 
       {showNew && (
-        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowNew(false); }}>
           <div className="glass-pop mt-16 w-full max-w-md rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-display text-sm font-semibold t-ink">New chat</h3>

@@ -271,11 +271,6 @@ export function BoardView() {
                     {selectedMember ? personLabel(selectedMember) : "Unassigned"}
                   </span>
                 }
-                renderOption={(o) => (
-                  <span className="block truncate" title={o.label}>
-                    {o.label}
-                  </span>
-                )}
               />
             </div>
             {editingTask && (
@@ -483,11 +478,6 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
               {assignee ? personLabel(assignee) : "Unassigned"}
             </span>
           }
-          renderOption={(o) => (
-            <span className="block truncate" title={o.label}>
-              {o.label}
-            </span>
-          )}
         />
       </div>
     </li>

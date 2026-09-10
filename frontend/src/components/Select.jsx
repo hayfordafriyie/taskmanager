@@ -40,7 +40,6 @@ export function Select({
   className = "",
   disabled,
   renderValue,
-  renderOption,
 }) {
   // Human-readable label of the current selection (used for the hidden
   // screen-reader text when a custom renderValue is supplied).
@@ -84,23 +83,9 @@ export function Select({
                 disabled={o.disabled}
                 className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-sm outline-none data-[disabled]:opacity-50 data-[highlighted]:bg-[var(--accent-tint)] data-[highlighted]:text-[var(--ink)]"
               >
-                {renderOption ? (
-                  <>
-                    {/* ItemText must stay: Radix uses it to register the item's
-                        value/selection. Keep it visually hidden (inline style,
-                        since Radix drops className) and render the custom
-                        content as the only visible text. */}
-                    <ItemText
-                      data-visually-hidden="true"
-                      style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}
-                    >
-                      {o.label}
-                    </ItemText>
-                    <span className="min-w-0 flex-1">{renderOption(o)}</span>
-                  </>
-                ) : (
-                  <ItemText className="min-w-0 truncate">{o.label}</ItemText>
-                )}
+                <span className="min-w-0 flex-1 truncate" title={o.label}>
+                  <ItemText>{o.label}</ItemText>
+                </span>
                 <ItemIndicator className="shrink-0">
                   <CheckIcon width={12} height={12} />
                 </ItemIndicator>

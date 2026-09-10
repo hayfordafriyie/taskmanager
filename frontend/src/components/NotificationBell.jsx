@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   BellIcon,
   CheckIcon,
@@ -9,6 +9,7 @@ import {
   EyeNoneIcon,
 } from "@radix-ui/react-icons";
 import Tooltip from "./Tooltip";
+import { useDismissOnOutside } from "../hooks/useDismiss";
 import {
   useNotifications,
   useUnreadNotificationCount,
@@ -34,6 +35,8 @@ function timeAgo(iso) {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  useDismissOnOutside(rootRef, () => setOpen(false), open);
   const { data: notifications = [] } = useNotifications();
   const { data: unread = 0 } = useUnreadNotificationCount();
 
@@ -49,7 +52,7 @@ export function NotificationBell() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <Tooltip content="Notifications">
         <button
           type="button"
