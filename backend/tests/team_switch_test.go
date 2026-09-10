@@ -6,7 +6,7 @@ import (
 )
 
 func myTeamsQuery() string {
-	return `query { myTeams { id name role isOwner isActive memberCount } }`
+	return `query { myTeams { id name role isOwner isActive memberCount ownerName } }`
 }
 
 func switchTeamQuery(teamID string) string {
