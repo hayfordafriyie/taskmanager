@@ -213,3 +213,43 @@ func mapInviteError(err error) (error, bool) {
 	}
 	return nil, false
 }
+
+// TeamsForUser lists every workspace the user belongs to (owned or joined),
+// flagging which one is active so the UI can offer a switcher.
+func TeamsForUser(ctx context.Context, pool *pgxpool.Pool, userID uuid.UUID) ([]types.TeamSummaryRow, error) {
+	rows, err := pool.Query(ctx,
+		`SELECT out_team_id, out_name, out_role, out_is_owner, out_is_active, out_members, out_created_at
+		   FROM teams_for_user($1)`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := make([]types.TeamSummaryRow, 0, 4)
+	for rows.Next() {
+		var r types.TeamSummaryRow
+		if err := rows.Scan(&r.ID, &r.Name, &r.Role, &r.IsOwner, &r.IsActive, &r.MemberCount, &r.CreatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, r)
+	}
+	return list, rows.Err()
+}
+
+// SwitchActiveTeam makes one of the user's workspaces the active one. Only
+// memberships are accepted, so a user can never switch into a team they do not
+// belong to.
+func SwitchActiveTeam(ctx context.Context, pool *pgxpool.Pool, userID, teamID uuid.UUID) (*types.TeamRow, error) {
+	var team types.TeamRow
+	err := pool.QueryRow(ctx,
+		`SELECT id, name, created_at FROM switch_active_team($1, $2)`,
+		userID, teamID,
+	).Scan(&team.ID, &team.Name, &team.CreatedAt)
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "45026" {
+			return nil, ErrNotTeamMember
+		}
+		return nil, err
+	}
+	return &team, nil
+}

@@ -263,6 +263,12 @@ type ResetPasswordResult struct {
 	Message string `json:"message"`
 }
 
+type SwitchTeamResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Team    *Team  `json:"team,omitempty"`
+}
+
 type Task struct {
 	ID          uuid.UUID  `json:"id"`
 	TeamID      uuid.UUID  `json:"teamId"`
@@ -301,6 +307,15 @@ type TeamMember struct {
 	Surname   string    `json:"surname"`
 	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type TeamSummary struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Role        Role      `json:"role"`
+	IsOwner     bool      `json:"isOwner"`
+	IsActive    bool      `json:"isActive"`
+	MemberCount int32     `json:"memberCount"`
 }
 
 type TimeEntry struct {

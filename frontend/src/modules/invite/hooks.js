@@ -3,6 +3,7 @@ import { gql } from "../../lib/api";
 
 export const TEAM_KEY = ["myTeam"];
 export const INVITES_KEY = ["myInvites"];
+export const TEAMS_KEY = ["myTeams"];
 
 const teamFields = `
   id
@@ -94,6 +95,38 @@ export function useRevokeInvite() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEAM_KEY });
+    },
+  });
+}
+export function useMyTeams() {
+  return useQuery({
+    queryKey: TEAMS_KEY,
+    queryFn: async () => {
+      const res = await gql(`query { myTeams { id name role isOwner isActive memberCount } }`);
+      return res?.data?.myTeams ?? [];
+    },
+    retry: false,
+  });
+}
+
+export function useSwitchTeam() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (teamId) =>
+      gql(
+        `mutation ($teamId: UUID!) {
+          switchTeam(teamId: $teamId) {
+            success message team { id name role }
+          }
+        }`,
+        { teamId },
+      ),
+    onSuccess: (res) => {
+      if (res?.data?.switchTeam?.success === false) return;
+      // Different workspace, different data: drop every cached query so nothing
+      // from the previous team (tasks, members, invites, chat…) can be shown
+      // inside the new one. Mounted queries refetch automatically.
+      queryClient.clear();
     },
   });
 }

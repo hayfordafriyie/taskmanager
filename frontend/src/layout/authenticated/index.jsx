@@ -6,6 +6,7 @@ import { WorkspaceProvider } from "../../modules/home/WorkspaceContext";
 import Button from "../../components/Button";
 import Dock from "../../components/Dock";
 import NotificationBell from "../../components/NotificationBell";
+import WorkspaceSwitcher from "../../components/WorkspaceSwitcher";
 import Tooltip from "../../components/Tooltip";
 import { useChatRealtime } from "../../modules/chat/realtime";
 
@@ -54,6 +55,7 @@ export default function AuthenticatedLayout() {
                     )}
                   </Button>
                 </Tooltip>
+                <WorkspaceSwitcher />
                 <NotificationBell />
                 <Tooltip content="Logout">
                   <Button

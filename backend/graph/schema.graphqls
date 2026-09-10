@@ -72,6 +72,21 @@ type TeamMember {
   createdAt: Time!
 }
 
+type TeamSummary {
+  id: UUID!
+  name: String!
+  role: Role!
+  isOwner: Boolean!
+  isActive: Boolean!
+  memberCount: Int!
+}
+
+type SwitchTeamResult {
+  success: Boolean!
+  message: String!
+  team: Team
+}
+
 type Invite {
   id: UUID!
   teamName: String!
@@ -377,6 +392,7 @@ type Query {
   me: User!
   myTeam: Team!
   myInvites: [Invite!]!
+  myTeams: [TeamSummary!]!
   teamTasks: [Task!]!
   notifications: [Notification!]!
   unreadNotificationCount: Int!
@@ -403,6 +419,7 @@ type Mutation {
   inviteToTeam(phone: String!, role: Role!): InviteResult!
   acceptInvite(inviteId: UUID!): AcceptInviteResult!
   revokeInvite(inviteId: UUID!): Boolean!
+  switchTeam(teamId: UUID!): SwitchTeamResult!
   createTask(input: CreateTaskInput!): TaskResult!
   updateTask(taskId: UUID!, input: UpdateTaskInput!): TaskResult!
   assignTask(taskId: UUID!, assigneeId: UUID): TaskResult!

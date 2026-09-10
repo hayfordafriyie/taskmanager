@@ -218,3 +218,14 @@ type DocAccessRow struct {
 	GrantedBy uuid.UUID
 	GrantedAt time.Time
 }
+
+// TeamSummaryRow is one workspace a user belongs to.
+type TeamSummaryRow struct {
+	ID          uuid.UUID
+	Name        string
+	Role        string
+	IsOwner     bool
+	IsActive    bool
+	MemberCount int32
+	CreatedAt   time.Time
+}

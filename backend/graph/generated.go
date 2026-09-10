@@ -220,6 +220,7 @@ type ComplexityRoot struct {
 		SetKeyResultProgress       func(childComplexity int, keyResultID uuid.UUID, progress int32) int
 		SetTaskStatus              func(childComplexity int, taskID uuid.UUID, status model.TaskStatus) int
 		StartConversation          func(childComplexity int, memberID uuid.UUID) int
+		SwitchTeam                 func(childComplexity int, teamID uuid.UUID) int
 		UpdateDoc                  func(childComplexity int, docID uuid.UUID, title *string, body *string, visibility *model.DocVisibility) int
 		UpdateGoalStatus           func(childComplexity int, goalID uuid.UUID, status model.GoalStatus) int
 		UpdateTask                 func(childComplexity int, taskID uuid.UUID, input model.UpdateTaskInput) int
@@ -253,6 +254,7 @@ type ComplexityRoot struct {
 		Me                      func(childComplexity int) int
 		MyInvites               func(childComplexity int) int
 		MyTeam                  func(childComplexity int) int
+		MyTeams                 func(childComplexity int) int
 		Notifications           func(childComplexity int) int
 		Reports                 func(childComplexity int) int
 		TeamDocs                func(childComplexity int) int
@@ -308,6 +310,12 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	SwitchTeamResult struct {
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
+		Team    func(childComplexity int) int
+	}
+
 	Task struct {
 		Assignee    func(childComplexity int) int
 		CompletedAt func(childComplexity int) int
@@ -346,6 +354,15 @@ type ComplexityRoot struct {
 		Phone     func(childComplexity int) int
 		Role      func(childComplexity int) int
 		Surname   func(childComplexity int) int
+	}
+
+	TeamSummary struct {
+		ID          func(childComplexity int) int
+		IsActive    func(childComplexity int) int
+		IsOwner     func(childComplexity int) int
+		MemberCount func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Role        func(childComplexity int) int
 	}
 
 	TimeEntry struct {
@@ -405,6 +422,7 @@ type MutationResolver interface {
 	InviteToTeam(ctx context.Context, phone string, role model.Role) (*model.InviteResult, error)
 	AcceptInvite(ctx context.Context, inviteID uuid.UUID) (*model.AcceptInviteResult, error)
 	RevokeInvite(ctx context.Context, inviteID uuid.UUID) (bool, error)
+	SwitchTeam(ctx context.Context, teamID uuid.UUID) (*model.SwitchTeamResult, error)
 	CreateTask(ctx context.Context, input model.CreateTaskInput) (*model.TaskResult, error)
 	UpdateTask(ctx context.Context, taskID uuid.UUID, input model.UpdateTaskInput) (*model.TaskResult, error)
 	AssignTask(ctx context.Context, taskID uuid.UUID, assigneeID *uuid.UUID) (*model.TaskResult, error)
@@ -437,6 +455,7 @@ type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
 	MyTeam(ctx context.Context) (*model.Team, error)
 	MyInvites(ctx context.Context) ([]*model.Invite, error)
+	MyTeams(ctx context.Context) ([]*model.TeamSummary, error)
 	TeamTasks(ctx context.Context) ([]*model.Task, error)
 	Notifications(ctx context.Context) ([]*model.Notification, error)
 	UnreadNotificationCount(ctx context.Context) (int32, error)
@@ -1383,6 +1402,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.StartConversation(childComplexity, args["memberId"].(uuid.UUID)), true
+	case "Mutation.switchTeam":
+		if e.ComplexityRoot.Mutation.SwitchTeam == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_switchTeam_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SwitchTeam(childComplexity, args["teamId"].(uuid.UUID)), true
 	case "Mutation.updateDoc":
 		if e.ComplexityRoot.Mutation.UpdateDoc == nil {
 			break
@@ -1566,6 +1596,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyTeam(childComplexity), true
+	case "Query.myTeams":
+		if e.ComplexityRoot.Query.MyTeams == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.MyTeams(childComplexity), true
 	case "Query.notifications":
 		if e.ComplexityRoot.Query.Notifications == nil {
 			break
@@ -1793,6 +1829,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ResetPasswordResult.Success(childComplexity), true
 
+	case "SwitchTeamResult.message":
+		if e.ComplexityRoot.SwitchTeamResult.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SwitchTeamResult.Message(childComplexity), true
+	case "SwitchTeamResult.success":
+		if e.ComplexityRoot.SwitchTeamResult.Success == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SwitchTeamResult.Success(childComplexity), true
+	case "SwitchTeamResult.team":
+		if e.ComplexityRoot.SwitchTeamResult.Team == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SwitchTeamResult.Team(childComplexity), true
+
 	case "Task.assignee":
 		if e.ComplexityRoot.Task.Assignee == nil {
 			break
@@ -1964,6 +2019,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TeamMember.Surname(childComplexity), true
+
+	case "TeamSummary.id":
+		if e.ComplexityRoot.TeamSummary.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.ID(childComplexity), true
+	case "TeamSummary.isActive":
+		if e.ComplexityRoot.TeamSummary.IsActive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.IsActive(childComplexity), true
+	case "TeamSummary.isOwner":
+		if e.ComplexityRoot.TeamSummary.IsOwner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.IsOwner(childComplexity), true
+	case "TeamSummary.memberCount":
+		if e.ComplexityRoot.TeamSummary.MemberCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.MemberCount(childComplexity), true
+	case "TeamSummary.name":
+		if e.ComplexityRoot.TeamSummary.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.Name(childComplexity), true
+	case "TeamSummary.role":
+		if e.ComplexityRoot.TeamSummary.Role == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.Role(childComplexity), true
 
 	case "TimeEntry.createdAt":
 		if e.ComplexityRoot.TimeEntry.CreatedAt == nil {
@@ -2647,6 +2739,18 @@ func (ec *executionContext) childFields_ResetPasswordResult(ctx context.Context,
 	return nil, fmt.Errorf("no field named %q was found under type ResetPasswordResult", field.Name)
 }
 
+func (ec *executionContext) childFields_SwitchTeamResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "success":
+		return ec.fieldContext_SwitchTeamResult_success(ctx, field)
+	case "message":
+		return ec.fieldContext_SwitchTeamResult_message(ctx, field)
+	case "team":
+		return ec.fieldContext_SwitchTeamResult_team(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SwitchTeamResult", field.Name)
+}
+
 func (ec *executionContext) childFields_Task(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -2725,6 +2829,24 @@ func (ec *executionContext) childFields_TeamMember(ctx context.Context, field gr
 		return ec.fieldContext_TeamMember_createdAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type TeamMember", field.Name)
+}
+
+func (ec *executionContext) childFields_TeamSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_TeamSummary_id(ctx, field)
+	case "name":
+		return ec.fieldContext_TeamSummary_name(ctx, field)
+	case "role":
+		return ec.fieldContext_TeamSummary_role(ctx, field)
+	case "isOwner":
+		return ec.fieldContext_TeamSummary_isOwner(ctx, field)
+	case "isActive":
+		return ec.fieldContext_TeamSummary_isActive(ctx, field)
+	case "memberCount":
+		return ec.fieldContext_TeamSummary_memberCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type TeamSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_TimeEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3432,6 +3554,20 @@ func (ec *executionContext) field_Mutation_startConversation_args(ctx context.Co
 		return nil, err
 	}
 	args["memberId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_switchTeam_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "teamId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["teamId"] = arg0
 	return args, nil
 }
 
@@ -6510,6 +6646,50 @@ func (ec *executionContext) fieldContext_Mutation_revokeInvite(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_switchTeam(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_switchTeam(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SwitchTeam(ctx, fc.Args["teamId"].(uuid.UUID))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SwitchTeamResult) graphql.Marshaler {
+			return ec.marshalNSwitchTeamResult2ᚖtaskmanagerᚋgraphᚋmodelᚐSwitchTeamResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_switchTeam(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SwitchTeamResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_switchTeam_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7963,6 +8143,38 @@ func (ec *executionContext) fieldContext_Query_myInvites(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_myTeams(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_myTeams(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().MyTeams(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.TeamSummary) graphql.Marshaler {
+			return ec.marshalNTeamSummary2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐTeamSummaryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_myTeams(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TeamSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_teamTasks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9119,6 +9331,84 @@ func (ec *executionContext) fieldContext_ResetPasswordResult_message(_ context.C
 	return graphql.NewScalarFieldContext("ResetPasswordResult", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _SwitchTeamResult_success(ctx context.Context, field graphql.CollectedField, obj *model.SwitchTeamResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SwitchTeamResult_success(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SwitchTeamResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SwitchTeamResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _SwitchTeamResult_message(ctx context.Context, field graphql.CollectedField, obj *model.SwitchTeamResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SwitchTeamResult_message(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SwitchTeamResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SwitchTeamResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SwitchTeamResult_team(ctx context.Context, field graphql.CollectedField, obj *model.SwitchTeamResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SwitchTeamResult_team(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Team, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Team) graphql.Marshaler {
+			return ec.marshalOTeam2ᚖtaskmanagerᚋgraphᚋmodelᚐTeam(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SwitchTeamResult_team(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SwitchTeamResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Team(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Task_id(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9806,6 +10096,144 @@ func (ec *executionContext) _TeamMember_createdAt(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_TeamMember_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("TeamMember", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _TeamSummary_id(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _TeamSummary_name(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TeamSummary_role(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_role(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.Role) graphql.Marshaler {
+			return ec.marshalNRole2taskmanagerᚋgraphᚋmodelᚐRole(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type Role does not have child fields"))
+}
+
+func (ec *executionContext) _TeamSummary_isOwner(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_isOwner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsOwner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_isOwner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TeamSummary_isActive(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_isActive(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsActive, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _TeamSummary_memberCount(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_memberCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MemberCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_memberCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _TimeEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.TimeEntry) (ret graphql.Marshaler) {
@@ -12980,6 +13408,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "switchTeam":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_switchTeam(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createTask":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createTask(ctx, field)
@@ -13400,6 +13835,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_myInvites(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "myTeams":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myTeams(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -14044,6 +14501,54 @@ func (ec *executionContext) _ResetPasswordResult(ctx context.Context, sel ast.Se
 	return out
 }
 
+var switchTeamResultImplementors = []string{"SwitchTeamResult"}
+
+func (ec *executionContext) _SwitchTeamResult(ctx context.Context, sel ast.SelectionSet, obj *model.SwitchTeamResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, switchTeamResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SwitchTeamResult")
+		case "success":
+			out.Values[i] = ec._SwitchTeamResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._SwitchTeamResult_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "team":
+			out.Values[i] = ec._SwitchTeamResult_team(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var taskImplementors = []string{"Task"}
 
 func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj *model.Task) graphql.Marshaler {
@@ -14292,6 +14797,69 @@ func (ec *executionContext) _TeamMember(ctx context.Context, sel ast.SelectionSe
 			}
 		case "createdAt":
 			out.Values[i] = ec._TeamMember_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var teamSummaryImplementors = []string{"TeamSummary"}
+
+func (ec *executionContext) _TeamSummary(ctx context.Context, sel ast.SelectionSet, obj *model.TeamSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, teamSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TeamSummary")
+		case "id":
+			out.Values[i] = ec._TeamSummary_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._TeamSummary_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "role":
+			out.Values[i] = ec._TeamSummary_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isOwner":
+			out.Values[i] = ec._TeamSummary_isOwner(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isActive":
+			out.Values[i] = ec._TeamSummary_isActive(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "memberCount":
+			out.Values[i] = ec._TeamSummary_memberCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -15590,6 +16158,16 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNSwitchTeamResult2ᚖtaskmanagerᚋgraphᚋmodelᚐSwitchTeamResult(ctx context.Context, sel ast.SelectionSet, v *model.SwitchTeamResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SwitchTeamResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNTask2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐTaskᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Task) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -15670,6 +16248,32 @@ func (ec *executionContext) marshalNTeamMember2ᚖtaskmanagerᚋgraphᚋmodelᚐ
 		return graphql.Null
 	}
 	return ec._TeamMember(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTeamSummary2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐTeamSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TeamSummary) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTeamSummary2ᚖtaskmanagerᚋgraphᚋmodelᚐTeamSummary(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTeamSummary2ᚖtaskmanagerᚋgraphᚋmodelᚐTeamSummary(ctx context.Context, sel ast.SelectionSet, v *model.TeamSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TeamSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
