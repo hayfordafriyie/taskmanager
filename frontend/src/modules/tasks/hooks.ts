@@ -1,8 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient, UseQueryOptions } from "@tanstack/react-query";
 import { gql } from "../../lib/api";
+import type { ApiResponse, GqlVariables } from "../../types/api";
+import type { ID, User } from "../../types/common";
+import type { Team } from "../../types/invite";
+import type {
+  AssignTaskVariables,
+  CreateTaskVariables,
+  Priority,
+  SetTaskStatusVariables,
+  Task,
+  TaskMutationData,
+  TaskPatch,
+  TaskStatus,
+  TeamTasksData,
+  UpdateTaskDescriptionVariables,
+  UpdateTaskVariables,
+} from "../../types/tasks";
 import { TEAM_KEY } from "../invite/hooks";
 
-export const TASKS_KEY = ["teamTasks"];
+export const TASKS_KEY: readonly string[] = ["teamTasks"];
 
 const taskFields = `
   id
@@ -29,11 +46,28 @@ const taskResult = `
   }
 `;
 
-export function useTeamTasks(options = {}) {
-  return useQuery({
+/** Query options callers may override (e.g. to disable a fetch). */
+type TasksQueryOptions = Partial<UseQueryOptions<Task[], Error, Task[]>>;
+
+/** Everything an optimistic update is handed alongside its own variables. */
+interface TaskOptimisticContext {
+  tasks: Task[];
+  queryClient: QueryClient;
+}
+
+/** Builds the next cached task list before the round trip completes. */
+type TaskOptimisticUpdate<TVariables> = (
+  variables: TVariables,
+  context: TaskOptimisticContext,
+) => Task[];
+
+type TaskMutationContext = { previous: Task[] | undefined };
+
+export function useTeamTasks(options: TasksQueryOptions = {}) {
+  return useQuery<Task[]>({
     queryKey: TASKS_KEY,
-    queryFn: async () => {
-      const res = await gql(`query { teamTasks { ${taskFields} } }`);
+    queryFn: async (): Promise<Task[]> => {
+      const res = await gql<TeamTasksData>(`query { teamTasks { ${taskFields} } }`);
       return res?.data?.teamTasks ?? [];
     },
     retry: false,
@@ -47,7 +81,7 @@ export function useTeamTasks(options = {}) {
 }
 
 // patchTask replaces one task in the cached list, leaving the rest untouched.
-function patchTask(tasks, taskId, patch) {
+function patchTask(tasks: Task[], taskId: ID, patch: TaskPatch): Task[] {
   return tasks.map((t) => (t.id === taskId ? { ...t, ...patch } : t));
 }
 
@@ -65,14 +99,23 @@ function patchTask(tasks, taskId, patch) {
  * `optimistic(variables, { tasks, queryClient })` must return the next task
  * list. Mutations without it behave exactly as before.
  */
-function useTaskMutation(mutationDoc, { optimistic } = {}) {
+function useTaskMutation<TVariables extends GqlVariables>(
+  mutationDoc: string,
+  { optimistic }: { optimistic?: TaskOptimisticUpdate<TVariables> } = {},
+) {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (variables) => gql(mutationDoc, variables),
-    onMutate: async (variables) => {
+  return useMutation<
+    ApiResponse<TaskMutationData>,
+    Error,
+    TVariables,
+    TaskMutationContext | undefined
+  >({
+    mutationFn: (variables: TVariables) =>
+      gql<TaskMutationData>(mutationDoc, variables),
+    onMutate: async (variables: TVariables): Promise<TaskMutationContext | undefined> => {
       if (!optimistic) return undefined;
       await queryClient.cancelQueries({ queryKey: TASKS_KEY });
-      const previous = queryClient.getQueryData(TASKS_KEY);
+      const previous = queryClient.getQueryData<Task[]>(TASKS_KEY);
       if (Array.isArray(previous)) {
         const next = optimistic(variables, { tasks: previous, queryClient });
         if (Array.isArray(next)) queryClient.setQueryData(TASKS_KEY, next);
@@ -96,7 +139,7 @@ function useTaskMutation(mutationDoc, { optimistic } = {}) {
 }
 
 export function useCreateTask() {
-  return useTaskMutation(`
+  return useTaskMutation<CreateTaskVariables>(`
     mutation ($input: CreateTaskInput!) {
       createTask(input: $input) { ${taskResult} }
     }
@@ -104,7 +147,7 @@ export function useCreateTask() {
 }
 
 export function useAssignTask() {
-  return useTaskMutation(
+  return useTaskMutation<AssignTaskVariables>(
     `
     mutation ($taskId: UUID!, $assigneeId: UUID) {
       assignTask(taskId: $taskId, assigneeId: $assigneeId) { ${taskResult} }
@@ -114,9 +157,9 @@ export function useAssignTask() {
       // Reassign instantly using the roster already in the cache; a null
       // assigneeId (unassign) clears the avatar straight away.
       optimistic: ({ taskId, assigneeId }, { tasks, queryClient }) => {
-        const team = queryClient.getQueryData(TEAM_KEY);
+        const team = queryClient.getQueryData<Team | null>(TEAM_KEY);
         const member = (team?.members ?? []).find((m) => m.id === assigneeId);
-        const assignee = member
+        const assignee: User | null = member
           ? {
               id: member.id,
               phone: member.phone,
@@ -131,7 +174,7 @@ export function useAssignTask() {
 }
 
 export function useSetTaskStatus() {
-  return useTaskMutation(
+  return useTaskMutation<SetTaskStatusVariables>(
     `
     mutation ($taskId: UUID!, $status: TaskStatus!) {
       setTaskStatus(taskId: $taskId, status: $status) { ${taskResult} }
@@ -146,7 +189,7 @@ export function useSetTaskStatus() {
 }
 
 export function useUpdateTaskDescription() {
-  return useTaskMutation(`
+  return useTaskMutation<UpdateTaskDescriptionVariables>(`
     mutation ($taskId: UUID!, $description: String!) {
       updateTaskDescription(taskId: $taskId, description: $description) { ${taskResult} }
     }
@@ -154,7 +197,7 @@ export function useUpdateTaskDescription() {
 }
 
 export function useUpdateTask() {
-  return useTaskMutation(
+  return useTaskMutation<UpdateTaskVariables>(
     `
     mutation ($taskId: UUID!, $input: UpdateTaskInput!) {
       updateTask(taskId: $taskId, input: $input) { ${taskResult} }
@@ -164,12 +207,12 @@ export function useUpdateTask() {
       // Mirror the edit form (title/description/priority/status) right away;
       // date fields are left to the refetch since they need normalising.
       optimistic: ({ taskId, input }, { tasks }) => {
-        const patch = {};
+        const patch: TaskPatch = {};
         if (input.title !== undefined && input.title !== null) patch.title = input.title;
         if (input.description !== undefined && input.description !== null) {
           patch.description = input.description;
         }
-        if (input.priority) patch.priority = String(input.priority).toUpperCase();
+        if (input.priority) patch.priority = String(input.priority).toUpperCase() as Priority;
         if (input.status) patch.status = toApiStatus(input.status);
         return patchTask(tasks, taskId, patch);
       },
@@ -177,6 +220,6 @@ export function useUpdateTask() {
   );
 }
 
-export function toApiStatus(dbStatus) {
-  return String(dbStatus || "TODO").toUpperCase();
+export function toApiStatus(dbStatus?: string | null): TaskStatus {
+  return String(dbStatus || "TODO").toUpperCase() as TaskStatus;
 }

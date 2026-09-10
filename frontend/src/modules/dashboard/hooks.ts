@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import { gql } from "../../lib/api";
+import type { Dashboard, DashboardData } from "../../types/dashboard";
 
-export const DASHBOARD_KEY = ["dashboard"];
+export const DASHBOARD_KEY: readonly string[] = ["dashboard"];
 
 const dashboardQuery = `
   query {
@@ -26,11 +28,16 @@ const dashboardQuery = `
   }
 `;
 
-export function useDashboard(options = {}) {
-  return useQuery({
+/** Query options callers may override (e.g. to disable a fetch). */
+type DashboardQueryOptions = Partial<
+  UseQueryOptions<Dashboard | null, Error, Dashboard | null>
+>;
+
+export function useDashboard(options: DashboardQueryOptions = {}) {
+  return useQuery<Dashboard | null>({
     queryKey: DASHBOARD_KEY,
-    queryFn: async () => {
-      const res = await gql(dashboardQuery);
+    queryFn: async (): Promise<Dashboard | null> => {
+      const res = await gql<DashboardData>(dashboardQuery);
       return res?.data?.dashboard ?? null;
     },
     retry: false,

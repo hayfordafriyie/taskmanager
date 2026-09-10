@@ -4,17 +4,24 @@
 // because the columns are DATE), while <input type="date"> works with plain
 // "YYYY-MM-DD" strings — these two helpers bridge that gap.
 
-export const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+import type {
+  BuildDatePayloadParams,
+  TaskDateInput,
+  TaskDatePayload,
+  TaskDates,
+} from "../../types/tasks";
+
+export const DATE_INPUT_PATTERN: RegExp = /^\d{4}-\d{2}-\d{2}$/;
 
 /** RFC3339 (or Date) → the "YYYY-MM-DD" value a date input expects. */
-export function toDateInput(value) {
+export function toDateInput(value: TaskDateInput): string {
   if (!value) return "";
   const raw = typeof value === "string" ? value : new Date(value).toISOString();
   return raw.slice(0, 10);
 }
 
 /** "YYYY-MM-DD" from a date input → RFC3339 midnight UTC, or null when empty. */
-export function toIsoDate(value) {
+export function toIsoDate(value?: string | null): string | null {
   const trimmed = String(value ?? "").trim();
   if (!trimmed) return null;
   if (!DATE_INPUT_PATTERN.test(trimmed)) return null;
@@ -27,7 +34,10 @@ export function toIsoDate(value) {
  * True when the window is invalid (an end date before its start date). Both
  * bounds are optional, so a missing side is always accepted.
  */
-export function isWindowReversed(start, end) {
+export function isWindowReversed(
+  start: TaskDateInput,
+  end: TaskDateInput,
+): boolean {
   const from = toDateInput(start);
   const to = toDateInput(end);
   if (!from || !to) return false;
@@ -36,14 +46,14 @@ export function isWindowReversed(start, end) {
 
 // Fixed English month abbreviations keep the label stable across ICU/locale
 // versions ("Sep" on one runtime, "Sept" on another).
-const MONTHS = [
+const MONTHS: readonly string[] = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
 /** Human label for the planned window, e.g. "15 Sep → 20 Sep". */
-export function formatWindow(start, end) {
-  const fmt = (value) => {
+export function formatWindow(start: TaskDateInput, end: TaskDateInput): string {
+  const fmt = (value: TaskDateInput): string => {
     const iso = toDateInput(value);
     if (!iso) return "";
     const [, month, day] = iso.split("-");
@@ -66,10 +76,15 @@ export function formatWindow(start, end) {
  * previous value is compared with the submitted one and the matching clear flag
  * is set. On create there is nothing to clear.
  */
-export function buildDatePayload({ start, end, previous, isEdit = false }) {
+export function buildDatePayload({
+  start,
+  end,
+  previous,
+  isEdit = false,
+}: BuildDatePayloadParams): TaskDatePayload {
   const startDate = toIsoDate(start);
   const endDate = toIsoDate(end);
-  const payload = { startDate, endDate };
+  const payload: TaskDatePayload = { startDate, endDate };
   if (isEdit) {
     const prevStart = toDateInput(previous?.startDate);
     const prevEnd = toDateInput(previous?.endDate);
@@ -80,7 +95,7 @@ export function buildDatePayload({ start, end, previous, isEdit = false }) {
 }
 
 /** Friendly day label: "Today", "Tomorrow", "Yesterday", else "12 Sep". */
-export function relativeDayLabel(value) {
+export function relativeDayLabel(value: TaskDateInput): string {
   const iso = toDateInput(value);
   if (!iso) return "";
   const [y, m, d] = iso.split("-").map(Number);
@@ -99,7 +114,7 @@ export function relativeDayLabel(value) {
  * planned window. A task with a window but no due date must never read
  * "No due date".
  */
-export function taskDateLabel(task) {
+export function taskDateLabel(task?: TaskDates | null): string {
   if (task?.dueAt) return `Due ${relativeDayLabel(task.dueAt)}`;
   const window = formatWindow(task?.startDate, task?.endDate);
   return window || "No date set";
