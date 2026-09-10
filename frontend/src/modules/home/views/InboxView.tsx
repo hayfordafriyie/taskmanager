@@ -241,7 +241,22 @@ function Thread({ conversation, currentUser, onBack }: InboxThreadProps) {
     });
   }
 
-  let lastDay: string | null = null;
+  // The day separators are derived up front: each row knows whether it starts a
+  // new day by looking at the row before it, instead of a counter that is
+  // reassigned while rendering (which React's compiler rejects).
+  const rows = useMemo(
+    () =>
+      messages.map((message, index) => {
+        const day = dayKey(message.createdAt);
+        const previous = index > 0 ? messages[index - 1] : null;
+        return {
+          message,
+          day,
+          showDay: !previous || dayKey(previous.createdAt) !== day,
+        };
+      }),
+    [messages],
+  );
 
   return (
     <div className="flex min-h-[24rem] flex-col">
@@ -265,11 +280,8 @@ function Thread({ conversation, currentUser, onBack }: InboxThreadProps) {
         {isLoading && messages.length === 0 && (
           <p className="py-8 text-center text-sm t-soft">Loading messages…</p>
         )}
-        {messages.map((m) => {
+        {rows.map(({ message: m, day, showDay }) => {
           const mine = m.sender?.id === currentUser?.id;
-          const day = dayKey(m.createdAt);
-          const showDay = day !== lastDay;
-          lastDay = day;
           return (
             <div key={m.id}>
               {showDay && (

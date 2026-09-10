@@ -30,21 +30,28 @@ export default function DonutChart({
   const circumference = 2 * Math.PI * radius;
   const gapLength = (gapDegrees / 360) * circumference;
 
-  // Precompute each arc's length and start offset around the ring.
-  let consumed = 0;
-  const arcs: DonutArc[] = slices.map((slice) => {
+  // Precompute each arc's length and start offset around the ring. Each offset
+  // is the running total of the slices before it, derived from the array rather
+  // than a counter mutated during render (which React's compiler rejects).
+  const arcs: DonutArc[] = slices.map((slice, index) => {
     const fraction = total > 0 ? Number(slice.count) / total : 0;
     const full = fraction * circumference;
     // only inset the arc when the slice is big enough to survive the gap
     const arcLength = full > gapLength * 2 ? full - gapLength : full;
-    const arc: DonutArc = {
+    const consumed = slices
+      .slice(0, index)
+      .reduce(
+        (sum, earlier) =>
+          sum +
+          (total > 0 ? Number(earlier.count) / total : 0) * circumference,
+        0,
+      );
+    return {
       ...slice,
       percent: Math.round(fraction * 100),
       dash: `${Math.max(arcLength, 0)} ${Math.max(circumference - arcLength, 0)}`,
       offset: -consumed,
     };
-    consumed += full;
-    return arc;
   });
 
   const active = arcs.find((a) => a.key === activeKey) || null;
