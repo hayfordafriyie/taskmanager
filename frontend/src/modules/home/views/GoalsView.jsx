@@ -1,42 +1,20 @@
-import { TargetIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
+import { TargetIcon, PlusIcon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PolicyBadge } from "../ui";
-
-const goals = [
-  {
-    id: 1,
-    name: "Ship Task Manager v2",
-    owner: "Hayford",
-    status: "On track",
-    progress: 72,
-    results: [
-      { id: 1, name: "Release mobile app", progress: 80 },
-      { id: 2, name: "Reach 1,000 weekly users", progress: 60 },
-      { id: 3, name: "Publish public API", progress: 75 },
-    ],
-  },
-  {
-    id: 2,
-    name: "User onboarding sprint",
-    owner: "Kojo",
-    status: "At risk",
-    progress: 40,
-    results: [
-      { id: 1, name: "Cut signup time to under 60s", progress: 55 },
-      { id: 2, name: "Deliver interactive tour", progress: 25 },
-    ],
-  },
-  {
-    id: 3,
-    name: "Design system adoption",
-    owner: "Ama",
-    status: "Behind",
-    progress: 30,
-    results: [
-      { id: 1, name: "Migrate 10 core screens", progress: 45 },
-      { id: 2, name: "Publish component docs", progress: 15 },
-    ],
-  },
-];
+import Select from "../../../components/Select";
+import { useAuth } from "../../auth/AuthContext";
+import { useMyTeam } from "../../invite/hooks";
+import {
+  useTeamGoals,
+  useCreateGoal,
+  useUpdateGoalStatus,
+  useCreateKeyResult,
+  useSetKeyResultProgress,
+  useDeleteGoal,
+  GOAL_STATUS_LABEL,
+  GOAL_STATUS_OPTIONS,
+} from "../../goals/hooks";
+import { useToast } from "../../../components/Toast";
 
 function ProgressRing({ value }) {
   const radius = 26;
@@ -54,7 +32,7 @@ function ProgressRing({ value }) {
         strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={offset}
-        className="stroke-indigo-500"
+        className="stroke-sky-500"
         transform="rotate(-90 32 32)"
       />
       <text
@@ -69,54 +47,304 @@ function ProgressRing({ value }) {
   );
 }
 
+function nameOf(user) {
+  if (!user) return "Unassigned";
+  return `${user.firstName ?? ""} ${user.surname ?? ""}`.trim() || "Teammate";
+}
+
 export function GoalsView() {
+  const toast = useToast();
+  const { user } = useAuth();
+  const { data: team } = useMyTeam();
+  const { data: goals = [], isLoading } = useTeamGoals({ enabled: !!user?.id });
+
+  const createGoal = useCreateGoal();
+  const updateStatus = useUpdateGoalStatus();
+  const createKeyResult = useCreateKeyResult();
+  const setKrProgress = useSetKeyResultProgress();
+  const deleteGoal = useDeleteGoal();
+
+  const [showNew, setShowNew] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [ownerId, setOwnerId] = useState("");
+  const [status, setStatus] = useState("ON_TRACK");
+  const [newKr, setNewKr] = useState({});
+
+  const members = team?.members ?? [];
+
+  function handleCreate(e) {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Enter a goal title first.");
+      return;
+    }
+    createGoal.mutate(
+      {
+        input: {
+          title: title.trim(),
+          description: description.trim(),
+          status,
+          ownerId: ownerId || null,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          const r = res?.data?.createGoal;
+          if (r?.success) {
+            setTitle("");
+            setDescription("");
+            setOwnerId("");
+            setStatus("ON_TRACK");
+            setShowNew(false);
+            toast.success(r.message);
+          } else {
+            toast.error(r?.message || "Could not create the goal.");
+          }
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
+
+  function addKeyResult(goalId) {
+    const value = (newKr[goalId] || "").trim();
+    if (!value) return;
+    createKeyResult.mutate(
+      { goalId, title: value },
+      {
+        onSuccess: (res) => {
+          const r = res?.data?.createKeyResult;
+          if (r && !r.success) toast.error(r.message);
+          setNewKr((prev) => ({ ...prev, [goalId]: "" }));
+        },
+        onError: (err) => toast.error(err.message),
+      },
+    );
+  }
+
   return (
     <div>
       <ViewHeader title="Goals" subtitle="Objectives and key results for the quarter." />
-      <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setShowNew(true)}
+          className="btn-gloss-primary flex items-center gap-1.5 rounded-full px-4 py-2 text-sm"
+        >
+          <PlusIcon width={14} height={14} />
+          New goal
+        </button>
+        <span className="text-xs t-soft">
+          {goals.length} goal{goals.length === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      {user?.id && !isLoading && goals.length === 0 && (
+        <Panel className="mt-4">
+          <p className="py-8 text-center text-sm t-soft">
+            No goals yet — create one to start tracking objectives.
+          </p>
+        </Panel>
+      )}
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {goals.map((g) => (
           <Panel key={g.id}>
             <header className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <TargetIcon width={16} height={16} className="t-faint shrink-0" />
                 <h2 className="truncate font-display text-sm font-semibold t-ink">
-                  {g.name}
+                  {g.title}
                 </h2>
               </div>
-              <PolicyBadge tone={g.status} className="shrink-0">{g.status}</PolicyBadge>
+              <button
+                type="button"
+                aria-label={`Delete goal ${g.title}`}
+                onClick={() =>
+                  deleteGoal.mutate(
+                    { goalId: g.id },
+                    { onError: (err) => toast.error(err.message) },
+                  )
+                }
+                className="ring-accent shrink-0 rounded-lg p-1.5 t-faint transition-colors hover:bg-[var(--glass-b)] hover:text-red-500"
+              >
+                <TrashIcon width={13} height={13} />
+              </button>
             </header>
-            <div className="mt-4 flex items-center gap-4">
+
+            {g.description && <p className="mt-1 text-xs t-soft">{g.description}</p>}
+
+            <div className="mt-3 flex items-center gap-4">
               <ProgressRing value={g.progress} />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs t-soft">Owner</p>
-                <p className="text-sm font-medium t-ink">
-                  {g.owner}
-                </p>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div>
+                  <p className="text-xs t-soft">Owner</p>
+                  <p className="truncate text-sm font-medium t-ink">{nameOf(g.owner)}</p>
+                </div>
+                <Select
+                  ariaLabel={`Status of ${g.title}`}
+                  value={g.status}
+                  onValueChange={(value) =>
+                    updateStatus.mutate(
+                      { goalId: g.id, status: value },
+                      { onError: (err) => toast.error(err.message) },
+                    )
+                  }
+                  options={GOAL_STATUS_OPTIONS}
+                  size="sm"
+                  className="w-full"
+                />
               </div>
             </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <PolicyBadge tone={GOAL_STATUS_LABEL[g.status]} className="shrink-0">
+                {GOAL_STATUS_LABEL[g.status] || g.status}
+              </PolicyBadge>
+              {g.dueAt && (
+                <span className="text-xs t-faint">
+                  Due {new Date(g.dueAt).toLocaleDateString()}
+                </span>
+              )}
+              <span className="ml-auto text-xs t-faint">
+                {g.keyResults.length} result{g.keyResults.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
             <ul className="mt-4 space-y-3 border-t border-[var(--border-subtle)] pt-4">
-              {g.results.map((r) => (
+              {g.keyResults.map((r) => (
                 <li key={r.id}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="min-w-0 flex-1 truncate t-ink">
-                      {r.name}
-                    </span>
-                    <span className="ml-3 text-xs t-faint">
-                      {r.progress}%
-                    </span>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate t-ink">{r.title}</span>
+                    <span className="ml-2 shrink-0 text-xs t-faint">{r.progress}%</span>
                   </div>
-                  <div className="track mt-1.5 h-1.5 w-full">
-                    <div
-                      className="h-full rounded-full bg-indigo-500"
-                      style={{ width: `${r.progress}%` }}
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={r.progress}
+                      aria-label={`Progress of ${r.title}`}
+                      onChange={(e) =>
+                        setKrProgress.mutate(
+                          { keyResultId: r.id, progress: Number(e.target.value) },
+                          { onError: (err) => toast.error(err.message) },
+                        )
+                      }
+                      className="h-1.5 w-full cursor-pointer accent-sky-500"
                     />
                   </div>
                 </li>
               ))}
+              {g.keyResults.length === 0 && (
+                <li className="text-xs t-faint">No key results yet.</li>
+              )}
             </ul>
+
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                value={newKr[g.id] || ""}
+                onChange={(e) => setNewKr((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addKeyResult(g.id);
+                  }
+                }}
+                placeholder="Add a key result…"
+                aria-label={`New key result for ${g.title}`}
+                className="control w-full rounded-full px-3 py-1.5 text-xs"
+              />
+              <button
+                type="button"
+                onClick={() => addKeyResult(g.id)}
+                aria-label={`Add key result to ${g.title}`}
+                className="btn-gloss-secondary flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              >
+                <PlusIcon width={13} height={13} />
+              </button>
+            </div>
           </Panel>
         ))}
       </div>
+
+      {showNew && (
+        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm">
+          <div className="glass-pop mt-16 w-full max-w-md rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-display text-sm font-semibold t-ink">New goal</h3>
+              <button
+                type="button"
+                onClick={() => setShowNew(false)}
+                aria-label="Close new goal"
+                className="ring-accent rounded-lg p-1.5 t-faint transition-colors hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
+              >
+                <Cross2Icon width={14} height={14} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreate} className="mt-3 space-y-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">Title</span>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="What do you want to achieve?"
+                  aria-label="Goal title"
+                  className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">
+                  Description <span className="t-faint">(optional)</span>
+                </span>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add context…"
+                  aria-label="Goal description"
+                  rows={2}
+                  className="control w-full resize-y rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+                />
+              </label>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">Owner</span>
+                <Select
+                  ariaLabel="Goal owner"
+                  value={ownerId || user?.id || ""}
+                  onValueChange={setOwnerId}
+                  options={members.map((m) => ({ value: m.id, label: nameOf(m) }))}
+                  size="md"
+                  className="w-full"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium t-soft">Status</span>
+                <Select
+                  ariaLabel="Goal status"
+                  value={status}
+                  onValueChange={setStatus}
+                  options={GOAL_STATUS_OPTIONS}
+                  size="md"
+                  className="w-full"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={createGoal.isPending}
+                className="btn-gloss-primary w-full rounded-full px-3.5 py-2.5 text-sm"
+              >
+                {createGoal.isPending ? "Creating…" : "Create goal"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default GoalsView;

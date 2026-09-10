@@ -212,6 +212,48 @@ type Conversation {
   unreadCount: Int!
 }
 
+enum GoalStatus {
+  ON_TRACK
+  AT_RISK
+  BEHIND
+  DONE
+}
+
+type KeyResult {
+  id: UUID!
+  title: String!
+  progress: Int!
+  createdAt: Time!
+}
+
+type Goal {
+  id: UUID!
+  teamId: UUID!
+  title: String!
+  description: String!
+  status: GoalStatus!
+  dueAt: Time
+  createdAt: Time!
+  updatedAt: Time!
+  owner: User!
+  progress: Int!
+  keyResults: [KeyResult!]!
+}
+
+type GoalResult {
+  success: Boolean!
+  message: String!
+  goal: Goal
+}
+
+input CreateGoalInput {
+  title: String!
+  description: String = ""
+  status: GoalStatus = ON_TRACK
+  dueAt: Time
+  ownerId: UUID
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -232,6 +274,7 @@ type Query {
   dashboard: Dashboard!
   conversations: [Conversation!]!
   conversationMessages(conversationId: UUID!, after: Time, limit: Int): [Message!]!
+  teamGoals: [Goal!]!
 }
 
 type Mutation {
@@ -260,4 +303,9 @@ type Mutation {
   startConversation(memberId: UUID!): Conversation!
   sendMessage(conversationId: UUID!, body: String!): Message!
   markConversationRead(conversationId: UUID!): Boolean!
+  createGoal(input: CreateGoalInput!): GoalResult!
+  updateGoalStatus(goalId: UUID!, status: GoalStatus!): GoalResult!
+  createKeyResult(goalId: UUID!, title: String!): GoalResult!
+  setKeyResultProgress(keyResultId: UUID!, progress: Int!): GoalResult!
+  deleteGoal(goalId: UUID!): Boolean!
 }

@@ -43,6 +43,14 @@ type CreateAccountResult struct {
 	User    *User  `json:"user,omitempty"`
 }
 
+type CreateGoalInput struct {
+	Title       string      `json:"title"`
+	Description *string     `json:"description,omitempty"`
+	Status      *GoalStatus `json:"status,omitempty"`
+	DueAt       *time.Time  `json:"dueAt,omitempty"`
+	OwnerID     *uuid.UUID  `json:"ownerId,omitempty"`
+}
+
 type CreateTaskInput struct {
 	Title       string     `json:"title"`
 	Description *string    `json:"description,omitempty"`
@@ -88,6 +96,26 @@ type DashboardStats struct {
 	CompletedThisWeek int32 `json:"completedThisWeek"`
 }
 
+type Goal struct {
+	ID          uuid.UUID    `json:"id"`
+	TeamID      uuid.UUID    `json:"teamId"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	Status      GoalStatus   `json:"status"`
+	DueAt       *time.Time   `json:"dueAt,omitempty"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	UpdatedAt   time.Time    `json:"updatedAt"`
+	Owner       *User        `json:"owner"`
+	Progress    int32        `json:"progress"`
+	KeyResults  []*KeyResult `json:"keyResults"`
+}
+
+type GoalResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Goal    *Goal  `json:"goal,omitempty"`
+}
+
 type Invite struct {
 	ID        uuid.UUID `json:"id"`
 	TeamName  string    `json:"teamName"`
@@ -105,6 +133,13 @@ type InviteResult struct {
 	Invite            *Invite `json:"invite,omitempty"`
 	InviteeRegistered bool    `json:"inviteeRegistered"`
 	AlreadyMember     bool    `json:"alreadyMember"`
+}
+
+type KeyResult struct {
+	ID        uuid.UUID `json:"id"`
+	Title     string    `json:"title"`
+	Progress  int32     `json:"progress"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type LoginResult struct {
@@ -217,6 +252,65 @@ type User struct {
 type VerifyOTPResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+type GoalStatus string
+
+const (
+	GoalStatusOnTrack GoalStatus = "ON_TRACK"
+	GoalStatusAtRisk  GoalStatus = "AT_RISK"
+	GoalStatusBehind  GoalStatus = "BEHIND"
+	GoalStatusDone    GoalStatus = "DONE"
+)
+
+var AllGoalStatus = []GoalStatus{
+	GoalStatusOnTrack,
+	GoalStatusAtRisk,
+	GoalStatusBehind,
+	GoalStatusDone,
+}
+
+func (e GoalStatus) IsValid() bool {
+	switch e {
+	case GoalStatusOnTrack, GoalStatusAtRisk, GoalStatusBehind, GoalStatusDone:
+		return true
+	}
+	return false
+}
+
+func (e GoalStatus) String() string {
+	return string(e)
+}
+
+func (e *GoalStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GoalStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid GoalStatus", str)
+	}
+	return nil
+}
+
+func (e GoalStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *GoalStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e GoalStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type Priority string

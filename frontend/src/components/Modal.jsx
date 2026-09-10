@@ -19,8 +19,7 @@ export function Modal({
         <Content
           aria-label={typeof title === "string" ? title : undefined}
           className={[
-            "glass-pop drawer-in fixed inset-x-0 bottom-0 z-[90] mx-auto w-full rounded-t-[1.25rem] p-5",
-            "max-h-[calc(100vh-3rem)] overflow-y-auto sm:inset-x-0 sm:bottom-8 sm:w-auto sm:max-w-lg sm:rounded-2xl",
+            "glass-pop drawer-in fixed inset-x-0 bottom-0 z-[90] mx-auto w-full max-h-[calc(100vh-3rem)] rounded-t-[1.25rem] p-5 overflow-y-auto",
             size === "sm" && "sm:max-w-sm",
             size === "md" && "sm:max-w-lg",
             size === "lg" && "sm:max-w-2xl",
@@ -28,7 +27,7 @@ export function Modal({
             .filter(Boolean)
             .join(" ")}
         >
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--border-soft)] sm:hidden" />
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--border-soft)]" />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <Title className="font-display text-lg font-semibold t-ink">{title}</Title>
