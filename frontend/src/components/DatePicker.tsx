@@ -5,6 +5,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@radix-ui/react-icons";
+import type {
+  DatePickerProps,
+  MonthCursor,
+  MonthGrid,
+} from "../types/dates";
 
 // Radix has no date-picker primitive, so this composes Radix Popover (focus
 // management, Esc/outside-click, portal + collision handling) with an
@@ -23,36 +28,36 @@ const MONTH_SHORT = [
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function isDateString(value) {
+function isDateString(value: string): boolean {
   return typeof value === "string" && DATE_RE.test(value);
 }
 
-function parse(value) {
+function parse(value: string): Date | null {
   if (!isDateString(value)) return null;
   const [y, m, d] = value.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function toValue(date) {
+function toValue(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
 /** "15 Sep 2026" — stable label that does not depend on the ICU build. */
-export function formatDisplayDate(value) {
+export function formatDisplayDate(value: string): string {
   const date = parse(value);
   if (!date) return "";
   return `${date.getUTCDate()} ${MONTH_SHORT[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 /** Six weeks of cells (Monday first) for the given month, padded with nulls. */
-export function monthGrid(year, monthIndex) {
+export function monthGrid(year: number, monthIndex: number): MonthGrid {
   const first = new Date(Date.UTC(year, monthIndex, 1));
   const offset = (first.getUTCDay() + 6) % 7; // Monday = 0
   const start = new Date(Date.UTC(year, monthIndex, 1 - offset));
-  const weeks = [];
+  const weeks: MonthGrid = [];
   for (let w = 0; w < 6; w += 1) {
-    const week = [];
+    const week: Array<Date | null> = [];
     for (let d = 0; d < 7; d += 1) {
       const day = new Date(start);
       day.setUTCDate(start.getUTCDate() + w * 7 + d);
@@ -72,18 +77,21 @@ export function DatePicker({
   placeholder = "Select date",
   disabled = false,
   className = "",
-}) {
+}: DatePickerProps) {
   const selected = parse(value);
-  const [open, setOpen] = useState(false);
-  const [cursor, setCursor] = useState(() => {
+  const [open, setOpen] = useState<boolean>(false);
+  const [cursor, setCursor] = useState<MonthCursor>(() => {
     const base = selected || new Date();
     return { year: base.getUTCFullYear(), month: base.getUTCMonth() };
   });
 
-  const weeks = useMemo(() => monthGrid(cursor.year, cursor.month), [cursor]);
+  const weeks = useMemo(
+    () => monthGrid(cursor.year, cursor.month),
+    [cursor],
+  );
 
-  const shiftMonth = (delta) => {
-    setCursor((c) => {
+  const shiftMonth = (delta: number) => {
+    setCursor((c: MonthCursor): MonthCursor => {
       const next = new Date(Date.UTC(c.year, c.month + delta, 1));
       return { year: next.getUTCFullYear(), month: next.getUTCMonth() };
     });
@@ -93,13 +101,13 @@ export function DatePicker({
   const maxDate = parse(max);
   const todayValue = toValue(new Date());
 
-  const isDisabledDay = (day) => {
+  const isDisabledDay = (day: Date): boolean => {
     if (minDate && day.getTime() < minDate.getTime()) return true;
     if (maxDate && day.getTime() > maxDate.getTime()) return true;
     return false;
   };
 
-  const pick = (day) => {
+  const pick = (day: Date) => {
     onChange?.(toValue(day));
     setOpen(false);
   };
@@ -134,7 +142,10 @@ export function DatePicker({
             >
               <ChevronLeftIcon width={13} height={13} />
             </button>
-            <p aria-live="polite" className="font-display text-sm font-semibold t-ink">
+            <p
+              aria-live="polite"
+              className="font-display text-sm font-semibold t-ink"
+            >
               {MONTH_NAMES[cursor.month]} {cursor.year}
             </p>
             <button
@@ -190,7 +201,10 @@ export function DatePicker({
               onClick={() => {
                 const today = new Date();
                 const todayIso = toValue(today);
-                setCursor({ year: today.getUTCFullYear(), month: today.getUTCMonth() });
+                setCursor({
+                  year: today.getUTCFullYear(),
+                  month: today.getUTCMonth(),
+                });
                 if (!isDisabledDay(today)) onChange?.(todayIso);
                 setOpen(false);
               }}
