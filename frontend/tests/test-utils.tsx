@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import ToastProvider from '../src/components/Toast'
+import ToastProvider from '../src/components/ToastProvider'
 
 export interface RenderWithProvidersOptions {
   queryClient?: QueryClient

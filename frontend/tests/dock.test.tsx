@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { WorkspaceProvider } from '../src/modules/home/WorkspaceContext'
+import { WorkspaceProvider } from '../src/modules/home/WorkspaceProvider'
 import Dock from '../src/components/Dock'
 
 function renderDock() {

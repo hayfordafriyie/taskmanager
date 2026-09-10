@@ -1,15 +1,10 @@
-import { createContext, useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { clearTokens } from "../../lib/api";
+import { AuthContext } from "./AuthContext";
 import { useMe } from "./hooks/useMe";
 import { useLogin } from "./hooks/useLogin";
 import { useLogout } from "./hooks/useLogout";
-import type {
-  AuthContextValue,
-  AuthProviderProps,
-  LoginResult,
-} from "../../types/auth";
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import type { AuthProviderProps, LoginResult } from "../../types/auth";
 
 function hasStoredTokens(): boolean {
   return (
@@ -65,10 +60,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}
+export default AuthProvider;

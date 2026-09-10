@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { UserEvent } from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import ToastProvider from '../src/components/Toast'
+import ToastProvider from '../src/components/ToastProvider'
 import Login from '../src/modules/login'
 import type { AuthLocationState, AuthUser, LoginResult } from '../src/types/auth'
 

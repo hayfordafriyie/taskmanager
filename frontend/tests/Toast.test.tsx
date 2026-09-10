@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import ToastProvider, { useToast } from '../src/components/Toast'
+import { useToast } from '../src/components/Toast'
+import ToastProvider from '../src/components/ToastProvider'
 
 function ToastDemo() {
   const toast = useToast()

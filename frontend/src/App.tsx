@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ToastProvider from "./components/Toast";
+import ToastProvider from "./components/ToastProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthenticatedLayout from "./layout/authenticated";
 import UnauthenticatedLayout from "./layout/unauthenticated";
-import { AuthProvider } from "./modules/auth/AuthContext";
+import { AuthProvider } from "./modules/auth/AuthProvider";
 import Home from "./modules/home";
 import Login from "./modules/login";
 import Signup from "./modules/signup";

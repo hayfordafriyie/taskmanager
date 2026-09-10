@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Toast from "radix-ui/toast";
 import {
   CheckCircledIcon,
@@ -14,6 +6,7 @@ import {
   InfoCircledIcon,
   Cross2Icon,
 } from "@radix-ui/react-icons";
+import { ToastContext } from "./toastContext";
 import type {
   ToastApi,
   ToastIconProps,
@@ -22,8 +15,6 @@ import type {
   ToastRecord,
   ToastType,
 } from "../types/ui";
-
-const ToastContext = createContext<ToastApi | null>(null);
 
 const iconColors: Record<ToastType, string> = {
   success: "text-emerald-600 dark:text-emerald-400",
@@ -119,14 +110,6 @@ export function ToastProvider({ children }: ToastProviderProps) {
       </Toast.Provider>
     </ToastContext.Provider>
   );
-}
-
-export function useToast(): ToastApi {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
-  }
-  return context;
 }
 
 export default ToastProvider;

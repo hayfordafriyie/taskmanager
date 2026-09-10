@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import { MoonIcon, SunIcon, ExitIcon } from "@radix-ui/react-icons";
 import useTheme from "../../hooks/useTheme";
 import { useAuth } from "../../modules/auth/AuthContext";
-import { WorkspaceProvider } from "../../modules/home/WorkspaceContext";
+import { WorkspaceProvider } from "../../modules/home/WorkspaceProvider";
 import Button from "../../components/Button";
 import Dock from "../../components/Dock";
 import NotificationBell from "../../components/NotificationBell";
