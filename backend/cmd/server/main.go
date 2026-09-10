@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"taskmanager/internal/notif"
 	"taskmanager/internal/server"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -25,6 +27,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/vektah/gqlparser/v2/ast"
 )
+
+// bearerOf extracts the caller's bearer token for cache-key isolation.
+func bearerOf(ctx context.Context) string {
+	if req := auth.Request(ctx); req != nil {
+		return auth.BearerToken(req)
+	}
+	return ""
+}
 
 func main() {
 	ctx := context.Background()
@@ -54,6 +64,42 @@ func main() {
 	srv.AddTransport(transport.POST{})
 
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+
+	// Redis-backed response cache: queries are cached per (query, variables,
+	// caller), and every mutation bumps the cache epoch so no stale read can
+	// survive a write. If Redis is unreachable this degrades to a no-op.
+	srv.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+		oc := graphql.GetOperationContext(ctx)
+		if oc == nil || oc.Operation == nil {
+			return next(ctx)
+		}
+
+		if oc.Operation.Operation == ast.Mutation {
+			run := next(ctx)
+			return func(ctx context.Context) *graphql.Response {
+				resp := run(ctx)
+				resolvers.InvalidateCache(context.Background())
+				return resp
+			}
+		}
+
+		key := resolvers.CacheKey(oc.RawQuery, graph.VariablesKey(oc.Variables), bearerOf(ctx))
+		if raw, ok := resolvers.CacheGetRaw(ctx, key); ok && len(raw) > 0 {
+			log.Printf("cache: hit %s", oc.Operation.Name)
+			return func(context.Context) *graphql.Response {
+				return &graphql.Response{Data: json.RawMessage(raw)}
+			}
+		}
+
+		run := next(ctx)
+		return func(ctx context.Context) *graphql.Response {
+			resp := run(ctx)
+			if resp != nil && len(resp.Errors) == 0 && len(resp.Data) > 0 {
+				resolvers.CacheSetRaw(context.Background(), key, []byte(resp.Data))
+			}
+			return resp
+		}
+	})
 
 	srv.Use(extension.Introspection{})
 	srv.Use(extension.AutomaticPersistedQuery{

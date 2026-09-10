@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import GoalsView from '../src/modules/home/views/GoalsView'
 import * as goalHooks from '../src/modules/goals/hooks'
@@ -101,8 +101,7 @@ describe('GoalsView', () => {
     )
 
     const slider = screen.getByLabelText('Progress of Release mobile app')
-    await user.clear(slider)
-    await user.type(slider, '95')
+    fireEvent.change(slider, { target: { value: '95' } })
     expect(goalHooks.krProgressSpy).toHaveBeenCalledWith(
       { keyResultId: 'kr-1', progress: 95 },
       expect.any(Object),
