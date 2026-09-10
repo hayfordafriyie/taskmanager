@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import NotificationBell from '../src/components/NotificationBell'
-import * as notifHooks from '../src/modules/notifications/hooks'
+import * as notifHooksModule from '../src/modules/notifications/hooks'
+import type { AppNotification } from '../src/types/notifications'
 import { renderWithProviders } from './test-utils'
 
-const notifications = [
+const notifications: AppNotification[] = [
   {
     id: 'n-1',
     kind: 'task_assigned',
@@ -50,6 +52,23 @@ vi.mock('../src/modules/notifications/hooks', () => {
     deleteAllSpy,
   }
 })
+
+/**
+ * `vi.mock` above swaps the entire notifications-hooks module out, so the spies
+ * its factory creates are not part of the real module's exports. Intersecting
+ * the namespace type with them keeps every `notifHooks.*Spy` assertion below
+ * unchanged.
+ */
+type NotificationsHooksMock = typeof notifHooksModule & {
+  markReadSpy: Mock
+  markUnreadSpy: Mock
+  markAllReadSpy: Mock
+  markAllUnreadSpy: Mock
+  deleteSpy: Mock
+  deleteAllSpy: Mock
+}
+
+const notifHooks = notifHooksModule as unknown as NotificationsHooksMock
 
 describe('NotificationBell', () => {
   it('shows the unread count and opens the notification list', async () => {

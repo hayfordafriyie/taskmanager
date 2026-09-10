@@ -1,11 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import ToastProvider from '../src/components/Toast'
 import Login from '../src/modules/login'
+import type { AuthLocationState, AuthUser, LoginResult } from '../src/types/auth'
 
-const { loginMock } = vi.hoisted(() => ({ loginMock: vi.fn() }))
+/**
+ * The login mutation only selects the user's `id phone`, so the fixture carried
+ * by `LoginResult.user` is the narrowed wire shape of `AuthUser`.
+ */
+type LoginFixture = Omit<Partial<LoginResult>, 'user'> & {
+  user?: Partial<AuthUser> | null
+}
+
+const { loginMock } = vi.hoisted(() => ({
+  loginMock: vi.fn<(phone: string, password: string) => Promise<LoginFixture>>(),
+}))
 
 vi.mock('../src/modules/auth/AuthContext', () => ({
   useAuth: () => ({
@@ -17,7 +29,7 @@ vi.mock('../src/modules/auth/AuthContext', () => ({
   }),
 }))
 
-function renderLogin(state) {
+function renderLogin(state?: AuthLocationState) {
   return render(
     <ToastProvider>
       <MemoryRouter initialEntries={[{ pathname: '/login', state }]}>
@@ -30,7 +42,7 @@ function renderLogin(state) {
   )
 }
 
-async function fillCredentials(user, phone = '0537144161', password = 'secret') {
+async function fillCredentials(user: UserEvent, phone = '0537144161', password = 'secret') {
   await user.type(screen.getByRole('textbox'), phone)
   await user.type(screen.getByPlaceholderText('Password'), password)
 }
@@ -62,7 +74,11 @@ describe('Login', () => {
 
   it('shows a validation toast when the empty form is submitted', async () => {
     const { container } = renderLogin()
-    fireEvent.submit(container.querySelector('form'))
+    const form = container.querySelector('form')
+    if (!form) {
+      throw new Error('login form was not rendered')
+    }
+    fireEvent.submit(form)
     expect(
       await screen.findByText('Phone and password are required.'),
     ).toBeInTheDocument()

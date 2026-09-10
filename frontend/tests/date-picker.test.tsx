@@ -16,8 +16,9 @@ describe('DatePicker', () => {
     expect(weeks).toHaveLength(6)
     const first = weeks[0][0]
     expect(first).toBeNull() // Monday 31 Aug is outside September
-    expect(weeks[0][1].toISOString().slice(0, 10)).toBe('2026-09-01')
-    expect(weeks[0][6].toISOString().slice(0, 10)).toBe('2026-09-06')
+    // Grid cells are nullable (padding cells), so the day is reached defensively.
+    expect(weeks[0][1]?.toISOString().slice(0, 10)).toBe('2026-09-01')
+    expect(weeks[0][6]?.toISOString().slice(0, 10)).toBe('2026-09-06')
   })
 
   it('shows the placeholder until a date is chosen', () => {

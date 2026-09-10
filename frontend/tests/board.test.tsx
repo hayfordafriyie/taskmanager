@@ -1,66 +1,76 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import BoardView from '../src/modules/home/views/BoardView'
-import * as taskHooks from '../src/modules/tasks/hooks'
+import * as taskHooksModule from '../src/modules/tasks/hooks'
+import type { Team } from '../src/types/invite'
+import type { TeamMember } from '../src/types/common'
+import type { Task } from '../src/types/tasks'
 import { renderWithProviders } from './test-utils'
 
-vi.mock('../src/modules/invite/hooks', () => ({
-  useMyTeam: () => ({
-    data: {
-      id: 'team-1',
-      name: 'Personal',
-      role: 'ADMIN',
-      members: [
-        { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei', role: 'ADMIN' },
-        {
-          id: 'u-9',
-          phone: '+233500000009',
-          firstName: 'Kwabena',
-          surname: 'Nkrumah-Agyeman Mensah',
-          role: 'MEMBER',
-        },
-      ],
+vi.mock('../src/modules/invite/hooks', () => {
+  const members: TeamMember[] = [
+    { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei', role: 'ADMIN' },
+    {
+      id: 'u-9',
+      phone: '+233500000009',
+      firstName: 'Kwabena',
+      surname: 'Nkrumah-Agyeman Mensah',
+      role: 'MEMBER',
     },
-  }),
-}))
+  ]
+  const team: Pick<Team, 'id' | 'name' | 'role' | 'members'> = {
+    id: 'team-1',
+    name: 'Personal',
+    role: 'ADMIN',
+    members,
+  }
+  return {
+    useMyTeam: () => ({
+      data: team,
+    }),
+  }
+})
 
 vi.mock('../src/modules/tasks/hooks', () => {
   const statusMutate = vi.fn()
   const updateMutate = vi.fn()
   const createMutate = vi.fn()
+  const tasks: Task[] = [
+    {
+      id: 't-1',
+      teamId: 'team-1',
+      title: 'Ship release notes',
+      description: 'Draft the notes for v2.',
+      status: 'TODO',
+      priority: 'HIGH',
+      startDate: '2026-09-15T00:00:00Z',
+      endDate: '2026-09-20T00:00:00Z',
+      createdAt: '2026-09-01T00:00:00Z',
+      updatedAt: '2026-09-01T00:00:00Z',
+      createdBy: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
+      assignee: null,
+    },
+    {
+      id: 't-2',
+      teamId: 'team-1',
+      title: 'Finish dashboard',
+      description: '',
+      status: 'DONE',
+      priority: 'MEDIUM',
+      createdAt: '2026-09-01T00:00:00Z',
+      updatedAt: '2026-09-01T00:00:00Z',
+      createdBy: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
+      assignee: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
+    },
+  ]
   return {
     TASKS_KEY: ['teamTasks'],
-    toApiStatus: (s) => String(s || 'TODO').toUpperCase(),
+    toApiStatus: (status?: string | null) => String(status || 'TODO').toUpperCase(),
     useTeamTasks: () => ({
-      data: [
-        {
-          id: 't-1',
-          teamId: 'team-1',
-          title: 'Ship release notes',
-          description: 'Draft the notes for v2.',
-          status: 'TODO',
-          priority: 'HIGH',
-          startDate: '2026-09-15T00:00:00Z',
-          endDate: '2026-09-20T00:00:00Z',
-          createdAt: '2026-09-01T00:00:00Z',
-          updatedAt: '2026-09-01T00:00:00Z',
-          createdBy: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
-          assignee: null,
-        },
-        {
-          id: 't-2',
-          teamId: 'team-1',
-          title: 'Finish dashboard',
-          description: '',
-          status: 'DONE',
-          priority: 'MEDIUM',
-          createdAt: '2026-09-01T00:00:00Z',
-          updatedAt: '2026-09-01T00:00:00Z',
-          createdBy: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
-          assignee: { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
-        },
-      ],
+      data: tasks,
       isLoading: false,
     }),
     useSetTaskStatus: () => ({ mutate: statusMutate, isPending: false }),
@@ -73,10 +83,28 @@ vi.mock('../src/modules/tasks/hooks', () => {
   }
 })
 
+/**
+ * `vi.mock` above swaps the entire tasks-hooks module out, so the spies its
+ * factory creates are not part of the real module's exports. Intersecting the
+ * namespace type with them keeps every `taskHooks.*Mutate` assertion below
+ * unchanged.
+ */
+type TaskHooksMock = typeof taskHooksModule & {
+  statusMutate: Mock
+  updateMutate: Mock
+  createMutate: Mock
+}
+
+const taskHooks = taskHooksModule as unknown as TaskHooksMock
+
 describe('BoardView', () => {
   // Opens a Radix date picker and walks forward until the target day is shown,
   // then clicks it — mirrors how a user picks a date.
-  async function pickDate(user, triggerLabel, dayLabel) {
+  async function pickDate(
+    user: UserEvent,
+    triggerLabel: string,
+    dayLabel: string,
+  ): Promise<void> {
     await user.click(screen.getByRole('button', { name: triggerLabel }))
     for (let i = 0; i < 24; i += 1) {
       const days = screen.queryAllByRole('button', { name: dayLabel })
@@ -151,6 +179,7 @@ describe('BoardView', () => {
     // separate rows instead of competing for the card's width.
     const group = status.closest('div')
     expect(group).toBe(assignee.closest('div'))
+    if (!group) throw new Error('status and assignee controls are not grouped')
     expect(group.className).toContain('flex-col')
   })
 
@@ -178,6 +207,7 @@ describe('BoardView', () => {
 
     const card = screen.getByText('Finish dashboard').closest('li')
     expect(card).not.toBeNull()
+    if (!card) throw new Error('task card not found')
 
     // Named once, in the assignee select. Radix also keeps a visually hidden
     // span and a native <option> for screen readers / form fallback — neither
@@ -281,7 +311,7 @@ describe('BoardView', () => {
     rows.forEach((row) => {
       // A duplicated label reads "Ama OseiAma Osei". Assert on the row's real
       // text so no CSS trick can hide a second copy from this check.
-      const text = row.textContent.replace(/\s+/g, ' ').trim()
+      const text = (row.textContent ?? '').replace(/\s+/g, ' ').trim()
       expect(text.length).toBeGreaterThan(0)
       expect(text).not.toMatch(/^(.{3,})\1$/)
       if (text.includes('Ama Osei')) sawAma = true

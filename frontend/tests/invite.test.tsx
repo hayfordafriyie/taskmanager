@@ -3,6 +3,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from './test-utils'
 import { InviteView } from '../src/modules/home/views/InviteView'
+import type { Team, TeamInvite } from '../src/types/invite'
 
 const {
   myTeamMock,
@@ -31,7 +32,15 @@ vi.mock('../src/modules/invite/hooks', () => ({
   useRevokeInvite: () => ({ mutateAsync: revokeInviteMock, isPending: false }),
 }))
 
-const team = {
+/**
+ * The API stores the invite lifecycle as a lowercase string (`status: String!`
+ * in the schema), which is what these fixtures carry, while `TeamInvite`'s
+ * `status` field enumerates uppercase values — so only that field is widened.
+ */
+type TeamInviteFixture = Omit<TeamInvite, 'status'> & { status: string }
+type TeamFixture = Omit<Team, 'invites'> & { invites: TeamInviteFixture[] }
+
+const team: TeamFixture = {
   id: 't1',
   name: 'Personal Workspace',
   role: 'ADMIN',
@@ -67,7 +76,7 @@ const team = {
   ],
 }
 
-const invites = [
+const invites: TeamInviteFixture[] = [
   {
     id: 'i9',
     teamName: 'Mobile App',
@@ -108,6 +117,9 @@ describe('InviteView', () => {
     expect(screen.getByText('Kojo Asante')).toBeInTheDocument()
 
     const membersList = screen.getByText('Members (2)').closest('section')
+    if (!membersList) {
+      throw new Error('Members panel not found')
+    }
     expect(within(membersList).getByText('Admin')).toBeInTheDocument()
     expect(within(membersList).getByText('Member')).toBeInTheDocument()
   })
@@ -172,7 +184,11 @@ describe('InviteView', () => {
 
   it('validates an empty phone number', async () => {
     const { container } = renderInvite()
-    fireEvent.submit(container.querySelector('form'))
+    const form = container.querySelector('form')
+    if (!form) {
+      throw new Error('Invite form not found')
+    }
+    fireEvent.submit(form)
     expect(await screen.findByText('Enter a phone number to invite.')).toBeInTheDocument()
     expect(inviteToTeamMock).not.toHaveBeenCalled()
   })

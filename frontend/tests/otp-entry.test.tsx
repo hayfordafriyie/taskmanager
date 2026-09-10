@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event'
 import OtpEntry from '../src/components/OtpEntry'
 
 describe('OtpEntry', () => {
-  const onResend = vi.fn()
+  // Matches `OtpEntryProps['onResend']` (`() => Promise<boolean | undefined>`).
+  const onResend = vi.fn<() => Promise<boolean>>()
 
   beforeEach(() => {
     onResend.mockReset()

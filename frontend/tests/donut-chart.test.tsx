@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DonutChart from '../src/components/DonutChart'
+import type { DonutSlice } from '../src/types/charts'
 import { renderWithProviders } from './test-utils'
 
-const DATA = [
+const DATA: DonutSlice[] = [
   { key: 'TODO', label: 'To do', count: 6, color: '#a1a1aa' },
   { key: 'IN_PROGRESS', label: 'In progress', count: 3, color: '#0ea5e9' },
   { key: 'DONE', label: 'Done', count: 1, color: '#10b981' },

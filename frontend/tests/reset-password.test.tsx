@@ -1,12 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { renderWithProviders } from './test-utils'
 import ResetPassword from '../src/modules/reset-password'
 import Login from '../src/modules/login'
+import type { ApiResponse } from '../src/types/api'
+import type {
+  RequestPasswordResetData,
+  ResetPasswordData,
+} from '../src/types/auth'
 
-const { gqlMock } = vi.hoisted(() => ({ gqlMock: vi.fn() }))
+/** Every response shape this suite feeds to the mocked `gql`. */
+type ResetGqlData = RequestPasswordResetData | ResetPasswordData
+
+const { gqlMock } = vi.hoisted(() => ({
+  gqlMock: vi.fn<(...args: unknown[]) => Promise<ApiResponse<ResetGqlData>>>(),
+}))
 
 vi.mock('../src/lib/api', () => ({
   gql: gqlMock,
@@ -40,13 +51,13 @@ describe('ResetPassword', () => {
     gqlMock.mockReset()
   })
 
-  async function fillPhone(user) {
+  async function fillPhone(user: UserEvent) {
     await user.type(screen.getByRole('textbox'), '0537144161')
     await user.click(screen.getByRole('button', { name: 'Send reset code' }))
     await screen.findByPlaceholderText('Verification code')
   }
 
-  async function fillResetForm(user, confirm = 'secret') {
+  async function fillResetForm(user: UserEvent, confirm = 'secret') {
     await user.type(screen.getByPlaceholderText('Verification code'), '123456')
     await user.type(screen.getByPlaceholderText('New password'), 'secret')
     await user.type(
@@ -76,7 +87,11 @@ describe('ResetPassword', () => {
 
   it('shows a validation toast when the empty form is submitted', async () => {
     const { container } = renderReset()
-    fireEvent.submit(container.querySelector('form'))
+    const form = container.querySelector('form')
+    if (!form) {
+      throw new Error('reset-password form was not rendered')
+    }
+    fireEvent.submit(form)
     expect(
       await screen.findByText('Enter your phone number first.'),
     ).toBeInTheDocument()

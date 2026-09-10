@@ -5,8 +5,34 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { renderWithProviders } from './test-utils'
 import Signup from '../src/modules/signup'
 import Login from '../src/modules/login'
+import type { ApiResponse } from '../src/types/api'
+import type {
+  AuthUser,
+  CreateAccountData,
+  CreateAccountResult,
+  RequestOtpData,
+  VerifyOtpData,
+} from '../src/types/auth'
 
-const { gqlMock } = vi.hoisted(() => ({ gqlMock: vi.fn() }))
+/**
+ * `createAccount` selects `id phone firstName surname otherNames`, so the user
+ * fixture is the narrowed wire shape of `AuthUser` rather than a full one.
+ */
+type CreateAccountFixture = Omit<CreateAccountResult, 'user'> & {
+  user?: Partial<AuthUser> | null
+}
+
+/** Every response shape this suite feeds to the mocked `gql`. */
+type SignupGqlData =
+  | RequestOtpData
+  | VerifyOtpData
+  | (Omit<CreateAccountData, 'createAccount'> & {
+      createAccount: CreateAccountFixture
+    })
+
+const { gqlMock } = vi.hoisted(() => ({
+  gqlMock: vi.fn<(...args: unknown[]) => Promise<ApiResponse<SignupGqlData>>>(),
+}))
 
 vi.mock('../src/lib/api', () => ({
   gql: gqlMock,
@@ -49,7 +75,11 @@ describe('Signup', () => {
 
   it('shows a validation toast when the empty form is submitted', async () => {
     const { container } = renderSignup()
-    fireEvent.submit(container.querySelector('form'))
+    const form = container.querySelector('form')
+    if (!form) {
+      throw new Error('signup form was not rendered')
+    }
+    fireEvent.submit(form)
     expect(
       await screen.findByText('Enter your phone number first.'),
     ).toBeInTheDocument()

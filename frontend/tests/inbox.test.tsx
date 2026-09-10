@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import InboxView from '../src/modules/home/views/InboxView'
-import * as chatHooks from '../src/modules/chat/hooks'
+import * as chatHooksModule from '../src/modules/chat/hooks'
+import type { ChatConversation, ChatMessage, ChatPerson } from '../src/types/chat'
 import { renderWithProviders } from './test-utils'
 
-const now = new Date().toISOString()
+// Built inside `vi.hoisted` so the hoisted `vi.mock` factories below can read it
+// safely — a plain module-level const would still be in its temporal dead zone
+// the first time the mocked module is imported.
+const { now } = vi.hoisted(() => ({ now: new Date().toISOString() }))
 
 vi.mock('../src/modules/auth/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'u-1', firstName: 'Ama', surname: 'Osei' } }),
@@ -29,32 +34,45 @@ vi.mock('../src/modules/chat/hooks', () => {
   const sendSpy = vi.fn()
   const markReadSpy = vi.fn()
   const startSpy = vi.fn()
+
+  // The inbox's trimmed `lastMessage` selection sends the sender id only, so
+  // the fixture type narrows `sender` down to that one field.
+  type LastMessageFixture = Omit<ChatMessage, 'sender'> & {
+    sender: Pick<ChatPerson, 'id'>
+  }
+  type ConversationFixture = Omit<ChatConversation, 'lastMessage'> & {
+    lastMessage: LastMessageFixture
+  }
+
+  const conversations: ConversationFixture[] = [
+    {
+      id: 'c-1',
+      teamId: 'team-1',
+      kind: 'direct',
+      unreadCount: 2,
+      lastMessageAt: now,
+      peer: { id: 'u-2', firstName: 'Kojo', surname: 'Afriyie', phone: '+233500000002' },
+      lastMessage: { id: 'm-0', body: 'See you tomorrow', createdAt: now, sender: { id: 'u-2' } },
+    },
+  ]
+  const messages: ChatMessage[] = [
+    {
+      id: 'm-1',
+      conversationId: 'c-1',
+      body: 'Hello there',
+      createdAt: now,
+      sender: { id: 'u-2', firstName: 'Kojo', surname: 'Afriyie' },
+    },
+  ]
+
   return {
     useConversations: () => ({
       isLoading: false,
-      data: [
-        {
-          id: 'c-1',
-          teamId: 'team-1',
-          kind: 'direct',
-          unreadCount: 2,
-          lastMessageAt: now,
-          peer: { id: 'u-2', firstName: 'Kojo', surname: 'Afriyie', phone: '+233500000002' },
-          lastMessage: { id: 'm-0', body: 'See you tomorrow', createdAt: now, sender: { id: 'u-2' } },
-        },
-      ],
+      data: conversations,
     }),
     useConversationMessages: () => ({
       isLoading: false,
-      data: [
-        {
-          id: 'm-1',
-          conversationId: 'c-1',
-          body: 'Hello there',
-          createdAt: now,
-          sender: { id: 'u-2', firstName: 'Kojo', surname: 'Afriyie' },
-        },
-      ],
+      data: messages,
     }),
     useStartConversation: () => ({ mutate: startSpy, isPending: false }),
     useSendMessage: () => ({ mutate: sendSpy, isPending: false }),
@@ -64,6 +82,20 @@ vi.mock('../src/modules/chat/hooks', () => {
     startSpy,
   }
 })
+
+/**
+ * `vi.mock` above swaps the entire chat-hooks module out, so the spies its
+ * factory creates are not part of the real module's exports. Intersecting the
+ * namespace type with them keeps every `chatHooks.*Spy` assertion below
+ * unchanged.
+ */
+type ChatHooksMock = typeof chatHooksModule & {
+  sendSpy: Mock
+  markReadSpy: Mock
+  startSpy: Mock
+}
+
+const chatHooks = chatHooksModule as unknown as ChatHooksMock
 
 describe('InboxView', () => {
   it('lists conversations with the peer and unread badge', () => {

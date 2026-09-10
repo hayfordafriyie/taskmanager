@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactNode } from 'react'
 import WorkspaceSwitcher from '../src/components/WorkspaceSwitcher'
+import type { TeamSummary } from '../src/types/invite'
 import { renderWithProviders } from './test-utils'
 
 const switchMutate = vi.fn()
-const teamsState = { data: [] }
+const teamsState: { data: TeamSummary[] } = { data: [] }
 
 vi.mock('../src/modules/invite/hooks', () => ({
   TEAM_KEY: ['myTeam'],
@@ -19,13 +21,13 @@ vi.mock('../src/modules/invite/hooks', () => ({
 
 vi.mock('../src/components/Toast', () => ({
   // The module also has a default export (the provider) — tests need a stand-in.
-  default: ({ children }) => children ?? null,
+  default: ({ children }: { children?: ReactNode }) => children ?? null,
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
 
 // Both workspaces share the generated name, exactly like production.
-const OWN = { id: 'team-own', name: 'Personal Workspace', role: 'ADMIN', isOwner: true, isActive: false, memberCount: 1, ownerName: 'Ama Osei' }
-const JOINED = { id: 'team-joined', name: 'Personal Workspace', role: 'MEMBER', isOwner: false, isActive: true, memberCount: 3, ownerName: 'Hayford Afriyie' }
+const OWN: TeamSummary = { id: 'team-own', name: 'Personal Workspace', role: 'ADMIN', isOwner: true, isActive: false, memberCount: 1, ownerName: 'Ama Osei' }
+const JOINED: TeamSummary = { id: 'team-joined', name: 'Personal Workspace', role: 'MEMBER', isOwner: false, isActive: true, memberCount: 3, ownerName: 'Hayford Afriyie' }
 
 describe('WorkspaceSwitcher', () => {
   beforeEach(() => {

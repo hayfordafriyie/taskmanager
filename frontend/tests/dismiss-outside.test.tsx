@@ -18,7 +18,7 @@ vi.mock('../src/modules/notifications/hooks', () => ({
 
 function Panel() {
   const [open, setOpen] = useState(true)
-  const ref = useRef(null)
+  const ref = useRef<HTMLDivElement | null>(null)
   useDismissOnOutside(ref, () => setOpen(false), open)
   return (
     <div>

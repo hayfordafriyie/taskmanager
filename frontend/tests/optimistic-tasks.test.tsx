@@ -1,37 +1,46 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { TASKS_KEY, useAssignTask, useSetTaskStatus } from '../src/modules/tasks/hooks'
 import { TEAM_KEY } from '../src/modules/invite/hooks'
+import type { User } from '../src/types/common'
+import type { SetTaskStatusVariables, Task, TaskStatus } from '../src/types/tasks'
 
 const gqlMock = vi.fn()
-vi.mock('../src/lib/api', () => ({ gql: (...args) => gqlMock(...args) }))
+vi.mock('../src/lib/api', () => ({ gql: (...args: unknown[]) => gqlMock(...args) }))
 vi.mock('../src/modules/invite/hooks', () => ({ TEAM_KEY: ['myTeam'], useMyTeam: () => ({ data: null }) }))
 
-const seedTasks = () => [
+// The subset of `Task` these optimistic updates read and patch in the cache.
+type SeedTask = Pick<Task, 'id' | 'title' | 'status'> & {
+  assignee: Pick<User, 'id'> | null
+}
+
+const seedTasks = (): SeedTask[] => [
   { id: 't-1', title: 'Ship release notes', status: 'TODO', assignee: null },
   { id: 't-2', title: 'Finish dashboard', status: 'DONE', assignee: { id: 'u-2' } },
 ]
 
-function setup(hook) {
+function setup<T>(hook: () => T) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   client.setQueryData(TASKS_KEY, seedTasks())
+  const members: User[] = [
+    { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
+    { id: 'u-2', phone: '+233500000002', firstName: 'Kojo', surname: 'Mensah' },
+  ]
   client.setQueryData(TEAM_KEY, {
     id: 'team-1',
-    members: [
-      { id: 'u-1', phone: '+233500000001', firstName: 'Ama', surname: 'Osei' },
-      { id: 'u-2', phone: '+233500000002', firstName: 'Kojo', surname: 'Mensah' },
-    ],
+    members,
   })
-  const wrapper = ({ children }) => (
+  const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   )
   const { result } = renderHook(hook, { wrapper })
   return { client, result }
 }
 
-const statusOf = (client, id) =>
-  client.getQueryData(TASKS_KEY).find((t) => t.id === id)?.status
+const statusOf = (client: QueryClient, id: string): TaskStatus | undefined =>
+  client.getQueryData<SeedTask[]>(TASKS_KEY)?.find((t) => t.id === id)?.status
 
 describe('optimistic task updates', () => {
   beforeEach(() => {
@@ -39,7 +48,9 @@ describe('optimistic task updates', () => {
   })
 
   it('moves the card to its new column before the API responds', async () => {
-    let resolveRequest
+    let resolveRequest: (value: unknown) => void = () => {
+      throw new Error('resolveRequest called before the request was created')
+    }
     gqlMock.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -82,14 +93,18 @@ describe('optimistic task updates', () => {
     const { client, result } = setup(() => useSetTaskStatus())
 
     act(() => {
-      result.current.mutate({ taskId: 't-1', status: 'review' })
+      // Deliberately off-type: the API can hand back a lowercase status, which
+      // the optimistic update has to normalise before showing it.
+      result.current.mutate({ taskId: 't-1', status: 'review' } as unknown as SetTaskStatusVariables)
     })
 
     await waitFor(() => expect(statusOf(client, 't-1')).toBe('REVIEW'))
   })
 
   it('reassigns instantly and rolls the assignee back on failure', async () => {
-    let rejectRequest
+    let rejectRequest: (reason?: unknown) => void = () => {
+      throw new Error('rejectRequest called before the request was created')
+    }
     gqlMock.mockImplementation(
       () =>
         new Promise((_resolve, reject) => {
@@ -104,18 +119,24 @@ describe('optimistic task updates', () => {
 
     // Optimistic: the avatar switches to the chosen member straight away.
     await waitFor(() =>
-      expect(client.getQueryData(TASKS_KEY).find((t) => t.id === 't-1').assignee.id).toBe('u-2'),
+      expect(
+        client.getQueryData<SeedTask[]>(TASKS_KEY)?.find((t) => t.id === 't-1')?.assignee?.id,
+      ).toBe('u-2'),
     )
 
     act(() => {
       rejectRequest(new Error('boom'))
     })
     await waitFor(() => expect(result.current.isError).toBe(true))
-    expect(client.getQueryData(TASKS_KEY).find((t) => t.id === 't-1').assignee).toBeNull()
+    expect(
+      client.getQueryData<SeedTask[]>(TASKS_KEY)?.find((t) => t.id === 't-1')?.assignee,
+    ).toBeNull()
   })
 
   it('does not let a stale refetch overwrite the optimistic move', async () => {
-    let resolveRequest
+    let resolveRequest: (value: unknown) => void = () => {
+      throw new Error('resolveRequest called before the request was created')
+    }
     gqlMock.mockImplementation(
       () =>
         new Promise((resolve) => {

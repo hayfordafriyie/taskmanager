@@ -9,8 +9,14 @@ import type { GqlVariables } from "./api";
 import type { ID, ISODateString, Role, TeamMember } from "./common";
 import type { PersonNameFields } from "./home";
 
-/** Lifecycle of an invitation, as stored by the backend (a plain string). */
-export type InviteStatus = "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+/**
+ * Lifecycle of an invitation.
+ *
+ * Lowercase on purpose: `graph/schema.resolvers.go` sets
+ * `invite.Status = "pending"` and migration 002 constrains the column to
+ * `('pending', 'accepted', 'revoked')`.
+ */
+export type InviteStatus = "pending" | "accepted" | "revoked";
 
 /** The member who sent an invitation. */
 export interface InviteSender {

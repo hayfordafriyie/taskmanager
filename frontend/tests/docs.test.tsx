@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DocsView from '../src/modules/home/views/DocsView'
-import * as docHooks from '../src/modules/docs/hooks'
+import * as docHooksModule from '../src/modules/docs/hooks'
+import type { Doc, DocVisibility, DocVisibilityOption } from '../src/types/docs'
 import { renderWithProviders } from './test-utils'
 
 vi.mock('../src/modules/auth/AuthContext', () => ({
@@ -26,42 +28,57 @@ vi.mock('../src/modules/docs/hooks', () => {
   const deleteSpy = vi.fn()
   const setAccessSpy = vi.fn()
   const revokeSpy = vi.fn()
+
+  const visibilityOptions: DocVisibilityOption[] = [
+    { value: 'TEAM', label: 'Whole team' },
+    { value: 'RESTRICTED', label: 'Restricted (invite only)' },
+    { value: 'PRIVATE', label: 'Private (just me)' },
+  ]
+  const visibilityLabel: Record<DocVisibility, string> = {
+    TEAM: 'Team',
+    RESTRICTED: 'Restricted',
+    PRIVATE: 'Private',
+  }
+  const visibilityTone: Record<DocVisibility, string> = {
+    TEAM: 'tone-indigo',
+    RESTRICTED: 'tone-amber',
+    PRIVATE: 'tone-neutral',
+  }
+
+  const docs: Doc[] = [
+    {
+      id: 'd-1',
+      teamId: 'team-1',
+      title: 'Roadmap',
+      body: 'Plan',
+      visibility: 'TEAM',
+      canEdit: true,
+      accessCount: 1,
+      createdAt: '2026-09-01T00:00:00Z',
+      updatedAt: '2026-09-01T00:00:00Z',
+      createdBy: { id: 'u-1', firstName: 'Ama', surname: 'Osei' },
+    },
+    {
+      id: 'd-2',
+      teamId: 'team-1',
+      title: 'Secret plan',
+      body: 'Top secret',
+      visibility: 'RESTRICTED',
+      canEdit: false,
+      accessCount: 0,
+      createdAt: '2026-09-01T00:00:00Z',
+      updatedAt: '2026-09-01T00:00:00Z',
+      createdBy: { id: 'u-2', firstName: 'Kojo', surname: 'Afriyie' },
+    },
+  ]
+
   return {
-    VISIBILITY_OPTIONS: [
-      { value: 'TEAM', label: 'Whole team' },
-      { value: 'RESTRICTED', label: 'Restricted (invite only)' },
-      { value: 'PRIVATE', label: 'Private (just me)' },
-    ],
-    VISIBILITY_LABEL: { TEAM: 'Team', RESTRICTED: 'Restricted', PRIVATE: 'Private' },
-    VISIBILITY_TONE: { TEAM: 'tone-indigo', RESTRICTED: 'tone-amber', PRIVATE: 'tone-neutral' },
+    VISIBILITY_OPTIONS: visibilityOptions,
+    VISIBILITY_LABEL: visibilityLabel,
+    VISIBILITY_TONE: visibilityTone,
     useTeamDocs: () => ({
       isLoading: false,
-      data: [
-        {
-          id: 'd-1',
-          teamId: 'team-1',
-          title: 'Roadmap',
-          body: 'Plan',
-          visibility: 'TEAM',
-          canEdit: true,
-          accessCount: 1,
-          createdAt: '2026-09-01T00:00:00Z',
-          updatedAt: '2026-09-01T00:00:00Z',
-          createdBy: { id: 'u-1', firstName: 'Ama', surname: 'Osei' },
-        },
-        {
-          id: 'd-2',
-          teamId: 'team-1',
-          title: 'Secret plan',
-          body: 'Top secret',
-          visibility: 'RESTRICTED',
-          canEdit: false,
-          accessCount: 0,
-          createdAt: '2026-09-01T00:00:00Z',
-          updatedAt: '2026-09-01T00:00:00Z',
-          createdBy: { id: 'u-2', firstName: 'Kojo', surname: 'Afriyie' },
-        },
-      ],
+      data: docs,
     }),
     useDocAccessList: () => ({ data: [] }),
     useCreateDoc: () => ({ mutate: createSpy, isPending: false }),
@@ -76,6 +93,22 @@ vi.mock('../src/modules/docs/hooks', () => {
     revokeSpy,
   }
 })
+
+/**
+ * `vi.mock` above swaps the entire docs-hooks module out, so the spies its
+ * factory creates are not part of the real module's exports. Intersecting the
+ * namespace type with them keeps every `docHooks.*Spy` assertion below
+ * unchanged.
+ */
+type DocsHooksMock = typeof docHooksModule & {
+  createSpy: Mock
+  updateSpy: Mock
+  deleteSpy: Mock
+  setAccessSpy: Mock
+  revokeSpy: Mock
+}
+
+const docHooks = docHooksModule as unknown as DocsHooksMock
 
 describe('DocsView', () => {
   it('lists API docs grouped by visibility', () => {
