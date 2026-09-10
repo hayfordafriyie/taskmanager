@@ -9,6 +9,7 @@ import {
   ItemText,
   ItemIndicator,
 } from "radix-ui/select";
+import { useMemo } from "react";
 import { ChevronDownIcon, CheckIcon } from "@radix-ui/react-icons";
 
 const sizes = {
@@ -41,6 +42,13 @@ export function Select({
   renderValue,
   renderOption,
 }) {
+  // Human-readable label of the current selection (used for the hidden
+  // screen-reader text when a custom renderValue is supplied).
+  const selectedLabel = useMemo(
+    () => options.find((o) => o.value === value)?.label ?? "",
+    [options, value],
+  );
+
   const hasCustomValue = renderValue !== undefined && renderValue !== null;
   return (
     <Root value={value} onValueChange={onValueChange} disabled={disabled}>
@@ -50,7 +58,11 @@ export function Select({
       >
         {hasCustomValue ? (
           <>
-            <Value className="sr-only" placeholder={placeholder} />
+            {/* Radix's <Value> ignores an added class, so it can never be hidden:
+                its text stayed in the layout and printed the member's name a
+                second time next to ours. Render our own screen-reader text
+                instead — assistive tech still announces the selection. */}
+            <span className="sr-only">{selectedLabel || placeholder || ""}</span>
             <span className="min-w-0 flex-1 truncate">{renderValue}</span>
           </>
         ) : (

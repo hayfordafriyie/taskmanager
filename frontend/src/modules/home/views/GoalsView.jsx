@@ -324,8 +324,8 @@ export function GoalsView() {
                   }))}
                   size="md"
                   className="w-full"
-                  // Long names stay in the dropdown (truncated); the trigger
-                  // shows the rounded initials so the field never stretches.
+                  // The trigger shows the member's name, truncated — no
+                  // initials or icons anywhere in member selectors.
                   renderValue={
                     <span
                       className="block max-w-[12rem] truncate"

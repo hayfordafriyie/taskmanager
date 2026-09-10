@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { errorMessage } from "../../../lib/errors";
 import { PlusIcon, PersonIcon, Pencil2Icon, CalendarIcon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, Avatar } from "../ui";
+import { Panel, ViewHeader } from "../ui";
 import Select from "../../../components/Select";
 import Modal from "../../../components/Modal";
 import DatePicker from "../../../components/DatePicker";
@@ -58,10 +58,6 @@ function personLabel(m) {
   return `${m?.firstName ?? ""} ${m?.surname ?? ""}`.trim() || "Unassigned";
 }
 
-function initials(m) {
-  if (!m) return "?";
-  return `${(m.firstName?.[0] || "")}${(m.surname?.[0] || "")}`.toUpperCase();
-}
 
 export function BoardView() {
   const toast = useToast();
@@ -450,20 +446,15 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
         </p>
       )}
 
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <div className="mt-2">
         <span className={`badge rounded-full px-2 py-0.5 text-xs ${priorityClass(task.priority)}`}>
           {PRIORITY_LABEL[task.priority] || task.priority}
         </span>
-        <Avatar
-          initial={initials(assignee)}
-          className="h-6 w-6 text-[10px]"
-          title={personLabel(assignee)}
-        />
       </div>
 
       {/* Status and assignee sit on their own rows so neither is squeezed on
-          narrow cards; the assignee keeps the rounded initials chip and
-          truncates the name instead of stretching. */}
+          narrow cards. The assignee is named once, here — the card used to
+          also draw an initials avatar, which printed the same person twice. */}
       <div className="mt-3 flex flex-col gap-2">
         <Select
           ariaLabel={`Change status of ${task.title}`}

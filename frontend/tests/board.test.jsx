@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import BoardView from '../src/modules/home/views/BoardView'
 import * as taskHooks from '../src/modules/tasks/hooks'
@@ -166,6 +166,26 @@ describe('BoardView', () => {
     expect(trigger).toHaveTextContent('Kwabena Nkrumah-Agyeman Mensah')
     // No rounded initials badge anywhere in the control.
     expect(trigger.querySelector('.rounded-full')).toBeNull()
+  })
+
+  it('names the assignee once on a card (no avatar + name duplicate)', async () => {
+    // t-2 / "Finish dashboard" is assigned to Ama Osei in the fixture
+    const name = 'Ama Osei'
+    renderWithProviders(<BoardView />)
+
+    const card = screen.getByText('Finish dashboard').closest('li')
+    expect(card).not.toBeNull()
+
+    // Named once, in the assignee select. Radix also keeps a visually hidden
+    // span and a native <option> for screen readers / form fallback — neither
+    // is laid out, so neither counts as a visible duplicate.
+    const visibleNames = within(card)
+      .getAllByText(name)
+      .filter((el) => !el.closest('.sr-only') && el.tagName !== 'OPTION')
+    expect(visibleNames).toHaveLength(1)
+
+    // ...and no initials avatar sits beside the priority badge any more.
+    expect(card.querySelector('.from-zinc-400')).toBeNull()
   })
 
   it('shows the planned window on a card', () => {

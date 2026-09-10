@@ -10,7 +10,7 @@ import {
   LockClosedIcon,
   MagnifyingGlassIcon,
 } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, Avatar } from "../ui";
+import { Panel, ViewHeader } from "../ui";
 import Select from "../../../components/Select";
 import { useAuth } from "../../auth/AuthContext";
 import { useMyTeam } from "../../invite/hooks";
@@ -33,10 +33,6 @@ function nameOf(person) {
   return `${person.firstName ?? ""} ${person.surname ?? ""}`.trim() || "Teammate";
 }
 
-function initialsOf(person) {
-  if (!person) return "?";
-  return `${person.firstName?.[0] ?? ""}${person.surname?.[0] ?? ""}`.toUpperCase() || "?";
-}
 
 export function DocsView() {
   const toast = useToast();
@@ -278,7 +274,6 @@ export function DocsView() {
 
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs t-faint">
               <span className="flex items-center gap-2">
-                <Avatar initial={initialsOf(selected.createdBy)} className="h-6 w-6 text-[10px]" />
                 {nameOf(selected.createdBy)}
               </span>
               <span>Updated {new Date(selected.updatedAt).toLocaleDateString()}</span>
@@ -459,7 +454,6 @@ function ShareButton({ doc }) {
                 const canEdit = Boolean(grant?.canEdit);
                 return (
                   <li key={m.id} className="flex items-center gap-3 py-3">
-                    <Avatar initial={initialsOf(m)} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium t-ink">{nameOf(m)}</p>
                       <p className="truncate text-xs t-soft">
