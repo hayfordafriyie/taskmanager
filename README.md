@@ -332,7 +332,7 @@ Schema source of truth: `backend/graph/schema.graphqls`.
 **Realtime (SSE)** — `GET /api/v1/events` authenticates via `?token=` or the
 `Authorization` header and streams `event: message` JSON frames; a `: ping`
 heartbeat every 25s keeps proxies open, and slow subscribers are dropped rather
-than blocking. The frontend consumes it in `src/modules/chat/realtime.js`.
+than blocking. The frontend consumes it in `src/modules/chat/realtime.ts`.
 
 **Redis cache** — GraphQL **read responses** are cached for 30s, keyed by a hash
 of the raw query + variables + caller token. Every mutation bumps an epoch
@@ -489,7 +489,7 @@ docker compose exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup
 
 - **Encrypted transport**: GraphQL bodies are encrypted with a per‑session key
   issued by `POST /api/v1/session`; clients must complete the handshake
-  (implemented in `frontend/src/lib/api.js`).
+  (implemented in `frontend/src/lib/api.ts`).
 - **Auth**: short‑lived JWT access tokens + rotating refresh tokens; sessions are
   stored server‑side and can be invalidated (rotating `JWT_SECRET` invalidates
   everything).
