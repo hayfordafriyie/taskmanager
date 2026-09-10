@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ChangeEvent, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import { errorMessage } from "../../../lib/errors";
 import { TargetIcon, PlusIcon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PolicyBadge } from "../ui";
@@ -16,8 +17,16 @@ import {
   GOAL_STATUS_OPTIONS,
 } from "../../goals/hooks";
 import { useToast } from "../../../components/Toast";
+import type { PersonNameFields } from "../../../types/home";
+import type {
+  GoalKeyResultDrafts,
+  GoalOwnerOption,
+  GoalProgressRingProps,
+  GoalStatus,
+} from "../../../types/goals";
+import type { ID, TeamMember } from "../../../types/common";
 
-function ProgressRing({ value }) {
+function ProgressRing({ value }: GoalProgressRingProps) {
   const radius = 26;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
@@ -48,7 +57,7 @@ function ProgressRing({ value }) {
   );
 }
 
-function nameOf(user) {
+function nameOf(user?: PersonNameFields | null): string {
   if (!user) return "Unassigned";
   return `${user.firstName ?? ""} ${user.surname ?? ""}`.trim() || "Teammate";
 }
@@ -65,16 +74,16 @@ export function GoalsView() {
   const setKrProgress = useSetKeyResultProgress();
   const deleteGoal = useDeleteGoal();
 
-  const [showNew, setShowNew] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [ownerId, setOwnerId] = useState("");
-  const [status, setStatus] = useState("ON_TRACK");
-  const [newKr, setNewKr] = useState({});
+  const [showNew, setShowNew] = useState<boolean>(false);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [ownerId, setOwnerId] = useState<string>("");
+  const [status, setStatus] = useState<GoalStatus>("ON_TRACK");
+  const [newKr, setNewKr] = useState<GoalKeyResultDrafts>({});
 
   const members = team?.members ?? [];
 
-  function handleCreate(e) {
+  function handleCreate(e: FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Enter a goal title first.");
@@ -108,7 +117,7 @@ export function GoalsView() {
     );
   }
 
-  function addKeyResult(goalId) {
+  function addKeyResult(goalId: ID): void {
     const value = (newKr[goalId] || "").trim();
     if (!value) return;
     createKeyResult.mutate(
@@ -229,7 +238,7 @@ export function GoalsView() {
                       step="5"
                       value={r.progress}
                       aria-label={`Progress of ${r.title}`}
-                      onChange={(e) =>
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         setKrProgress.mutate(
                           { keyResultId: r.id, progress: Number(e.target.value) },
                           { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
@@ -248,8 +257,8 @@ export function GoalsView() {
             <div className="mt-3 flex items-center gap-2">
               <input
                 value={newKr[g.id] || ""}
-                onChange={(e) => setNewKr((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                onKeyDown={(e) => {
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setNewKr((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     addKeyResult(g.id);
@@ -273,7 +282,7 @@ export function GoalsView() {
       </div>
 
       {showNew && (
-        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowNew(false); }}>
+        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={(e: MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) setShowNew(false); }}>
           <div className="glass-pop mt-16 w-full max-w-md rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-display text-sm font-semibold t-ink">New goal</h3>
@@ -292,7 +301,7 @@ export function GoalsView() {
                 <span className="text-xs font-medium t-soft">Title</span>
                 <input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                   placeholder="What do you want to achieve?"
                   aria-label="Goal title"
                   className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
@@ -304,7 +313,7 @@ export function GoalsView() {
                 </span>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                   placeholder="Add context…"
                   aria-label="Goal description"
                   rows={2}
@@ -317,7 +326,7 @@ export function GoalsView() {
                   ariaLabel="Goal owner"
                   value={ownerId || user?.id || ""}
                   onValueChange={setOwnerId}
-                  options={Array.from(new Map(members.map((m) => [m.id, m])).values()).map((m) => ({
+                  options={Array.from(new Map<string, TeamMember>(members.map((m): [string, TeamMember] => [m.id, m])).values()).map((m): GoalOwnerOption => ({
                     value: m.id,
                     label: nameOf(m),
                     member: m,

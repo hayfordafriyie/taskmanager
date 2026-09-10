@@ -86,3 +86,20 @@ export interface LogTimeVariables extends GqlVariables {
 export interface DeleteTimeEntryVariables extends GqlVariables {
   entryId: ID;
 }
+
+/** One project row of the weekly timesheet (`TimeView`). */
+export interface TimeSheetRow {
+  /** Project label: the entry label, else its task title, else "General". */
+  label: string;
+  /** Minutes logged per weekday, Monday first (always 5 entries). */
+  days: number[];
+  /** Minutes logged across the whole week for this row. */
+  total: number;
+}
+
+/** One metric card at the top of `TimeView`. */
+export interface TimeMetricCard {
+  label: string;
+  value: string;
+  hint: string;
+}

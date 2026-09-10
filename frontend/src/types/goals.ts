@@ -5,7 +5,8 @@
  * types, plus the variable/response shapes the goal hooks use.
  */
 import type { GqlVariables } from "./api";
-import type { ID, ISODateString, User } from "./common";
+import type { ID, ISODateString, TeamMember, User } from "./common";
+import type { SelectOption } from "./ui";
 
 /** Goal lifecycle, mirroring the GraphQL `GoalStatus` enum. */
 export type GoalStatus = "ON_TRACK" | "AT_RISK" | "BEHIND" | "DONE";
@@ -97,4 +98,18 @@ export interface GoalIdVariables extends GqlVariables {
 export interface GoalStatusOption {
   value: GoalStatus;
   label: string;
+}
+
+/** Props of the circular progress indicator used by `GoalsView` cards. */
+export interface GoalProgressRingProps {
+  /** Completion percentage, 0–100. */
+  value: number;
+}
+
+/** Draft key-result text per goal id (the inline "add a key result" inputs). */
+export type GoalKeyResultDrafts = Record<ID, string>;
+
+/** One entry of the goal-owner picker: a select option plus the member it is. */
+export interface GoalOwnerOption extends SelectOption<string> {
+  member: TeamMember;
 }

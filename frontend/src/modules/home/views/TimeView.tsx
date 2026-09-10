@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent, MouseEvent } from "react";
 import { errorMessage } from "../../../lib/errors";
 import {
   StopwatchIcon,
@@ -21,24 +22,26 @@ import {
   toApiTime,
 } from "../../time/hooks";
 import { useToast } from "../../../components/Toast";
+import type { SelectOption } from "../../../types/ui";
+import type { TimeMetricCard, TimeSheetRow } from "../../../types/time";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
-function startOfWeek(offsetWeeks = 0) {
+function startOfWeek(offsetWeeks: number = 0): Date {
   const now = new Date();
   const day = (now.getDay() + 6) % 7; // Monday = 0
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + offsetWeeks * 7);
 }
 
-function addDays(date, days) {
+function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
-function isoDate(date) {
+function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-function dayIndex(dateStr) {
+function dayIndex(dateStr: string): number {
   const d = new Date(dateStr);
   return (d.getDay() + 6) % 7; // Monday-based
 }
@@ -48,14 +51,14 @@ export function TimeView() {
   const { user } = useAuth();
   const { data: tasks = [] } = useTeamTasks({ enabled: !!user?.id });
 
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [showLog, setShowLog] = useState(false);
-  const [taskId, setTaskId] = useState("");
-  const [label, setLabel] = useState("");
-  const [hours, setHours] = useState("");
-  const [minutes, setMinutes] = useState("");
-  const [spentOn, setSpentOn] = useState(() => isoDate(new Date()));
-  const [note, setNote] = useState("");
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [showLog, setShowLog] = useState<boolean>(false);
+  const [taskId, setTaskId] = useState<string>("");
+  const [label, setLabel] = useState<string>("");
+  const [hours, setHours] = useState<string>("");
+  const [minutes, setMinutes] = useState<string>("");
+  const [spentOn, setSpentOn] = useState<string>(() => isoDate(new Date()));
+  const [note, setNote] = useState<string>("");
 
   const monday = useMemo(() => startOfWeek(weekOffset), [weekOffset]);
   const friday = useMemo(() => addDays(monday, 4), [monday]);
@@ -67,12 +70,12 @@ export function TimeView() {
   const logTime = useLogTime();
   const deleteEntry = useDeleteTimeEntry();
 
-  const rows = useMemo(() => {
-    const byLabel = new Map();
+  const rows = useMemo<TimeSheetRow[]>(() => {
+    const byLabel = new Map<string, TimeSheetRow>();
     for (const e of entries) {
       const key = e.label || e.taskTitle || "General";
       if (!byLabel.has(key)) byLabel.set(key, { label: key, days: [0, 0, 0, 0, 0], total: 0 });
-      const row = byLabel.get(key);
+      const row = byLabel.get(key)!;
       const idx = dayIndex(e.spentOn);
       if (idx >= 0 && idx < 5) row.days[idx] += e.minutes;
       row.total += e.minutes;
@@ -82,7 +85,7 @@ export function TimeView() {
 
   const weekTotal = rows.reduce((sum, r) => sum + r.total, 0);
 
-  const summaries = [
+  const summaries: TimeMetricCard[] = [
     {
       label: "Hours logged",
       value: formatHours(summary?.totalMinutes ?? weekTotal),
@@ -104,12 +107,12 @@ export function TimeView() {
     },
   ];
 
-  const taskOptions = [
+  const taskOptions: SelectOption<string>[] = [
     { value: "", label: "No task (free label)" },
     ...tasks.map((t) => ({ value: t.id, label: t.title })),
   ];
 
-  function submitLog(e) {
+  function submitLog(e: FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     const totalMinutes = Number(hours || 0) * 60 + Number(minutes || 0);
     if (!totalMinutes || totalMinutes <= 0) {
@@ -280,7 +283,7 @@ export function TimeView() {
       )}
 
       {showLog && (
-        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowLog(false); }}>
+        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={(e: MouseEvent<HTMLDivElement>) => { if (e.target === e.currentTarget) setShowLog(false); }}>
           <div className="glass-pop mt-16 w-full max-w-md rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="font-display text-sm font-semibold t-ink">Log time</h3>
@@ -313,7 +316,7 @@ export function TimeView() {
                 </span>
                 <input
                   value={label}
-                  onChange={(e) => setLabel(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setLabel(e.target.value)}
                   placeholder="e.g. Internal tooling"
                   aria-label="Label"
                   className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
@@ -327,7 +330,7 @@ export function TimeView() {
                     type="number"
                     min="0"
                     value={hours}
-                    onChange={(e) => setHours(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setHours(e.target.value)}
                     placeholder="0"
                     aria-label="Hours"
                     className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
@@ -340,7 +343,7 @@ export function TimeView() {
                     min="0"
                     max="59"
                     value={minutes}
-                    onChange={(e) => setMinutes(e.target.value)}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setMinutes(e.target.value)}
                     placeholder="0"
                     aria-label="Minutes"
                     className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
@@ -353,7 +356,7 @@ export function TimeView() {
                 <input
                   type="date"
                   value={spentOn}
-                  onChange={(e) => setSpentOn(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setSpentOn(e.target.value)}
                   aria-label="Date"
                   className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
                 />
@@ -365,7 +368,7 @@ export function TimeView() {
                 </span>
                 <input
                   value={note}
-                  onChange={(e) => setNote(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNote(e.target.value)}
                   placeholder="What did you work on?"
                   aria-label="Note"
                   className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
