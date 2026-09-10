@@ -20,8 +20,9 @@ import {
   useDeleteNotification,
   useDeleteAllNotifications,
 } from "../modules/notifications/hooks";
+import type { ISODateString } from "../types/common";
 
-function timeAgo(iso) {
+function timeAgo(iso: ISODateString): string {
   const then = new Date(iso);
   const diff = Math.max(0, Date.now() - then.getTime());
   const min = Math.floor(diff / 60000);
@@ -34,8 +35,8 @@ function timeAgo(iso) {
 }
 
 export function NotificationBell() {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef(null);
+  const [open, setOpen] = useState<boolean>(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   useDismissOnOutside(rootRef, () => setOpen(false), open);
   const { data: notifications = [] } = useNotifications();
   const { data: unread = 0 } = useUnreadNotificationCount();
@@ -131,7 +132,11 @@ export function NotificationBell() {
 
             {notifications.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm t-soft">
-                <DoubleArrowDownIcon width={16} height={16} className="mx-auto mb-1 t-faint" />
+                <DoubleArrowDownIcon
+                  width={16}
+                  height={16}
+                  className="mx-auto mb-1 t-faint"
+                />
                 No notifications yet.
               </p>
             ) : (
@@ -140,8 +145,16 @@ export function NotificationBell() {
                   <li key={n.id} className="group flex gap-3 px-4 py-3">
                     <button
                       type="button"
-                      aria-label={n.read ? `Mark ${n.title} as unread` : `Mark ${n.title} as read`}
-                      onClick={() => (n.read ? markUnread.mutate({ id: n.id }) : markRead.mutate({ id: n.id }))}
+                      aria-label={
+                        n.read
+                          ? `Mark ${n.title} as unread`
+                          : `Mark ${n.title} as read`
+                      }
+                      onClick={() =>
+                        n.read
+                          ? markUnread.mutate({ id: n.id })
+                          : markRead.mutate({ id: n.id })
+                      }
                       className={`mt-1 h-2 w-2 shrink-0 rounded-full transition-colors ${
                         n.read
                           ? "bg-transparent ring-1 ring-[var(--border-strong)]"
@@ -150,12 +163,16 @@ export function NotificationBell() {
                       title={n.read ? "Unread" : "Read"}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm ${n.read ? "t-soft" : "font-medium t-ink"}`}>
+                      <p
+                        className={`text-sm ${n.read ? "t-soft" : "font-medium t-ink"}`}
+                      >
                         {n.title}
                       </p>
                       {n.body && <p className="mt-0.5 text-xs t-soft">{n.body}</p>}
                       <p className="mt-0.5 flex items-center gap-2 text-[11px] t-faint">
-                        {n.kind === "task_due_soon" && <ReaderIcon width={11} height={11} />}
+                        {n.kind === "task_due_soon" && (
+                          <ReaderIcon width={11} height={11} />
+                        )}
                         <span>{timeAgo(n.createdAt)}</span>
                       </p>
                     </div>
