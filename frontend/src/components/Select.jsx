@@ -86,8 +86,16 @@ export function Select({
               >
                 {renderOption ? (
                   <>
-                    {/* Keeps the full label for a11y + the native fallback. */}
-                    <ItemText className="sr-only">{o.label}</ItemText>
+                    {/* ItemText must stay: Radix uses it to register the item's
+                        value/selection. Keep it visually hidden (inline style,
+                        since Radix drops className) and render the custom
+                        content as the only visible text. */}
+                    <ItemText
+                      data-visually-hidden="true"
+                      style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}
+                    >
+                      {o.label}
+                    </ItemText>
                     <span className="min-w-0 flex-1">{renderOption(o)}</span>
                   </>
                 ) : (

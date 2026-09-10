@@ -156,7 +156,9 @@ describe('BoardView', () => {
 
   it('shows the member name (truncated) in the assignee select — no initials', async () => {
     renderWithProviders(<BoardView />)
-    const user = userEvent.setup()
+    // Radix Select is modal and leaves pointer-events:none on <body> while a
+    // listbox is open; jsdom keeps that rule, so skip the pointer-events gate.
+    const user = userEvent.setup({ pointerEventsCheck: 0 })
     await user.click(screen.getByRole('button', { name: /Add task/ }))
 
     await user.click(screen.getByRole('combobox', { name: 'Assignee' }))
@@ -168,7 +170,8 @@ describe('BoardView', () => {
     expect(trigger.querySelector('.rounded-full')).toBeNull()
   })
 
-  it('names the assignee once on a card (no avatar + name duplicate)', async () => {
+
+  it('names the assignee once on a card (no duplicate avatar + name)', async () => {
     // t-2 / "Finish dashboard" is assigned to Ama Osei in the fixture
     const name = 'Ama Osei'
     renderWithProviders(<BoardView />)
@@ -264,5 +267,47 @@ describe('BoardView', () => {
       },
       expect.any(Object),
     )
+  })
+
+  it('names each member once per row in the assignee dropdown', async () => {
+    renderWithProviders(<BoardView />)
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('combobox', { name: 'Assignee of Finish dashboard' }))
+    const rows = await screen.findAllByRole('option')
+    expect(rows.length).toBeGreaterThan(1)
+
+    // Text a sighted user actually sees: skip sr-only labels and aria-hidden
+    // decoration, so a name printed twice is caught.
+    const visibleText = (el) => {
+      let out = ''
+      el.childNodes.forEach((node) => {
+        if (node.nodeType === 3) {
+          out += node.textContent
+          return
+        }
+        if (node.nodeType !== 1) return
+        if (node.classList.contains('sr-only') || node.getAttribute('data-visually-hidden') === 'true') return
+        out += visibleText(node)
+      })
+      return out
+    }
+
+    let sawAma = false
+    rows.forEach((row) => {
+      const label = row.querySelector('[data-visually-hidden="true"]')?.textContent?.trim()
+        || row.querySelector('.sr-only')?.textContent?.trim()
+        || row.textContent.replace(/\s+/g, ' ').trim()
+      expect(label.length).toBeGreaterThan(0)
+      if (label === 'Ama Osei') sawAma = true
+      // Visible text must equal the label exactly once — a duplicate name
+      // (label + custom content) would come out as "Ama OseiAma Osei".
+      expect(visibleText(row).replace(/\s+/g, ' ').trim()).toBe(label)
+    })
+    expect(sawAma).toBe(true)
+
+    // Radix Select is modal: close it, otherwise it leaves pointer-events:none
+    // on <body> and the next test's clicks are swallowed.
+    await user.keyboard('{Escape}')
   })
 })
