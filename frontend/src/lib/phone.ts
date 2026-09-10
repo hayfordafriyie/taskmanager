@@ -1,4 +1,6 @@
-export const countryOptions = [
+import type { CountryOption } from '../types/phone';
+
+export const countryOptions: CountryOption[] = [
   { label: "Ghana", code: "+233", placeholder: "53 714 4161", length: 9 },
   { label: "Nigeria", code: "+234", placeholder: "801 234 5678", length: 10 },
   { label: "Côte d'Ivoire", code: "+225", placeholder: "07 12 34 56", length: 8, keepZero: true },
@@ -13,7 +15,8 @@ export const countryOptions = [
   { label: "Guinea-Bissau", code: "+245", placeholder: "91 23 456", length: 7 },
 ];
 
-export function normalizeNational(country, raw) {
+/** Strip the national part down to digits, dropping a leading trunk zero. */
+export function normalizeNational(country: string, raw?: string | null): string {
   let digits = (raw || "").replace(/\D/g, "");
   const rule = countryOptions.find((c) => c.code === country);
   if (!rule?.keepZero && digits.startsWith("0")) {
@@ -22,6 +25,7 @@ export function normalizeNational(country, raw) {
   return digits;
 }
 
-export function combinePhone(country, national) {
+/** Build the full international number for a country + national part. */
+export function combinePhone(country: string, national?: string | null): string {
   return `${country}${normalizeNational(country, national)}`;
 }
