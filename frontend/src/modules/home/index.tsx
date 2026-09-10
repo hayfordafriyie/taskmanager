@@ -11,8 +11,10 @@ import {
   ReportsView,
   InviteView,
 } from "./views";
+import type { ComponentType } from "react";
+import type { WorkspaceView } from "../../types/workspace";
 
-const views = {
+const views: Record<WorkspaceView, ComponentType> = {
   Dashboard: DashboardView,
   "My tasks": MyTasksView,
   Board: BoardView,

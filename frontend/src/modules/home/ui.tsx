@@ -1,10 +1,20 @@
-const priorityTint = {
+import type {
+  AvatarProps,
+  PersonNameFields,
+  PolicyBadgeProps,
+  PriorityBadgeProps,
+  SectionTitleProps,
+  ViewHeaderProps,
+} from "../../types/home";
+import type { PanelProps } from "../../types/ui";
+
+const priorityTint: Record<string, string> = {
   High: "tone-red",
   Medium: "tone-amber",
   Low: "tone-neutral",
 };
 
-const statusTint = {
+const statusTint: Record<string, string> = {
   zinc: "tone-neutral",
   indigo: "tone-indigo",
   amber: "tone-amber",
@@ -22,7 +32,11 @@ const statusTint = {
   Admin: "tone-indigo",
 };
 
-export function PolicyBadge({ children, tone = "zinc", className = "" }) {
+export function PolicyBadge({
+  children,
+  tone = "zinc",
+  className = "",
+}: PolicyBadgeProps) {
   return (
     <span
       className={`badge rounded-full px-2.5 py-0.5 text-xs ${statusTint[tone] || statusTint.Low} ${className}`}
@@ -32,32 +46,24 @@ export function PolicyBadge({ children, tone = "zinc", className = "" }) {
   );
 }
 
-export function PriorityBadge({ children, className = "" }) {
+export function PriorityBadge({ children, className = "" }: PriorityBadgeProps) {
   return (
     <span
-      className={`badge rounded-full px-2.5 py-0.5 text-xs ${priorityTint[children]} ${className}`}
+      className={`badge rounded-full px-2.5 py-0.5 text-xs ${priorityTint[String(children)]} ${className}`}
     >
       {children}
     </span>
   );
 }
 
-export function Panel({ children, className = "" }) {
-  return (
-    <section
-      className={`glass-card p-4 ${className}`}
-    >
-      {children}
-    </section>
-  );
+export function Panel({ children, className = "" }: PanelProps) {
+  return <section className={`glass-card p-4 ${className}`}>{children}</section>;
 }
 
-export function SectionTitle({ title, icon: Icon }) {
+export function SectionTitle({ title, icon: Icon }: SectionTitleProps) {
   return (
     <header className="flex items-center gap-2">
-      {Icon && (
-        <Icon width={16} height={16} className="t-faint" />
-      )}
+      {Icon && <Icon width={16} height={16} className="t-faint" />}
       <h2 className="t-ink font-display text-sm font-semibold uppercase tracking-wide">
         {title}
       </h2>
@@ -65,7 +71,10 @@ export function SectionTitle({ title, icon: Icon }) {
   );
 }
 
-export function ViewHeader({ title, subtitle = "Task Manager workspace" }) {
+export function ViewHeader({
+  title,
+  subtitle = "Task Manager workspace",
+}: ViewHeaderProps) {
   return (
     <div>
       <h1 className="t-ink font-display text-2xl font-bold tracking-tight">
@@ -76,7 +85,7 @@ export function ViewHeader({ title, subtitle = "Task Manager workspace" }) {
   );
 }
 
-export function Avatar({ initial, className = "" }) {
+export function Avatar({ initial, className = "" }: AvatarProps) {
   return (
     <span
       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-700 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 ${className}`}
@@ -87,15 +96,22 @@ export function Avatar({ initial, className = "" }) {
 }
 
 /** Full display name for a person-like object ("Ama Osei"). */
-export function personName(person, fallback = "") {
+export function personName(
+  person?: PersonNameFields | null,
+  fallback = "",
+): string {
   if (!person) return fallback;
   return `${person.firstName ?? ""} ${person.surname ?? ""}`.trim() || fallback;
 }
 
 /** Rounded initials for a person-like object ("Ama Osei" -> "AO"). */
-export function initialsOf(person, fallback = "?") {
+export function initialsOf(
+  person?: PersonNameFields | null,
+  fallback = "?",
+): string {
   if (!person) return fallback;
-  const initials = `${person.firstName?.[0] ?? ""}${person.surname?.[0] ?? ""}`.toUpperCase();
+  const initials =
+    `${person.firstName?.[0] ?? ""}${person.surname?.[0] ?? ""}`.toUpperCase();
   return initials || fallback;
 }
 
