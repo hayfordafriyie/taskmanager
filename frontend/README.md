@@ -78,7 +78,15 @@ root `.env`.
 | `npm run preview` | serve the built `dist/` locally |
 | `npm test` | Vitest run (jsdom, Testing Library) |
 | `npm run test:watch` | Vitest in watch mode |
+| `npm run typecheck` | `tsc --noEmit` — type-check the migrated TypeScript surface |
 | `npm run lint` | oxlint |
+
+> **TypeScript migration in progress.** The app is being ported from `.jsx`/`.js`
+> to `.tsx`/`.ts` incrementally, module by module, without breaking the build.
+> `tsconfig.json` has `allowJs: true` / `checkJs: false`, so unmigrated files keep
+> working while typed ones are checked. **All shared types live in `src/types/`**
+> (one file per module plus `common.ts` for cross-module entities) — components and
+> pages must import them rather than declaring props inline.
 
 ---
 
@@ -150,11 +158,13 @@ frontend/
   index.html
   vite.config.js        dev server + /api proxy
   vitest.config.js      jsdom + setup file
+  tsconfig.json         TS config (allowJs during the migration)
   Caddyfile             Docker serving (SPA fallback + /api proxy, internal HTTP)
   src/
     main.jsx            providers: QueryClient, fonts, index.css
     App.jsx             routes (protected / unauthenticated)
     index.css           design tokens, glass utilities, ambient background
+    types/              shared types, one file per module (common.ts = cross-module)
     components/         Button, Select, Toast, Tooltip, Dock, NotificationBell…
     hooks/useTheme.js   light/dark theme (localStorage + system preference)
     layout/             authenticated shell (app bar, dock) + auth shell

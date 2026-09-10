@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { base, buttonVariants, buttonSizes, cn } from "./buttonStyles";
+import type { ButtonProps } from "../types/ui";
 
 export function Button({
   variant = "primary",
@@ -10,7 +11,7 @@ export function Button({
   disabled,
   children,
   ...props
-}) {
+}: ButtonProps) {
   const classes = cn(base, buttonVariants[variant], buttonSizes[size], className);
   if (to) {
     return (
