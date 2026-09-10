@@ -77,8 +77,8 @@ describe('BoardView', () => {
   it('calls setTaskStatus when a card is moved via its status control', async () => {
     renderWithProviders(<BoardView />)
     const user = userEvent.setup()
-    const select = screen.getByRole('combobox', { name: 'Change status of Ship release notes' })
-    await user.selectOptions(select, 'DONE')
+    await user.click(screen.getByRole('combobox', { name: 'Change status of Ship release notes' }))
+    await user.click(await screen.findByRole('option', { name: 'Done' }))
     expect(taskHooks.statusMutate).toHaveBeenCalledWith(
       expect.objectContaining({ taskId: 't-1', status: 'DONE' }),
       expect.any(Object),

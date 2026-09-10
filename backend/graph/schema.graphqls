@@ -183,6 +183,7 @@ type Mutation {
   createTask(input: CreateTaskInput!): TaskResult!
   assignTask(taskId: UUID!, assigneeId: UUID): TaskResult!
   setTaskStatus(taskId: UUID!, status: TaskStatus!): TaskResult!
+  updateTaskDescription(taskId: UUID!, description: String!): TaskResult!
   markNotificationRead(id: UUID!): Boolean!
   markNotificationUnread(id: UUID!): Boolean!
   markAllNotificationsRead: Boolean!

@@ -142,7 +142,8 @@ describe('InviteView', () => {
     renderInvite()
 
     await user.type(screen.getByRole('textbox', { name: 'Phone number' }), '0537144161')
-    await user.click(screen.getByRole('button', { name: 'Guest' }))
+    await user.click(screen.getByRole('combobox', { name: 'Member role' }))
+    await user.click(await screen.findByRole('option', { name: 'Guest' }))
     await user.click(screen.getByRole('button', { name: 'Send invite' }))
 
     await waitFor(() =>

@@ -1,5 +1,22 @@
 import { useState } from "react";
-import { PaperPlaneIcon, PersonIcon, ClockIcon } from "@radix-ui/react-icons";
+import {
+  Root,
+  Trigger,
+  Value,
+  Portal,
+  Content,
+  Viewport,
+  Item,
+  ItemText,
+  ItemIndicator,
+} from "radix-ui/select";
+import {
+  PaperPlaneIcon,
+  PersonIcon,
+  ClockIcon,
+  ChevronDownIcon,
+  CheckIcon,
+} from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PolicyBadge, Avatar } from "../ui";
 import { useToast } from "../../../components/Toast";
 import {
@@ -188,19 +205,37 @@ export function InviteView() {
               aria-label="Phone number"
               className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
             />
-            <div className="seg flex-wrap">
-              {roleOptions.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  aria-pressed={role === r}
-                  className="seg-btn"
+            <Root value={role} onValueChange={setRole}>
+              <Trigger
+                aria-label="Member role"
+                className="control flex w-full items-center justify-between gap-2 rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+              >
+                <Value>{roleLabel[role]}</Value>
+                <ChevronDownIcon width={12} height={12} className="opacity-60" />
+              </Trigger>
+              <Portal>
+                <Content
+                  position="popper"
+                  sideOffset={4}
+                  className="glass-pop z-50 max-h-72 min-w-36 overflow-auto rounded-xl p-1"
                 >
-                  {roleLabel[r]}
-                </button>
-              ))}
-            </div>
+                  <Viewport>
+                    {roleOptions.map((r) => (
+                      <Item
+                        key={r}
+                        value={r}
+                        className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-[var(--accent-tint)] data-[highlighted]:text-[var(--ink)]"
+                      >
+                        <ItemText>{roleLabel[r]}</ItemText>
+                        <ItemIndicator>
+                          <CheckIcon width={12} height={12} />
+                        </ItemIndicator>
+                      </Item>
+                    ))}
+                  </Viewport>
+                </Content>
+              </Portal>
+            </Root>
             <button
               type="submit"
               disabled={inviteToTeam.isPending}

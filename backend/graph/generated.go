@@ -98,6 +98,7 @@ type ComplexityRoot struct {
 		ResetPassword              func(childComplexity int, phone string, code string, password string, confirmPassword string) int
 		RevokeInvite               func(childComplexity int, inviteID uuid.UUID) int
 		SetTaskStatus              func(childComplexity int, taskID uuid.UUID, status model.TaskStatus) int
+		UpdateTaskDescription      func(childComplexity int, taskID uuid.UUID, description string) int
 		VerifyOtp                  func(childComplexity int, phone string, code string) int
 	}
 
@@ -213,6 +214,7 @@ type MutationResolver interface {
 	CreateTask(ctx context.Context, input model.CreateTaskInput) (*model.TaskResult, error)
 	AssignTask(ctx context.Context, taskID uuid.UUID, assigneeID *uuid.UUID) (*model.TaskResult, error)
 	SetTaskStatus(ctx context.Context, taskID uuid.UUID, status model.TaskStatus) (*model.TaskResult, error)
+	UpdateTaskDescription(ctx context.Context, taskID uuid.UUID, description string) (*model.TaskResult, error)
 	MarkNotificationRead(ctx context.Context, id uuid.UUID) (bool, error)
 	MarkNotificationUnread(ctx context.Context, id uuid.UUID) (bool, error)
 	MarkAllNotificationsRead(ctx context.Context) (bool, error)
@@ -586,6 +588,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetTaskStatus(childComplexity, args["taskId"].(uuid.UUID), args["status"].(model.TaskStatus)), true
+	case "Mutation.updateTaskDescription":
+		if e.ComplexityRoot.Mutation.UpdateTaskDescription == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTaskDescription_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateTaskDescription(childComplexity, args["taskId"].(uuid.UUID), args["description"].(string)), true
 	case "Mutation.verifyOTP":
 		if e.ComplexityRoot.Mutation.VerifyOtp == nil {
 			break
@@ -1689,6 +1702,28 @@ func (ec *executionContext) field_Mutation_setTaskStatus_args(ctx context.Contex
 		return nil, err
 	}
 	args["status"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateTaskDescription_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "taskId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["taskId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "description",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["description"] = arg1
 	return args, nil
 }
 
@@ -2974,6 +3009,50 @@ func (ec *executionContext) fieldContext_Mutation_setTaskStatus(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_setTaskStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateTaskDescription(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateTaskDescription(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateTaskDescription(ctx, fc.Args["taskId"].(uuid.UUID), fc.Args["description"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.TaskResult) graphql.Marshaler {
+			return ec.marshalNTaskResult2ᚖtaskmanagerᚋgraphᚋmodelᚐTaskResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateTaskDescription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TaskResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTaskDescription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6309,6 +6388,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "setTaskStatus":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setTaskStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateTaskDescription":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTaskDescription(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { PlusIcon, ColumnsIcon, PersonIcon } from "@radix-ui/react-icons";
+import { PlusIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, Avatar } from "../ui";
+import Select from "../../../components/Select";
 import { useMyTeam } from "../../invite/hooks";
 import {
   useTeamTasks,
@@ -19,7 +20,20 @@ const COLUMNS = [
 ];
 
 const PRIORITY_LABEL = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
-const STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"];
+const UNASSIGNED = "__none";
+
+const PRIORITY_OPTIONS = [
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
+];
+
+const STATUS_SELECT_OPTIONS = [
+  { value: "TODO", label: "To do" },
+  { value: "IN_PROGRESS", label: "In progress" },
+  { value: "REVIEW", label: "Review" },
+  { value: "DONE", label: "Done" },
+];
 
 function priorityClass(p) {
   const map = {
@@ -136,35 +150,29 @@ export function BoardView() {
                 className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
               />
             </label>
-            <label className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">Priority</span>
-              <select
+              <Select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                aria-label="Priority"
-                className="control rounded-[0.85rem] px-3.5 py-2.5 text-sm"
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1">
+                onValueChange={setPriority}
+                options={PRIORITY_OPTIONS}
+                ariaLabel="Priority"
+                size="md"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">Assignee</span>
-              <select
-                value={assigneeId}
-                onChange={(e) => setAssigneeId(e.target.value)}
-                aria-label="Assignee"
-                className="control rounded-[0.85rem] px-3.5 py-2.5 text-sm"
-              >
-                <option value="">Unassigned</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {personLabel(m)}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <Select
+                value={assigneeId || UNASSIGNED}
+                onValueChange={(v) => setAssigneeId(v === UNASSIGNED ? "" : v)}
+                options={[
+                  { value: UNASSIGNED, label: "Unassigned" },
+                  ...members.map((m) => ({ value: m.id, label: personLabel(m) })),
+                ]}
+                ariaLabel="Assignee"
+                size="md"
+              />
+            </div>
             <button
               type="submit"
               disabled={createTask.isPending}
@@ -245,10 +253,6 @@ export function BoardView() {
         </div>
       )}
 
-      <p className="hidden items-center gap-2 text-xs t-faint lg:flex">
-        <ColumnsIcon width={14} height={14} />
-        Drag a card to another column to update its status. Use the card’s menu to reassign or move manually.
-      </p>
       <p className="flex items-center gap-2 text-xs t-faint lg:hidden">
         <PersonIcon width={14} height={14} />
         Swipe columns sideways; drag cards to move status.
@@ -288,34 +292,27 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onStatus, onA
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <label className="flex flex-1 items-center gap-1.5">
-          <span className="sr-only">Move to status</span>
-          <select
-            aria-label={`Change status of ${task.title}`}
+        <div className="flex-1">
+          <Select
+            ariaLabel={`Change status of ${task.title}`}
             value={task.status}
-            onChange={(e) => onStatus(toApiStatus(e.target.value))}
-            className="control w-full rounded-full px-2.5 py-1 text-xs"
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>
-                {COLUMNS.find((c) => c.key === s)?.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <select
-          aria-label={`Assignee of ${task.title}`}
-          value={task.assignee?.id ?? ""}
-          onChange={(e) => onAssignee(e.target.value)}
-          className="control max-w-[7.5rem] rounded-full px-2.5 py-1 text-xs"
-        >
-          <option value="">Unassigned</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>
-              {personLabel(m)}
-            </option>
-          ))}
-        </select>
+            onValueChange={onStatus}
+            options={STATUS_SELECT_OPTIONS}
+            size="sm"
+            className="w-full"
+          />
+        </div>
+        <Select
+          ariaLabel={`Assignee of ${task.title}`}
+          value={task.assignee?.id ?? UNASSIGNED}
+          onValueChange={(v) => onAssignee(v === UNASSIGNED ? "" : v)}
+          options={[
+            { value: UNASSIGNED, label: "Unassigned" },
+            ...members.map((m) => ({ value: m.id, label: personLabel(m) })),
+          ]}
+          size="sm"
+          className="max-w-[7.5rem]"
+        />
       </div>
     </li>
   );

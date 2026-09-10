@@ -37,6 +37,9 @@ if (typeof window.Element.prototype.setPointerCapture !== 'function') {
 if (typeof window.Element.prototype.releasePointerCapture !== 'function') {
   window.Element.prototype.releasePointerCapture = () => {}
 }
+if (typeof window.Element.prototype.scrollIntoView !== 'function') {
+  window.Element.prototype.scrollIntoView = () => {}
+}
 if (typeof window.PointerEvent === 'undefined') {
   class PointerEvent extends MouseEvent {
     constructor(type, params) {

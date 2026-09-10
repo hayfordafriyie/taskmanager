@@ -330,3 +330,43 @@ func (r *Resolver) notifyTaskUser(ctx context.Context, userID uuid.UUID, kind, t
 		_ = err // in-app delivery is best effort
 	}
 }
+
+// UpdateTaskDescription is the resolver for the updateTaskDescription field.
+func (r *mutationResolver) UpdateTaskDescription(ctx context.Context, taskID uuid.UUID, description string) (*model.TaskResult, error) {
+	user, err := r.currentUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	teamID, err := r.myTeamID(ctx, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("load team: %w", err)
+	}
+
+	updated, err := db.UpdateTaskDescription(ctx, r.Pool, taskID, user.ID, description)
+	if err != nil {
+		switch err {
+		case db.ErrTaskNotFound, db.ErrNotWorkspaceMember:
+			return r.taskFail(err.Error()), nil
+		default:
+			return nil, fmt.Errorf("update task description: %w", err)
+		}
+	}
+
+	roster, err := r.rosterOf(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+	task, err := r.taskModel(updated, roster)
+	if err != nil {
+		return nil, err
+	}
+
+	// Everyone involved should know the details changed.
+	msg := fmt.Sprintf("%s updated the details of “%s”.", personName(roster[user.ID]), updated.Title)
+	r.notifyTaskUser(ctx, updated.CreatedBy, "task_updated", "Task details updated", msg, &updated.ID)
+	if updated.AssigneeID != nil && *updated.AssigneeID != updated.CreatedBy {
+		r.notifyTaskUser(ctx, *updated.AssigneeID, "task_updated", "Task details updated", msg, &updated.ID)
+	}
+
+	return &model.TaskResult{Success: true, Message: "task updated", Task: task}, nil
+}

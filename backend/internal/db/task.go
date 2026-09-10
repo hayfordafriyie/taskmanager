@@ -124,6 +124,30 @@ func SetTaskStatus(
 	return t, nil
 }
 
+// UpdateTaskDescription edits a task's optional description.
+func UpdateTaskDescription(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	taskID, actor uuid.UUID,
+	description string,
+) (*types.TaskRow, error) {
+	row := pool.QueryRow(
+		ctx,
+		`SELECT id, team_id, created_by, assignee_id, title, description, status,
+		        priority, due_at, completed_at, created_at, updated_at
+		   FROM update_task_description($1, $2, $3)`,
+		taskID, actor, description,
+	)
+	t, err := scanTaskCore(row)
+	if err != nil {
+		if mapped, ok := mapTaskError(err); ok {
+			return nil, mapped
+		}
+		return nil, err
+	}
+	return t, nil
+}
+
 // TeamTasks returns every task in a workspace with assignee + creator details.
 func TeamTasks(
 	ctx context.Context,
