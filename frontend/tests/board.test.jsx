@@ -143,6 +143,17 @@ describe('BoardView', () => {
     )
   })
 
+  it('stacks the status and assignee selects vertically on a card', () => {
+    renderWithProviders(<BoardView />)
+    const status = screen.getByRole('combobox', { name: 'Change status of Ship release notes' })
+    const assignee = screen.getByRole('combobox', { name: 'Assignee of Ship release notes' })
+    // Both controls live in the same column container, so they render on
+    // separate rows instead of competing for the card's width.
+    const group = status.closest('div')
+    expect(group).toBe(assignee.closest('div'))
+    expect(group.className).toContain('flex-col')
+  })
+
   it('collapses a long assignee name to rounded initials once chosen', async () => {
     renderWithProviders(<BoardView />)
     const user = userEvent.setup()

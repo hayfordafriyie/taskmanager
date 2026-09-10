@@ -449,17 +449,18 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className="flex-1">
-          <Select
-            ariaLabel={`Change status of ${task.title}`}
-            value={task.status}
-            onValueChange={onStatus}
-            options={STATUS_SELECT_OPTIONS}
-            size="sm"
-            className="w-full"
-          />
-        </div>
+      {/* Status and assignee sit on their own rows so neither is squeezed on
+          narrow cards; the assignee keeps the rounded initials chip and
+          truncates the name instead of stretching. */}
+      <div className="mt-3 flex flex-col gap-2">
+        <Select
+          ariaLabel={`Change status of ${task.title}`}
+          value={task.status}
+          onValueChange={onStatus}
+          options={STATUS_SELECT_OPTIONS}
+          size="sm"
+          className="w-full"
+        />
         <Select
           ariaLabel={`Assignee of ${task.title}`}
           value={task.assignee?.id ?? UNASSIGNED}
@@ -469,10 +470,8 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
             ...members.map((m) => ({ value: m.id, label: personLabel(m), member: m })),
           ]}
           size="sm"
-          className="max-w-[6.5rem]"
-          // Initials only in the trigger so a long name cannot widen the card;
-          // the dropdown still lists names (truncated) next to the initials.
-          renderValue={<MemberChip member={assignee} compact />}
+          className="w-full"
+          renderValue={<MemberChip member={assignee} />}
           renderOption={(o) => <MemberChip member={o.member} />}
         />
       </div>
