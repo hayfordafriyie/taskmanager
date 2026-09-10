@@ -3,6 +3,7 @@ import { PlusIcon, PersonIcon, Pencil2Icon, CalendarIcon } from "@radix-ui/react
 import { Panel, ViewHeader, Avatar } from "../ui";
 import Select from "../../../components/Select";
 import Modal from "../../../components/Modal";
+import DatePicker from "../../../components/DatePicker";
 import { useMyTeam } from "../../invite/hooks";
 import {
   useTeamTasks,
@@ -276,33 +277,35 @@ export function BoardView() {
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">
                 Start date <span className="t-faint">(optional)</span>
               </span>
-              <input
-                type="date"
+              <DatePicker
                 value={startDate}
-                max={endDate || undefined}
-                onChange={(e) => setStartDate(e.target.value)}
-                aria-label="Start date"
-                className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+                onChange={setStartDate}
+                max={endDate || ""}
+                ariaLabel="Start date"
+                placeholder="Select start"
               />
-            </label>
-            <label className="flex flex-col gap-1">
+            </div>
+            <div className="flex flex-col gap-1">
               <span className="text-xs font-medium t-soft">
                 End date <span className="t-faint">(optional)</span>
               </span>
-              <input
-                type="date"
+              <DatePicker
                 value={endDate}
-                min={startDate || undefined}
-                onChange={(e) => setEndDate(e.target.value)}
-                aria-label="End date"
-                className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
+                onChange={setEndDate}
+                min={startDate || ""}
+                ariaLabel="End date"
+                placeholder="Select end"
               />
-            </label>
+            </div>
           </div>
+          <p className="t-faint text-[11px]">
+            Dates before the start date are unavailable in the end-date picker (and vice versa),
+            so a task can never end before it starts.
+          </p>
           {isWindowReversed(startDate, endDate) && (
             <p className="text-xs text-red-500" role="alert">
               The end date cannot be before the start date.

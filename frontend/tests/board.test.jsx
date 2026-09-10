@@ -67,6 +67,21 @@ vi.mock('../src/modules/tasks/hooks', () => {
 })
 
 describe('BoardView', () => {
+  // Opens a Radix date picker and walks forward until the target day is shown,
+  // then clicks it — mirrors how a user picks a date.
+  async function pickDate(user, triggerLabel, dayLabel) {
+    await user.click(screen.getByRole('button', { name: triggerLabel }))
+    for (let i = 0; i < 24; i += 1) {
+      const days = screen.queryAllByRole('button', { name: dayLabel })
+      if (days.length > 0) {
+        await user.click(days[0])
+        return
+      }
+      await user.click(screen.getByRole('button', { name: 'Next month' }))
+    }
+    throw new Error(`date picker never showed ${dayLabel}`)
+  }
+
   it('groups real tasks into columns and opens the add-task modal', async () => {
     renderWithProviders(<BoardView />)
     expect(screen.getByRole('heading', { name: 'To do' })).toBeInTheDocument()
@@ -132,8 +147,8 @@ describe('BoardView', () => {
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Add task/ }))
     await user.type(screen.getByPlaceholderText('What needs doing?'), 'Plan the sprint')
-    await user.type(screen.getByLabelText('Start date'), '2026-10-01')
-    await user.type(screen.getByLabelText('End date'), '2026-10-15')
+    await pickDate(user, 'Start date', '1 Oct 2026')
+    await pickDate(user, 'End date', '15 Oct 2026')
     await user.click(screen.getByRole('button', { name: 'Add task' }))
 
     expect(taskHooks.createMutate).toHaveBeenCalledWith(
@@ -148,20 +163,30 @@ describe('BoardView', () => {
     )
   })
 
-  it('blocks a task whose end date is before its start date', async () => {
-    taskHooks.createMutate.mockClear()
+  it('disables end dates that fall before the chosen start date', async () => {
     renderWithProviders(<BoardView />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Add task/ }))
-    await user.type(screen.getByPlaceholderText('What needs doing?'), 'Backwards window')
-    await user.type(screen.getByLabelText('Start date'), '2026-10-20')
-    await user.type(screen.getByLabelText('End date'), '2026-10-01')
+    await pickDate(user, 'Start date', '15 Sep 2026')
 
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'The end date cannot be before the start date.',
-    )
-    await user.click(screen.getByRole('button', { name: 'Add task' }))
-    expect(taskHooks.createMutate).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'End date' }))
+    // Earlier days in the same month must be unpickable, later ones selectable.
+    expect(screen.getByRole('button', { name: '14 Sep 2026' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '1 Sep 2026' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '15 Sep 2026' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '20 Sep 2026' })).toBeEnabled()
+  })
+
+  it('disables start dates that fall after the chosen end date', async () => {
+    renderWithProviders(<BoardView />)
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /Add task/ }))
+    await pickDate(user, 'End date', '15 Sep 2026')
+
+    await user.click(screen.getByRole('button', { name: 'Start date' }))
+    expect(screen.getByRole('button', { name: '20 Sep 2026' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '15 Sep 2026' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '1 Sep 2026' })).toBeEnabled()
   })
 
   it('pre-fills the dates when editing and clears one when blanked', async () => {
@@ -169,10 +194,11 @@ describe('BoardView', () => {
     renderWithProviders(<BoardView />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: 'Edit task Ship release notes' }))
-    expect(screen.getByLabelText('Start date')).toHaveValue('2026-09-15')
-    expect(screen.getByLabelText('End date')).toHaveValue('2026-09-20')
+    expect(screen.getByRole('button', { name: 'Start date' })).toHaveTextContent('15 Sep 2026')
+    expect(screen.getByRole('button', { name: 'End date' })).toHaveTextContent('20 Sep 2026')
 
-    await user.clear(screen.getByLabelText('Start date'))
+    await user.click(screen.getByRole('button', { name: 'Start date' }))
+    await user.click(screen.getByRole('button', { name: 'Clear' }))
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
 
     expect(taskHooks.updateMutate).toHaveBeenCalledWith(
