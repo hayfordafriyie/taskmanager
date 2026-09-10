@@ -3,10 +3,13 @@ import { Panel, ViewHeader } from "../ui";
 import { useAuth } from "../../auth/AuthContext";
 import { useReports } from "../../reports/hooks";
 import DonutChart from "../../../components/DonutChart";
+import type { ReportPoint, ReportSlice, ReportStat, ReportWorkload } from "../../../types/reports";
 
-const WORKLOAD_BAR = ["bg-sky-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-zinc-400"];
+const WORKLOAD_BAR: string[] = ["bg-sky-500", "bg-emerald-500", "bg-amber-500", "bg-violet-500", "bg-zinc-400"];
 
-const SLICE_COLOR = {
+// Server status keys reach us as plain strings (`ReportSlice.key`), so the
+// lookup table stays open-ended and falls back to the neutral grey below.
+const SLICE_COLOR: Record<string, string> = {
   TODO: "#a1a1aa",
   IN_PROGRESS: "#0ea5e9",
   REVIEW: "#f59e0b",
@@ -17,13 +20,13 @@ export function ReportsView() {
   const { user } = useAuth();
   const { data, isLoading } = useReports({ enabled: !!user?.id });
 
-  const days = data?.completedPerDay ?? [];
-  const byStatus = data?.byStatus ?? [];
-  const workload = data?.workload ?? [];
+  const days: ReportPoint[] = data?.completedPerDay ?? [];
+  const byStatus: ReportSlice[] = data?.byStatus ?? [];
+  const workload: ReportWorkload[] = data?.workload ?? [];
 
   const maxValue = Math.max(1, ...days.map((d) => d.value));
 
-  const stats = [
+  const stats: ReportStat[] = [
     { label: "Total tasks", value: data?.totalTasks ?? 0 },
     { label: "Completed", value: data?.completedTasks ?? 0 },
     { label: "Overdue", value: data?.overdueTasks ?? 0 },

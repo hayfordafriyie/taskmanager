@@ -104,3 +104,20 @@ export interface DocVisibilityOption {
   value: DocVisibility;
   label: string;
 }
+
+/** One visibility bucket of the `DocsView` sidebar, before its pages are attached. */
+export interface DocVisibilityGroupSpec {
+  key: DocVisibility;
+  label: string;
+}
+
+/** A visibility bucket of the `DocsView` sidebar with the pages it contains. */
+export interface DocVisibilityGroup extends DocVisibilityGroupSpec {
+  items: Doc[];
+}
+
+/** Props of the per-member access dialog opened from `DocsView` (`ShareButton`). */
+export interface DocShareButtonProps {
+  /** The document whose access grants are managed. */
+  doc: Doc;
+}

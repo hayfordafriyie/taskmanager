@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { errorMessage } from "../../../lib/errors";
 import {
   ReaderIcon,
@@ -27,8 +28,18 @@ import {
   VISIBILITY_TONE,
 } from "../../docs/hooks";
 import { useToast } from "../../../components/Toast";
+import type { ID, TeamMember } from "../../../types/common";
+import type {
+  Doc,
+  DocAccess,
+  DocShareButtonProps,
+  DocVisibility,
+  DocVisibilityGroup,
+  DocVisibilityGroupSpec,
+} from "../../../types/docs";
+import type { PersonNameFields } from "../../../types/home";
 
-function nameOf(person) {
+function nameOf(person?: PersonNameFields | null): string {
   if (!person) return "Teammate";
   return `${person.firstName ?? ""} ${person.surname ?? ""}`.trim() || "Teammate";
 }
@@ -44,16 +55,16 @@ export function DocsView() {
   const updateDoc = useUpdateDoc();
   const deleteDoc = useDeleteDoc();
 
-  const [selectedId, setSelectedId] = useState(null);
-  const [search, setSearch] = useState("");
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [visibility, setVisibility] = useState("TEAM");
+  const [selectedId, setSelectedId] = useState<ID | null>(null);
+  const [search, setSearch] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
+  const [body, setBody] = useState<string>("");
+  const [visibility, setVisibility] = useState<DocVisibility>("TEAM");
 
-  const [showNew, setShowNew] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newBody, setNewBody] = useState("");
-  const [newVisibility, setNewVisibility] = useState("TEAM");
+  const [showNew, setShowNew] = useState<boolean>(false);
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [newBody, setNewBody] = useState<string>("");
+  const [newVisibility, setNewVisibility] = useState<DocVisibility>("TEAM");
 
   const selected = docs.find((d) => d.id === selectedId) || null;
 
@@ -69,7 +80,7 @@ export function DocsView() {
 
   const members = team?.members ?? [];
 
-  const filtered = useMemo(() => {
+  const filtered = useMemo<Doc[]>(() => {
     const q = search.trim().toLowerCase();
     if (!q) return docs;
     return docs.filter(
@@ -80,8 +91,8 @@ export function DocsView() {
     );
   }, [docs, search]);
 
-  const groups = useMemo(() => {
-    const order = [
+  const groups = useMemo<DocVisibilityGroup[]>(() => {
+    const order: DocVisibilityGroupSpec[] = [
       { key: "TEAM", label: "Shared with team" },
       { key: "RESTRICTED", label: "Restricted" },
       { key: "PRIVATE", label: "Private" },
@@ -94,7 +105,7 @@ export function DocsView() {
   const dirty =
     selected && (title !== selected.title || body !== selected.body || visibility !== selected.visibility);
 
-  function save() {
+  function save(): void {
     if (!selected) return;
     updateDoc.mutate(
       { docId: selected.id, title, body, visibility },
@@ -109,7 +120,7 @@ export function DocsView() {
     );
   }
 
-  function removeDoc(doc) {
+  function removeDoc(doc: Doc): void {
     deleteDoc.mutate(
       { docId: doc.id },
       {
@@ -122,7 +133,7 @@ export function DocsView() {
     );
   }
 
-  function handleCreate(e) {
+  function handleCreate(e: FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     if (!newTitle.trim()) {
       toast.error("Enter a document title first.");
@@ -178,7 +189,7 @@ export function DocsView() {
             />
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
               placeholder="Search docs…"
               aria-label="Search docs"
               className="control w-full rounded-full py-2 pl-9 pr-3 text-sm"
@@ -235,7 +246,7 @@ export function DocsView() {
               {selected.canEdit ? (
                 <input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                   aria-label="Document title"
                   className="control min-w-0 flex-1 rounded-[0.85rem] px-3 py-2 font-display text-lg font-bold"
                 />
@@ -296,7 +307,7 @@ export function DocsView() {
             {selected.canEdit ? (
               <textarea
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setBody(e.target.value)}
                 placeholder="Write the document…"
                 aria-label="Document body"
                 rows={14}
@@ -336,7 +347,7 @@ export function DocsView() {
                 <span className="text-xs font-medium t-soft">Title</span>
                 <input
                   value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setNewTitle(e.target.value)}
                   placeholder="e.g. Product roadmap"
                   aria-label="New document title"
                   className="control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm"
@@ -346,7 +357,7 @@ export function DocsView() {
                 <span className="text-xs font-medium t-soft">Body</span>
                 <textarea
                   value={newBody}
-                  onChange={(e) => setNewBody(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewBody(e.target.value)}
                   placeholder="Start writing…"
                   aria-label="New document body"
                   rows={6}
@@ -380,18 +391,18 @@ export function DocsView() {
 }
 
 // ShareButton opens the per-member access modal for a document.
-function ShareButton({ doc }) {
+function ShareButton({ doc }: DocShareButtonProps) {
   const toast = useToast();
   const { data: team } = useMyTeam();
   const { data: access = [] } = useDocAccessList(doc.id);
   const setAccess = useSetDocAccess();
   const revokeAccess = useRevokeDocAccess();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<boolean>(false);
 
   const members = team?.members ?? [];
-  const accessByUser = new Map(access.map((a) => [a.userId, a]));
+  const accessByUser = new Map<ID, DocAccess>(access.map((a) => [a.userId, a]));
 
-  function toggleAccess(member) {
+  function toggleAccess(member: TeamMember): void {
     const existing = accessByUser.get(member.id);
     if (existing) {
       revokeAccess.mutate(
@@ -406,7 +417,7 @@ function ShareButton({ doc }) {
     );
   }
 
-  function toggleEdit(member) {
+  function toggleEdit(member: TeamMember): void {
     const existing = accessByUser.get(member.id);
     setAccess.mutate(
       { docId: doc.id, userId: member.id, canEdit: !existing?.canEdit },

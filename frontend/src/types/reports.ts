@@ -49,3 +49,14 @@ export type ReportStatusKey = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 export interface ReportsData {
   reports: WorkspaceReports;
 }
+
+/**
+ * One headline counter in the `ReportsView` summary row.
+ *
+ * `value` is already formatted for display (counts stay numbers, the completion
+ * rate arrives as `"42%"`), so the view only has to render it.
+ */
+export interface ReportStat {
+  label: string;
+  value: string | number;
+}
