@@ -86,6 +86,7 @@ optional.
 | `JWT_SECRET` | `openssl rand -base64 48` | **required**; rotating it logs everyone out |
 | `JWT_REFRESH_SECRET` | `openssl rand -base64 48` | **required** |
 | `APP_URL` | `https://localhost:8443` | optional; linked in SMS texts |
+| `CORS_ORIGINS` | `https://app.example.com` | comma‑separated allow‑list of browser origins (exact match, trailing slash tolerated). **Required in production**; when empty only loopback origins (`localhost`, `127.0.0.1`, `::1`) are accepted — local dev keeps working, public deployments are closed by default. Disallowed origins receive no CORS headers and their preflights get `403`. |
 
 ### Redis cache (optional)
 

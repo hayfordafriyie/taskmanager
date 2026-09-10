@@ -243,6 +243,8 @@ Notes
 | `REDIS_PASSWORD` | Redis + backend | Compose builds `REDIS_URL` from it |
 | `REDIS_URL` | backend | `redis://:<password>@redis:6379/0` in Compose; `127.0.0.1` for local runs |
 | `JWT_SECRET`, `JWT_REFRESH_SECRET` | backend | **required**; generate with `openssl rand -base64 48` |
+| `CORS_ORIGINS` | backend | comma‑separated browser origins allowed to call the API (exact match). **Required in production** (e.g. `https://app.example.com`); when empty only loopback origins are accepted |
+| `APP_URL` | backend | public app URL used in SMS links (invites, password resets) |
 | `SMS_API_KEY` (or `SMS_KEY`), `DEFAULT_SMS_SENDER_ID`, `SMS_BASE_URL`, `SENDER_ID` | backend | Mnotify credentials |
 | `VITE_API_URL`, `VITE_API_VERSION`, `VITE_ENCRYPTED_MARKER` | frontend build | inlined into the bundle; set `VITE_API_URL` to the public URL in production |
 | `SERVER_PORT` | backend | `8080` |
@@ -409,13 +411,16 @@ stack survives host reboots. Published host ports:
 
 | Service | Host port | Container port | Notes |
 |---|---|---|---|
-| Postgres | `5433` | `5432` | remapped to avoid conflicts with existing Postgres on the host |
-| Redis | `6380` | `6379` | remapped to avoid conflicts with existing Redis on the host |
-| Backend | `8080` | `8080` | plain HTTP; system Caddy proxies to this |
-| Frontend | `127.0.0.1:5173` | `80` | localhost‑only; system Caddy proxies to this |
+| Postgres | `127.0.0.1:5433` | `5432` | loopback only; remapped to avoid conflicts with an existing Postgres |
+| Redis | `127.0.0.1:6380` | `6379` | loopback only; remapped to avoid conflicts with an existing Redis |
+| Backend | `127.0.0.1:8080` | `8080` | loopback only; plain HTTP, the reverse proxy fronts it |
+| Frontend | `127.0.0.1:5173` | `80` | loopback only; the system Caddy proxies to this |
 
-In production you can remove the Postgres and Redis host‑port mappings entirely
-so the datastores are reachable only on the internal `taskmanager-net` network.
+Every published port is bound to `127.0.0.1`, so nothing is reachable from the
+host network — only from the machine itself (and from containers on
+`taskmanager-net`). For a remote database connection use an SSH tunnel or a
+managed instance. You can drop the Postgres/Redis mappings entirely if you only
+need in‑stack access.
 
 ### 11.3 System Caddy integration
 
@@ -491,9 +496,10 @@ docker compose exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup
 - **Passwords** are hashed with bcrypt; OTPs are hashed and rate‑limited.
 - **Abuse protection**: per‑phone and per‑IP brute‑force protection on auth
   endpoints, plus HTTP rate limiting.
-- **HTTP hardening**: security headers and HSTS (via Caddy). Note that CORS
-  currently **reflects the request `Origin`** with credentials enabled
-  (`internal/server/cors.go`) — for production, restrict it to your app's origin.
+- **HTTP hardening**: security headers and HSTS (via Caddy). CORS uses an
+  **explicit allow‑list**: set `CORS_ORIGINS` to your app's origin(s) in
+  production. When it is empty only loopback origins are reflected, so local
+  development works while a public deployment is closed by default.
 - **Least privilege in data**: every query/mutation is membership‑checked in SQL;
   docs enforce `team`/`restricted`/`private` visibility and per‑member edit
   grants; a user can only read their own notifications, time entries and
