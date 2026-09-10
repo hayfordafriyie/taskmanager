@@ -4,7 +4,7 @@
  * Components import these instead of declaring props inline, so the primitives
  * stay consistent across every page.
  */
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
 
 /** The button styles offered by `components/Button`. */
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -41,6 +41,36 @@ export interface SelectProps<TValue extends string = string> {
   size?: SelectSize;
   className?: string;
   disabled?: boolean;
+  /**
+   * Node shown in the trigger instead of the raw label — pass a compact chip
+   * (e.g. rounded initials) so long names don't stretch the layout. The real
+   * label stays available to assistive tech.
+   */
+  renderValue?: ReactNode;
+}
+
+/** Sides a tooltip can be placed on. */
+export type TooltipSide = "top" | "right" | "bottom" | "left";
+
+export interface TooltipProps {
+  content: ReactNode;
+  side?: TooltipSide;
+  children: ReactNode;
+}
+
+/** Shared props for text-like inputs that report their value on change. */
+export interface FieldProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "className"> {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  /** Marks the field as invalid (adds an error ring). */
+  invalid?: boolean;
+}
+
+/** Props for the password field with the show/hide toggle. */
+export interface PasswordInputProps extends FieldProps {
+  placeholder?: string;
 }
 
 /** Basic props for a presentational panel/section wrapper. */

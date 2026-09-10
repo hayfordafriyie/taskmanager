@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
+import type { PasswordInputProps } from "../types/ui";
 
 const fieldClass =
   "control w-full rounded-[0.85rem] px-3.5 py-2.5 pr-10 text-sm";
 
-export default function PasswordInput({ value, onChange, placeholder, disabled, invalid }) {
+export default function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  invalid,
+}: PasswordInputProps) {
   const [visible, setVisible] = useState(false);
   const type = visible ? "text" : "password";
 

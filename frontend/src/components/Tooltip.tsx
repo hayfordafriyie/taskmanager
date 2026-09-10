@@ -1,6 +1,7 @@
 import * as Tip from "radix-ui/tooltip";
+import type { TooltipProps } from "../types/ui";
 
-export function Tooltip({ content, side = "top", children }) {
+export function Tooltip({ content, side = "top", children }: TooltipProps) {
   return (
     <Tip.Provider delayDuration={200}>
       <Tip.Root>

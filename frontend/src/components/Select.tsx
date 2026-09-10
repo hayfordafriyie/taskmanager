@@ -11,8 +11,9 @@ import {
 } from "radix-ui/select";
 import { useMemo } from "react";
 import { ChevronDownIcon, CheckIcon } from "@radix-ui/react-icons";
+import type { SelectProps, SelectSize } from "../types/ui";
 
-const sizes = {
+const sizes: Record<SelectSize, string> = {
   sm: "px-2.5 py-1 text-xs rounded-full",
   md: "px-3.5 py-2.5 text-sm rounded-[0.85rem]",
 };
@@ -21,16 +22,11 @@ const sizes = {
  * Radix select.
  *
  * Long labels (person names especially) used to stretch the trigger and break
- * card layouts. Two optional props fix that without giving up the full text:
- *
- *  - renderValue: node shown in the trigger instead of the raw label — pass a
- *    compact chip (e.g. rounded initials). The real label stays in the DOM via
- *    a visually hidden Select.Value, so screen readers and the native form
- *    fallback still get the full name.
- *  - renderOption: node shown for each row in the dropdown (the dropdown can
- *    afford the full name, truncated rather than overflowing).
+ * card layouts. `renderValue` fixes that without giving up the full text: pass a
+ * compact chip (e.g. rounded initials) and the real label stays in the DOM via
+ * visually hidden text, so screen readers still announce the selection.
  */
-export function Select({
+export function Select<TValue extends string = string>({
   value,
   onValueChange,
   options,
@@ -40,7 +36,7 @@ export function Select({
   className = "",
   disabled,
   renderValue,
-}) {
+}: SelectProps<TValue>) {
   // Human-readable label of the current selection (used for the hidden
   // screen-reader text when a custom renderValue is supplied).
   const selectedLabel = useMemo(
