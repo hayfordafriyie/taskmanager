@@ -9,8 +9,8 @@ matter (assignments, status changes, invites, chat messages, due dates).
 |---|---|
 | **Backend** | Go 1.27 · GraphQL (gqlgen) · PostgreSQL 16 · Redis · SSE realtime |
 | **Frontend** | React 19 · Vite 8 · React Router 7 · TanStack Query 5 · Radix UI · Tailwind v4 |
-| **Serving** | Caddy (static SPA + `/api/*` reverse proxy + TLS) |
-| **Infra** | Docker Compose (Postgres, Redis, certificate generation) |
+| **Serving** | Caddy (static SPA + `/api/*` reverse proxy + TLS) — either bundled in the Docker container or delegated to a system‑level Caddy |
+| **Infra** | Docker Compose (Postgres, Redis, backend, frontend) |
 
 > Detailed, component‑specific instructions live in **[`backend/README.md`](backend/README.md)**
 > and **[`frontend/README.md`](frontend/README.md)**. This file is the project‑wide
@@ -78,26 +78,26 @@ matter (assignments, status changes, invites, chat messages, due dates).
 
 ```
                             ┌──────────────────────────────┐
-        browser  ────────►  │  Caddy (frontend container)  │
-                            │  • serves the built SPA      │
-                            │  • TLS (cert from certgen)   │
-                            │  • /api/* ──► backend:8080   │
-                            └───────────────┬──────────────┘
-                                            │
-                            ┌───────────────▼──────────────┐
-                            │      Go backend (:8080)      │
-                            │  • encrypted GraphQL API     │
-                            │  • SSE realtime hub          │
-                            │  • SMS worker (Mnotify)      │
-                            │  • due‑reminder loop         │
-                            └───────┬──────────────┬───────┘
-                                    │              │
-                        ┌───────────▼───┐   ┌──────▼───────┐
-                        │  PostgreSQL   │   │    Redis     │
-                        │ (source of    │   │ (response    │
-                        │  truth, SQL   │   │  cache,      │
-                        │  migrations)  │   │  epoch‑based │
-                        └───────────────┘   └──────────────┘
+        browser  ────────►  │  System Caddy (host)         │
+                            │  • TLS (Let's Encrypt)       │
+                            │  • acs.edspike.com           │
+                            │  • /api/* ──► :8080          │
+                            │  • else    ──► :5173         │
+                            └──────┬───────────────┬───────┘
+                                   │               │
+                    ┌──────────────▼──┐   ┌────────▼───────────┐
+                    │ Go backend      │   │ Docker Caddy       │
+                    │ (:8080)         │   │ (:5173 → 80)       │
+                    │  • GraphQL API  │   │  • serves SPA      │
+                    │  • SSE realtime │   │  • /api/* proxy     │
+                    │  • SMS worker   │   └────────────────────┘
+                    └───────┬──────┬─┘
+                            │      │
+                ┌───────────▼──┐ ┌─▼──────────┐
+                │  PostgreSQL  │ │   Redis    │
+                │ (source of   │ │ (response  │
+                │  truth)      │ │  cache)    │
+                └──────────────┘ └────────────┘
 ```
 
 **Request lifecycle (GraphQL)**
@@ -128,7 +128,7 @@ Design notes for individual domains: [`docs/inbox-realtime-architecture.md`](doc
 
 ```
 taskmanager/
-├── docker-compose.yml        # postgres, redis, certgen, backend, frontend
+├── docker-compose.yml        # postgres, redis, backend, frontend
 ├── .env.example              # root env used by docker compose
 ├── backend/                  # Go API (see backend/README.md)
 │   ├── cmd/server/           # entry point: config, mux, workers
@@ -138,7 +138,7 @@ taskmanager/
 │   │   └── db/migrations/    # 001…011 versioned SQL
 │   └── tests/                # DB-backed integration tests
 ├── frontend/                 # React SPA (see frontend/README.md)
-│   ├── Caddyfile             # SPA fallback + /api proxy + TLS
+│   ├── Caddyfile             # SPA fallback + /api proxy (internal HTTP)
 │   └── src/
 │       ├── components/ layout/ lib/
 │       └── modules/          # auth, home, tasks, goals, docs, chat, …
@@ -174,14 +174,17 @@ docker compose logs -f backend      # "connected to database", "database migrate
 
 | URL | What |
 |---|---|
-| `https://localhost:8443` | the app (self‑signed cert — accept the browser warning) |
-| `http://localhost:5173` | redirects to the HTTPS URL above |
-| `https://localhost:8080/api/v1/` | GraphQL playground |
+| `https://acs.edspike.com` | the app (production domain, TLS via system Caddy) |
+| `https://localhost:8080/api/v1/` | GraphQL playground (direct backend access) |
 | `https://localhost:8080/api/v1/health` | health probe (`ok`) |
 
-`certgen` generates a self‑signed certificate into the `certs` volume on first
-run; `postgres`, `redis`, `backend` and `frontend` all wait for their
-dependencies to be healthy before starting.
+When deployed behind a system‑level Caddy (recommended for production), the
+frontend container listens on `127.0.0.1:5173` and the system Caddy terminates
+TLS and routes `acs.edspike.com` to the container. The backend runs on plain
+HTTP inside the container (`:8080`).
+
+`postgres`, `redis`, `backend` and `frontend` all wait for their dependencies
+to be healthy before starting.
 
 **Useful commands**
 
@@ -241,8 +244,7 @@ Notes
 | `REDIS_URL` | backend | `redis://:<password>@redis:6379/0` in Compose; `127.0.0.1` for local runs |
 | `JWT_SECRET`, `JWT_REFRESH_SECRET` | backend | **required**; generate with `openssl rand -base64 48` |
 | `SMS_API_KEY` (or `SMS_KEY`), `DEFAULT_SMS_SENDER_ID`, `SMS_BASE_URL`, `SENDER_ID` | backend | Mnotify credentials |
-| `TLS_CERT`, `TLS_KEY` | backend + Caddy | Compose mounts the generated certs at `/certs` |
-| `VITE_API_URL`, `VITE_API_VERSION`, `VITE_ENCRYPTED_MARKER` | frontend build | inlined into the bundle; empty `VITE_API_URL` = same origin |
+| `VITE_API_URL`, `VITE_API_VERSION`, `VITE_ENCRYPTED_MARKER` | frontend build | inlined into the bundle; set `VITE_API_URL` to the public URL in production |
 | `SERVER_PORT` | backend | `8080` |
 
 ### Backend‑only (see `backend/.env.example`)
@@ -379,17 +381,19 @@ makes; no backend is required. Current status: **80 tests across 18 files**.
 1. **Secrets** — set strong values in the root `.env`:
    `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`
    (`openssl rand -base64 48`), and real SMS credentials.
-2. **TLS** — either keep the bundled Caddy + certificate setup, or terminate TLS
-   at your own proxy/load balancer and run the backend without `TLS_CERT`/
-   `TLS_KEY` (plain HTTP behind the proxy). Replace the self‑signed cert before
-   going live, or set `TLS_CERT`/`TLS_KEY` to real certificates.
-3. **`APP_URL`** — set it to the public URL so SMS texts link users to the right
+2. **TLS** — the recommended production setup delegates TLS termination to a
+   **system‑level Caddy** (or nginx/HAProxy) that routes to the Docker containers.
+   The backend runs on plain HTTP inside the container. If you need end‑to‑end TLS,
+   set `TLS_CERT`/`TLS_KEY` in the backend env and update the Caddyfile accordingly.
+3. **`VITE_API_URL`** — set it to the public URL (e.g. `https://acs.edspike.com`)
+   so the frontend makes API calls to the correct origin.
+4. **`APP_URL`** — set it to the public URL so SMS texts link users to the right
    place.
-4. **Database** — point `DB_*` at managed Postgres (`DB_SSLMODE=require`).
+5. **Database** — point `DB_*` at managed Postgres (`DB_SSLMODE=require`).
    Migrations run on startup; roll them out with the app.
-5. **Redis** — provide `REDIS_URL` for the response cache (optional but
+6. **Redis** — provide `REDIS_URL` for the response cache (optional but
    recommended); the app degrades gracefully without it.
-6. **Sender ID / SMS** — verify the Mnotify sender ID is approved for your account.
+7. **Sender ID / SMS** — verify the Mnotify sender ID is approved for your account.
 
 ### 11.2 Deploy with Compose
 
@@ -401,10 +405,45 @@ docker compose logs -f backend
 ```
 
 Because `restart: unless-stopped` is set for the data services and both apps, the
-stack survives host reboots. Ports published by default: `5432` (Postgres) and
-`6379` (Redis) — **remove those mappings in production** so the datastores are
-reachable only on the internal `taskmanager-net` network, and expose only `8443`
-(and optionally `8080`).
+stack survives host reboots. Published host ports:
+
+| Service | Host port | Container port | Notes |
+|---|---|---|---|
+| Postgres | `5433` | `5432` | remapped to avoid conflicts with existing Postgres on the host |
+| Redis | `6380` | `6379` | remapped to avoid conflicts with existing Redis on the host |
+| Backend | `8080` | `8080` | plain HTTP; system Caddy proxies to this |
+| Frontend | `127.0.0.1:5173` | `80` | localhost‑only; system Caddy proxies to this |
+
+In production you can remove the Postgres and Redis host‑port mappings entirely
+so the datastores are reachable only on the internal `taskmanager-net` network.
+
+### 11.3 System Caddy integration
+
+When running behind a system‑level Caddy (recommended), add a block to
+`/etc/caddy/Caddyfile`:
+
+```caddy
+acs.edspike.com {
+    import edspike_origin_guard
+    rate_limit {
+        zone per_ip {
+            key {remote_host}
+            events 100
+            window 1m
+            ipv6_prefix 64
+        }
+    }
+    encode zstd gzip
+    route /api/* {
+        reverse_proxy 127.0.0.1:8080
+    }
+    route {
+        reverse_proxy 127.0.0.1:5173
+    }
+}
+```
+
+Then reload: `sudo systemctl reload caddy`.
 
 ### 11.3 Scaling notes
 
@@ -424,7 +463,6 @@ reachable only on the internal `taskmanager-net` network, and expose only `8443`
 |---|---|---|
 | Database | `pgdata` volume | schedule `pg_dump` (or managed snapshots) |
 | Redis | `redisdata` volume, AOF on | cache only — safe to lose |
-| Certificates | `certs` volume | regenerated by `certgen` if missing |
 
 ```bash
 docker compose exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql
@@ -474,8 +512,7 @@ docker compose exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup
 | `SERVER_PORT is not set in .env` | running outside `backend/` or missing `backend/.env` |
 | `JWT_SECRET and JWT_REFRESH_SECRET must be set` | fill both in the root **and** `backend/.env` |
 | `cache: redis disabled` | Redis down/unset — harmless; start Redis to enable caching |
-| Certificate warning at `https://localhost:8443` | expected for the generated self‑signed cert; use real certs in production |
-| Backend tests are “skipped” | Postgres unreachable — start it first |
+| Backend tests are "skipped" | Postgres unreachable — start it first |
 | Env change had no effect (frontend) | `VITE_*` are build‑time: restart `npm run dev` or rebuild the image |
 | Chat not updating live | SSE blocked by a proxy; the hooks poll meanwhile — check `/api/v1/events` |
 

@@ -7,6 +7,8 @@ Radix + Tailwind v4 “liquid glass” design system with light/dark themes.
 - **Stack:** React 19, Vite 8, React Router 7, TanStack Query 5, Radix UI
   primitives, Tailwind CSS v4, Vitest + Testing Library
 - **Served in Docker by:** Caddy (static files + reverse proxy for `/api/*`)
+  — listens on internal port 80, exposed on `127.0.0.1:5173` for the system Caddy
+  to proxy
 
 ---
 
@@ -21,10 +23,10 @@ cp .env.example .env        # backend + Postgres/Redis values
 docker compose up -d --build
 ```
 
-Open **https://localhost:8443** (self‑signed certificate — accept the warning).
-`http://localhost:5173` permanently redirects there. Caddy serves the built app
-and proxies `/api/*` to the backend container, so **no `VITE_API_URL` is needed**
-in this mode.
+Open **https://acs.edspike.com** in production (or `http://localhost:5173` if
+running the system Caddy locally). The system Caddy terminates TLS and routes
+requests to the Docker frontend container, so **no `VITE_API_URL` is needed**
+in this mode when the app is served from the same origin.
 
 ### Option B — Vite dev server (fastest inner loop)
 
@@ -148,7 +150,7 @@ frontend/
   index.html
   vite.config.js        dev server + /api proxy
   vitest.config.js      jsdom + setup file
-  Caddyfile             Docker serving (SPA fallback + /api proxy + TLS)
+  Caddyfile             Docker serving (SPA fallback + /api proxy, internal HTTP)
   src/
     main.jsx            providers: QueryClient, fonts, index.css
     App.jsx             routes (protected / unauthenticated)
@@ -171,6 +173,5 @@ frontend/
 |---|---|
 | Requests fail with a session/handshake error | the backend must be reachable at the same origin (or `VITE_API_URL`); check `/api/v1/session` responds |
 | CORS errors in dev | run with an empty `VITE_API_URL` so the Vite proxy handles `/api` |
-| `https://localhost:8443` certificate warning | expected: Compose generates a self‑signed cert; trust it or use the HTTP dev server |
-| Chat doesn’t update live | SSE may be blocked by the proxy — the hooks poll as a fallback; check `/api/v1/events` |
+| Chat doesn't update live | SSE may be blocked by the proxy — the hooks poll as a fallback; check `/api/v1/events` |
 | Env change has no effect | `VITE_*` values are compiled in: restart `npm run dev` or rebuild the image |

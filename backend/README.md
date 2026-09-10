@@ -32,7 +32,7 @@ waits for healthy dependencies. Check it:
 ```bash
 docker compose ps
 docker compose logs -f backend
-curl -k https://localhost:8080/api/v1/health   # -> ok   (https when TLS is on)
+curl http://localhost:8080/api/v1/health   # -> ok   (plain HTTP inside the container)
 ```
 
 ### Option B — infra in Docker, backend locally (fastest inner loop)
@@ -114,7 +114,7 @@ is a pure optimisation, never a requirement.
 
 | Variable | Notes |
 |---|---|
-| `TLS_CERT` / `TLS_KEY` | when both are set the server serves HTTPS; otherwise plain HTTP (typical behind Caddy/nginx) |
+| `TLS_CERT` / `TLS_KEY` | when both are set the server serves HTTPS; otherwise plain HTTP (typical behind Caddy/nginx). In the standard Docker Compose setup the backend runs on plain HTTP and TLS is terminated by the system Caddy. |
 
 ### Background jobs (optional)
 
@@ -268,4 +268,3 @@ backend/
 | `database connection failed` | is Postgres up (`docker compose up -d postgres`) and do `DB_*` match `POSTGRES_*`? |
 | `cache: redis disabled` | fine — start Redis (`docker compose up -d redis`) or set `REDIS_URL` to enable caching |
 | tests are skipped | Postgres was unreachable; start it first |
-| TLS handshake errors in Docker | Compose generates a self‑signed cert (`certgen`); trust it or use `curl -k` |
