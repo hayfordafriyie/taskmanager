@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as Toast from "radix-ui/toast";
 import {
   CheckCircledIcon,
@@ -6,32 +14,41 @@ import {
   InfoCircledIcon,
   Cross2Icon,
 } from "@radix-ui/react-icons";
+import type {
+  ToastApi,
+  ToastIconProps,
+  ToastOptions,
+  ToastProviderProps,
+  ToastRecord,
+  ToastType,
+} from "../types/ui";
 
-const ToastContext = createContext(null);
+const ToastContext = createContext<ToastApi | null>(null);
 
-const iconColors = {
+const iconColors: Record<ToastType, string> = {
   success: "text-emerald-600 dark:text-emerald-400",
   error: "text-rose-600 dark:text-rose-400",
   info: "accent-text",
 };
 
-function ToastIcon({ type }) {
+function ToastIcon({ type }: ToastIconProps) {
+  const className = `mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`;
   if (type === "success") {
-    return <CheckCircledIcon className={`mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`} />;
+    return <CheckCircledIcon className={className} />;
   }
   if (type === "error") {
-    return <CrossCircledIcon className={`mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`} />;
+    return <CrossCircledIcon className={className} />;
   }
-  return <InfoCircledIcon className={`mt-0.5 shrink-0 ${iconColors[type] || iconColors.info}`} />;
+  return <InfoCircledIcon className={className} />;
 }
 
-export function ToastProvider({ children }) {
-  const [open, setOpen] = useState(false);
-  const [toast, setToast] = useState(null);
-  const nextId = useRef(0);
+export function ToastProvider({ children }: ToastProviderProps) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [toast, setToast] = useState<ToastRecord | null>(null);
+  const nextId = useRef<number>(0);
 
-  const show = useCallback((options = {}) => {
-    const type = options.type || options.kind || "info";
+  const show = useCallback((options: ToastOptions = {}) => {
+    const type: ToastType = options.type || options.kind || "info";
     nextId.current += 1;
     setToast({
       id: nextId.current,
@@ -49,9 +66,11 @@ export function ToastProvider({ children }) {
     setOpen(true);
   }, []);
 
-  const api = useMemo(() => {
-    const make = (type) => (message, title) =>
-      show({ type, description: message, title });
+  const api = useMemo<ToastApi>(() => {
+    const make =
+      (type: ToastType) =>
+      (message?: string, title?: string) =>
+        show({ type, description: message, title });
     return {
       show,
       success: make("success"),
@@ -102,7 +121,7 @@ export function ToastProvider({ children }) {
   );
 }
 
-export function useToast() {
+export function useToast(): ToastApi {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider");

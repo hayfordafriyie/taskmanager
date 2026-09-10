@@ -115,3 +115,67 @@ export interface IconActionProps {
   onClick?: () => void;
   className?: string;
 }
+
+/** Tone of a toast notification. */
+export type ToastType = "success" | "error" | "info";
+
+/** The payload accepted by `useToast().show(...)`. */
+export interface ToastOptions {
+  type?: ToastType;
+  /** Alias of `type` kept for older call sites. */
+  kind?: ToastType;
+  title?: string;
+  description?: string;
+  /** Alias of `description` kept for older call sites. */
+  text?: string;
+  /** Auto-dismiss delay in milliseconds. */
+  duration?: number;
+}
+
+/** The toast API returned by `useToast()`. */
+export interface ToastApi {
+  show: (options?: ToastOptions) => void;
+  success: (message?: string, title?: string) => void;
+  error: (message?: string, title?: string) => void;
+  info: (message?: string, title?: string) => void;
+}
+
+/** State of the currently visible toast. */
+export interface ToastRecord {
+  id: number;
+  type: ToastType;
+  title: string;
+  description: string;
+  duration: number;
+}
+
+/** Props for `components/Toast`'s provider. */
+export interface ToastProviderProps {
+  children?: ReactNode;
+}
+
+/** Props for the toast icon glyph. */
+export interface ToastIconProps {
+  type: ToastType;
+}
+
+/** Width presets for `components/Modal`. */
+export type ModalSize = "sm" | "md" | "lg";
+
+export interface ModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Optional trigger rendered as the dialog opener. */
+  trigger?: ReactNode;
+  title?: ReactNode;
+  description?: ReactNode;
+  size?: ModalSize;
+  children?: ReactNode;
+  /** Actions rendered in the footer row. */
+  footer?: ReactNode;
+}
+
+/** Props for the auth gate that redirects anonymous visitors. */
+export interface ProtectedRouteProps {
+  children: ReactNode;
+}

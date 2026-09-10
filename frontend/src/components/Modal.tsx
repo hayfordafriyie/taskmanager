@@ -1,5 +1,15 @@
-import { Root, Trigger, Portal, Overlay, Content, Title, Description, Close } from "radix-ui/dialog";
+import {
+  Root,
+  Trigger,
+  Portal,
+  Overlay,
+  Content,
+  Title,
+  Description,
+  Close,
+} from "radix-ui/dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import type { ModalProps } from "../types/ui";
 
 export function Modal({
   open,
@@ -10,7 +20,7 @@ export function Modal({
   size = "md",
   children,
   footer,
-}) {
+}: ModalProps) {
   return (
     <Root open={open} onOpenChange={onOpenChange}>
       {trigger && <Trigger asChild>{trigger}</Trigger>}
@@ -30,8 +40,14 @@ export function Modal({
           <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--border-soft)]" />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <Title className="font-display text-lg font-semibold t-ink">{title}</Title>
-              {description && <Description className="mt-1 text-sm t-soft">{description}</Description>}
+              <Title className="font-display text-lg font-semibold t-ink">
+                {title}
+              </Title>
+              {description && (
+                <Description className="mt-1 text-sm t-soft">
+                  {description}
+                </Description>
+              )}
             </div>
             <Close
               aria-label="Close"
@@ -43,7 +59,11 @@ export function Modal({
 
           <div className="mt-4">{children}</div>
 
-          {footer && <div className="mt-5 flex flex-wrap items-center justify-end gap-2">{footer}</div>}
+          {footer && (
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              {footer}
+            </div>
+          )}
         </Content>
       </Portal>
     </Root>

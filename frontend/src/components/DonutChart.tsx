@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import type { DonutChartProps, DonutSlice } from "../types/charts";
+
+interface DonutArc extends DonutSlice {
+  percent: number;
+  dash: string;
+  offset: number;
+}
 
 /**
  * SVG donut chart.
@@ -7,8 +14,6 @@ import { useMemo, useState } from "react";
  * stroke-dasharray on a circle, so it scales cleanly at any size, keeps a hole
  * for the headline number, and highlights on hover/focus — from the segment or
  * from the legend.
- *
- * data: [{ key, label, count, color }]
  */
 export default function DonutChart({
   data = [],
@@ -18,11 +23,14 @@ export default function DonutChart({
   centerCaption = "tasks",
   showLegend = true,
   ariaLabel = "Tasks by status",
-}) {
-  const [activeKey, setActiveKey] = useState(null);
+}: DonutChartProps) {
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   const slices = useMemo(() => data.filter((d) => Number(d.count) > 0), [data]);
-  const total = useMemo(() => data.reduce((sum, d) => sum + Number(d.count || 0), 0), [data]);
+  const total = useMemo(
+    () => data.reduce((sum, d) => sum + Number(d.count || 0), 0),
+    [data],
+  );
 
   const radius = (size - thickness) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -30,12 +38,12 @@ export default function DonutChart({
 
   // Precompute each arc's length and start offset around the ring.
   let consumed = 0;
-  const arcs = slices.map((slice) => {
+  const arcs: DonutArc[] = slices.map((slice) => {
     const fraction = total > 0 ? Number(slice.count) / total : 0;
     const full = fraction * circumference;
     // only inset the arc when the slice is big enough to survive the gap
     const arcLength = full > gapLength * 2 ? full - gapLength : full;
-    const arc = {
+    const arc: DonutArc = {
       ...slice,
       percent: Math.round(fraction * 100),
       dash: `${Math.max(arcLength, 0)} ${Math.max(circumference - arcLength, 0)}`,
@@ -58,7 +66,12 @@ export default function DonutChart({
           role="img"
           aria-label={`${ariaLabel}: no data yet`}
         >
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+          <svg
+            width={size}
+            height={size}
+            viewBox={`0 0 ${size} ${size}`}
+            aria-hidden="true"
+          >
             <circle
               cx={size / 2}
               cy={size / 2}
@@ -74,7 +87,11 @@ export default function DonutChart({
             <span className="text-xs t-soft">{centerCaption}</span>
           </div>
         </div>
-        {showLegend && <p className="text-sm t-soft">No tasks yet — create one from the Board.</p>}
+        {showLegend && (
+          <p className="text-sm t-soft">
+            No tasks yet — create one from the Board.
+          </p>
+        )}
       </div>
     );
   }
@@ -89,7 +106,12 @@ export default function DonutChart({
           .map((a) => `${a.label} ${a.count} of ${total} (${a.percent}%)`)
           .join(", ")}`}
       >
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          className="-rotate-90"
+        >
           {arcs.map((a) => {
             const isActive = a.key === activeKey;
             return (
@@ -120,7 +142,9 @@ export default function DonutChart({
 
         {/* the hole: headline number, or the hovered slice */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
-          <span className="font-display text-3xl font-bold leading-none t-ink">{centerValue}</span>
+          <span className="font-display text-3xl font-bold leading-none t-ink">
+            {centerValue}
+          </span>
           <span className="mt-1 truncate text-[0.7rem] font-medium uppercase tracking-wide t-soft">
             {centerText}
           </span>
@@ -131,7 +155,8 @@ export default function DonutChart({
       {showLegend && (
         <ul className="min-w-0 flex-1 space-y-2">
           {data.map((s) => {
-            const percent = total > 0 ? Math.round((Number(s.count) / total) * 100) : 0;
+            const percent =
+              total > 0 ? Math.round((Number(s.count) / total) * 100) : 0;
             const isActive = s.key === activeKey;
             return (
               <li
@@ -149,7 +174,9 @@ export default function DonutChart({
                 />
                 <span className="min-w-0 flex-1 truncate t-soft">{s.label}</span>
                 <span className="shrink-0 text-xs t-faint">{percent}%</span>
-                <span className="w-8 shrink-0 text-right font-medium t-ink">{s.count}</span>
+                <span className="w-8 shrink-0 text-right font-medium t-ink">
+                  {s.count}
+                </span>
               </li>
             );
           })}
