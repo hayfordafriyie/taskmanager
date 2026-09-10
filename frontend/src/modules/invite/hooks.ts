@@ -1,9 +1,29 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { gql } from "../../lib/api";
+import type { ApiResponse } from "../../types/api";
+import type {
+  AcceptInviteData,
+  InviteIdVariables,
+  InviteToTeamData,
+  InviteToTeamVariables,
+  MyInvitesData,
+  MyTeamData,
+  MyTeamsData,
+  RevokeInviteData,
+  SwitchTeamData,
+  SwitchTeamVariables,
+  Team,
+  TeamInvite,
+  TeamSummary,
+} from "../../types/invite";
 
-export const TEAM_KEY = ["myTeam"];
-export const INVITES_KEY = ["myInvites"];
-export const TEAMS_KEY = ["myTeams"];
+export const TEAM_KEY: readonly string[] = ["myTeam"];
+export const INVITES_KEY: readonly string[] = ["myInvites"];
+export const TEAMS_KEY: readonly string[] = ["myTeams"];
 
 const teamFields = `
   id
@@ -25,10 +45,12 @@ const inviteFields = `
 `;
 
 export function useMyTeam() {
-  return useQuery({
+  return useQuery<Team | null | undefined>({
     queryKey: TEAM_KEY,
-    queryFn: async () => {
-      const res = await gql(`query { myTeam { ${teamFields} } }`);
+    queryFn: async (): Promise<Team | null | undefined> => {
+      const res = await gql<MyTeamData>(
+        `query { myTeam { ${teamFields} } }`,
+      );
       return res?.data?.myTeam;
     },
     retry: false,
@@ -36,10 +58,12 @@ export function useMyTeam() {
 }
 
 export function useMyInvites() {
-  return useQuery({
+  return useQuery<TeamInvite[]>({
     queryKey: INVITES_KEY,
-    queryFn: async () => {
-      const res = await gql(`query { myInvites { ${inviteFields} } }`);
+    queryFn: async (): Promise<TeamInvite[]> => {
+      const res = await gql<MyInvitesData>(
+        `query { myInvites { ${inviteFields} } }`,
+      );
       return res?.data?.myInvites ?? [];
     },
     retry: false,
@@ -48,15 +72,15 @@ export function useMyInvites() {
 
 export function useInviteToTeam() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ phone, role }) =>
-      gql(
+  return useMutation<ApiResponse<InviteToTeamData>, Error, InviteToTeamVariables>({
+    mutationFn: (variables: InviteToTeamVariables) =>
+      gql<InviteToTeamData>(
         `mutation ($phone: String!, $role: Role!) {
           inviteToTeam(phone: $phone, role: $role) {
             success message inviteeRegistered alreadyMember invite { id phone role teamName }
           }
         }`,
-        { phone, role },
+        variables,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEAM_KEY });
@@ -66,15 +90,15 @@ export function useInviteToTeam() {
 
 export function useAcceptInvite() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (inviteId) =>
-      gql(
+  return useMutation<ApiResponse<AcceptInviteData>, Error, string>({
+    mutationFn: (inviteId: string) =>
+      gql<AcceptInviteData>(
         `mutation ($inviteId: UUID!) {
           acceptInvite(inviteId: $inviteId) {
             success message team { id name role }
           }
         }`,
-        { inviteId },
+        { inviteId } satisfies InviteIdVariables,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: INVITES_KEY });
@@ -85,24 +109,27 @@ export function useAcceptInvite() {
 
 export function useRevokeInvite() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (inviteId) =>
-      gql(
+  return useMutation<ApiResponse<RevokeInviteData>, Error, string>({
+    mutationFn: (inviteId: string) =>
+      gql<RevokeInviteData>(
         `mutation ($inviteId: UUID!) {
           revokeInvite(inviteId: $inviteId)
         }`,
-        { inviteId },
+        { inviteId } satisfies InviteIdVariables,
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TEAM_KEY });
     },
   });
 }
+
 export function useMyTeams() {
-  return useQuery({
+  return useQuery<TeamSummary[]>({
     queryKey: TEAMS_KEY,
-    queryFn: async () => {
-      const res = await gql(`query { myTeams { id name role isOwner isActive memberCount ownerName } }`);
+    queryFn: async (): Promise<TeamSummary[]> => {
+      const res = await gql<MyTeamsData>(
+        `query { myTeams { id name role isOwner isActive memberCount ownerName } }`,
+      );
       return res?.data?.myTeams ?? [];
     },
     retry: false,
@@ -111,15 +138,15 @@ export function useMyTeams() {
 
 export function useSwitchTeam() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (teamId) =>
-      gql(
+  return useMutation<ApiResponse<SwitchTeamData>, Error, string>({
+    mutationFn: (teamId: string) =>
+      gql<SwitchTeamData>(
         `mutation ($teamId: UUID!) {
           switchTeam(teamId: $teamId) {
             success message team { id name role }
           }
         }`,
-        { teamId },
+        { teamId } satisfies SwitchTeamVariables,
       ),
     onSuccess: (res) => {
       const payload = res?.data?.switchTeam;
@@ -129,8 +156,10 @@ export function useSwitchTeam() {
       // subtree on this team id, so it remounts once (not twice) and every view
       // refetches straight away — no page refresh, no data from the old team.
       if (payload.team) {
-        queryClient.setQueryData(["myTeam"], (prev) =>
-          prev ? { ...prev, ...payload.team } : prev,
+        const switched = payload.team;
+        queryClient.setQueryData<Team | null | undefined>(
+          ["myTeam"],
+          (prev) => (prev ? { ...prev, ...switched } : prev),
         );
       }
       // Drop everything else so nothing team-scoped can linger in memory.

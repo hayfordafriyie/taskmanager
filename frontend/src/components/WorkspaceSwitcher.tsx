@@ -3,11 +3,12 @@ import { CheckIcon, ChevronDownIcon, PersonIcon } from "@radix-ui/react-icons";
 import { useMyTeams, useSwitchTeam } from "../modules/invite/hooks";
 import { useToast } from "./Toast";
 import { initialsOf } from "../modules/home/ui";
+import type { TeamSummary } from "../types/invite";
 
 // Every account's private workspace is created as "Personal Workspace", so a
 // joined team is labelled with its owner's name instead — otherwise the switcher
 // would list several identical entries with no way to tell them apart.
-export function workspaceLabel(team) {
+export function workspaceLabel(team?: TeamSummary | null): string {
   if (!team) return "";
   if (team.isOwner) return team.name;
   if (team.ownerName) return `${team.ownerName}'s workspace`;
@@ -27,12 +28,12 @@ export default function WorkspaceSwitcher() {
   const switchTeam = useSwitchTeam();
   const toast = useToast();
 
-  const list = teams ?? [];
+  const list: TeamSummary[] = teams ?? [];
   if (isPending || list.length < 2) return null;
 
   const active = list.find((t) => t.isActive) ?? list[0];
 
-  async function handleSwitch(team) {
+  async function handleSwitch(team: TeamSummary) {
     if (team.id === active?.id) return;
     try {
       const res = await switchTeam.mutateAsync(team.id);
@@ -43,7 +44,8 @@ export default function WorkspaceSwitcher() {
         toast.error(result?.message || "Unable to switch workspace.");
       }
     } catch (err) {
-      toast.error(err?.message || "Unable to switch workspace.");
+      const message = err instanceof Error ? err.message : null;
+      toast.error(message || "Unable to switch workspace.");
     }
   }
 
@@ -98,15 +100,23 @@ export default function WorkspaceSwitcher() {
                   <span className="min-w-0 flex-1">
                     <span
                       className="block truncate text-sm t-ink"
-                      title={team.isOwner ? team.name : `${workspaceLabel(team)} (${team.name})`}
+                      title={
+                        team.isOwner
+                          ? team.name
+                          : `${workspaceLabel(team)} (${team.name})`
+                      }
                     >
                       {workspaceLabel(team)}
                     </span>
                     <span className="block text-[11px] t-faint">
-                      {team.isOwner ? "My workspace" : `${team.role} · ${team.memberCount} member${team.memberCount === 1 ? "" : "s"}`}
+                      {team.isOwner
+                        ? "My workspace"
+                        : `${team.role} · ${team.memberCount} member${team.memberCount === 1 ? "" : "s"}`}
                     </span>
                   </span>
-                  {team.isActive && <CheckIcon width={13} height={13} className="shrink-0" />}
+                  {team.isActive && (
+                    <CheckIcon width={13} height={13} className="shrink-0" />
+                  )}
                 </button>
               </li>
             ))}
