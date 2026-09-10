@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ChangeEvent } from "react";
 import { errorMessage } from "../../../lib/errors";
 import { CheckboxIcon, MagnifyingGlassIcon, CheckIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PriorityBadge } from "../ui";
@@ -6,12 +7,14 @@ import { useAuth } from "../../auth/AuthContext";
 import { useTeamTasks, useSetTaskStatus, toApiStatus } from "../../tasks/hooks";
 import { useToast } from "../../../components/Toast";
 import { formatWindow } from "../../tasks/dates";
+import type { MyTasksFilter, PriorityLabelMap } from "../../../types/board";
+import type { Task } from "../../../types/tasks";
 
-const filters = ["All", "Open", "Done"];
+const filters: ReadonlyArray<MyTasksFilter> = ["All", "Open", "Done"];
 
-const PRIORITY_LABEL = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
+const PRIORITY_LABEL: PriorityLabelMap = { LOW: "Low", MEDIUM: "Medium", HIGH: "High" };
 
-function creatorName(t) {
+function creatorName(t: Task): string {
   const c = t.createdBy;
   if (!c) return "Teammate";
   return `${c.firstName ?? ""} ${c.surname ?? ""}`.trim() || "Teammate";
@@ -23,11 +26,11 @@ export function MyTasksView() {
   const { data: tasks = [], isLoading } = useTeamTasks({ enabled: !!user?.id });
   const setStatus = useSetTaskStatus();
 
-  const [filter, setFilter] = useState("All");
-  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<MyTasksFilter>("All");
+  const [query, setQuery] = useState<string>("");
 
-  const mine = tasks.filter((t) => t.assignee?.id === user?.id);
-  const visible = mine.filter((t) => {
+  const mine: Task[] = tasks.filter((t) => t.assignee?.id === user?.id);
+  const visible: Task[] = mine.filter((t) => {
     const done = toApiStatus(t.status) === "DONE";
     if (filter === "Open" && done) return false;
     if (filter === "Done" && !done) return false;
@@ -37,7 +40,7 @@ export function MyTasksView() {
 
   const doneCount = mine.filter((t) => toApiStatus(t.status) === "DONE").length;
 
-  function toggle(t) {
+  function toggle(t: Task): void {
     const done = toApiStatus(t.status) === "DONE";
     setStatus.mutate(
       { taskId: t.id, status: done ? "TODO" : "DONE" },
@@ -72,7 +75,7 @@ export function MyTasksView() {
           <MagnifyingGlassIcon width={14} height={14} className="t-faint absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
             placeholder="Search tasks…"
             aria-label="Search my tasks"
             className="control rounded-full py-2 pl-9 pr-3 text-sm"
