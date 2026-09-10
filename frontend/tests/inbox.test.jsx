@@ -71,13 +71,13 @@ describe('InboxView', () => {
     expect(screen.getByRole('heading', { name: 'Inbox' })).toBeInTheDocument()
     expect(screen.getByText('Kojo Afriyie')).toBeInTheDocument()
     expect(screen.getByText('See you tomorrow')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByLabelText('2 unread messages')).toBeInTheDocument()
   })
 
   it('opens a conversation and shows its messages, marking it read', async () => {
     const user = userEvent.setup()
     renderWithProviders(<InboxView />)
-    await user.click(screen.getByRole('button', { name: 'Open chat with Kojo Afriyie' }))
+    await user.click(screen.getByRole('button', { name: 'Continue chat with Kojo Afriyie' }))
     expect(screen.getByText('Hello there')).toBeInTheDocument()
     expect(chatHooks.markReadSpy).toHaveBeenCalledWith('c-1')
   })
@@ -85,7 +85,7 @@ describe('InboxView', () => {
   it('sends a message from the composer', async () => {
     const user = userEvent.setup()
     renderWithProviders(<InboxView />)
-    await user.click(screen.getByRole('button', { name: 'Open chat with Kojo Afriyie' }))
+    await user.click(screen.getByRole('button', { name: 'Continue chat with Kojo Afriyie' }))
     await user.type(screen.getByLabelText('Message'), 'Hi Kojo')
     await user.click(screen.getByRole('button', { name: 'Send message' }))
     expect(chatHooks.sendSpy).toHaveBeenCalledWith('Hi Kojo', expect.any(Object))
@@ -94,7 +94,6 @@ describe('InboxView', () => {
   it('opens the existing conversation instead of creating a new one', async () => {
     const user = userEvent.setup()
     renderWithProviders(<InboxView />)
-    await user.click(screen.getByRole('button', { name: 'New chat' }))
     await user.click(screen.getByRole('button', { name: 'Continue chat with Kojo Afriyie' }))
     expect(chatHooks.startSpy).not.toHaveBeenCalled()
     expect(screen.getByText('Hello there')).toBeInTheDocument()
@@ -103,7 +102,6 @@ describe('InboxView', () => {
   it('creates a conversation for a teammate with no existing chat', async () => {
     const user = userEvent.setup()
     renderWithProviders(<InboxView />)
-    await user.click(screen.getByRole('button', { name: 'New chat' }))
     await user.click(screen.getByRole('button', { name: 'Start chat with Yaw Mensah' }))
     expect(chatHooks.startSpy).toHaveBeenCalledWith('u-3', expect.any(Object))
   })

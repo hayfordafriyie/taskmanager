@@ -5,8 +5,6 @@ import {
   MagnifyingGlassIcon,
   PersonIcon,
   ArrowLeftIcon,
-  PlusIcon,
-  Cross2Icon,
 } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, Avatar } from "../ui";
 import { useAuth } from "../../auth/AuthContext";
@@ -63,7 +61,6 @@ export function InboxView() {
 
   const [activeId, setActiveId] = useState(null);
   const [search, setSearch] = useState("");
-  const [showNew, setShowNew] = useState(false);
 
   const members = team?.members ?? [];
   const active = conversations.find((c) => c.id === activeId) || null;
@@ -80,11 +77,22 @@ export function InboxView() {
 
   const otherMembers = members.filter((m) => m.id !== user?.id);
 
-  const filtered = useMemo(() => {
+  // One row per teammate: their existing chat if there is one, otherwise a row
+  // that starts a fresh chat. No "new chat" button or picker modal needed.
+  const rows = useMemo(() => {
+    const listed = new Set();
+    const out = [];
+    for (const c of conversations) {
+      if (c.peer?.id) listed.add(c.peer.id);
+      out.push({ member: c.peer, conv: c });
+    }
+    for (const m of otherMembers) {
+      if (!listed.has(m.id)) out.push({ member: m, conv: null });
+    }
     const q = search.trim().toLowerCase();
-    if (!q) return conversations;
-    return conversations.filter((c) => nameOf(c.peer).toLowerCase().includes(q));
-  }, [conversations, search]);
+    if (!q) return out;
+    return out.filter((r) => nameOf(r.member).toLowerCase().includes(q));
+  }, [conversations, otherMembers, search]);
 
   function openConversation(id) {
     setActiveId(id);
@@ -95,7 +103,6 @@ export function InboxView() {
   // create it (startConversation is idempotent server-side too).
   function pickMember(memberId) {
     if (!memberId || memberId === "__pick") return;
-    setShowNew(false);
 
     const existing = conversationByPeer.get(memberId);
     if (existing) {
@@ -120,17 +127,7 @@ export function InboxView() {
         <Panel className={`h-fit ${active ? "hidden lg:block" : ""}`}>
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-display text-sm font-semibold t-ink">Chats</h2>
-            <div className="flex items-center gap-2">
-              <span className="badge badge-tint px-2 py-0.5 text-xs">{conversations.length}</span>
-              <button
-                type="button"
-                onClick={() => setShowNew(true)}
-                className="btn-gloss-primary flex items-center gap-1 rounded-full px-3 py-1.5 text-xs"
-              >
-                <PlusIcon width={12} height={12} />
-                New chat
-              </button>
-            </div>
+            <span className="badge badge-tint px-2 py-0.5 text-xs">{rows.length}</span>
           </div>
 
           <div className="relative mt-3">
@@ -149,39 +146,48 @@ export function InboxView() {
           </div>
 
           <ul className="divide-soft mt-3 max-h-[26rem] overflow-y-auto">
-            {filtered.map((c) => (
-              <li key={c.id}>
+            {rows.map(({ member, conv }) => (
+              <li key={member?.id ?? conv?.id}>
                 <button
                   type="button"
-                  onClick={() => openConversation(c.id)}
-                  aria-label={`Open chat with ${nameOf(c.peer)}`}
+                  onClick={() => (conv ? openConversation(conv.id) : pickMember(member.id))}
+                  aria-label={
+                    conv ? `Continue chat with ${nameOf(member)}` : `Start chat with ${nameOf(member)}`
+                  }
                   className={`flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors ${
-                    c.id === activeId ? "bg-[var(--accent-tint)]" : "hover:bg-[var(--glass-b)]"
+                    conv?.id === activeId ? "bg-[var(--accent-tint)]" : "hover:bg-[var(--glass-b)]"
                   }`}
                 >
-                  <Avatar initial={initialsOf(c.peer)} />
+                  <Avatar initial={initialsOf(member)} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium t-ink">{nameOf(c.peer)}</p>
+                    <p className="truncate text-sm font-medium t-ink">{nameOf(member)}</p>
                     <p className="truncate text-xs t-soft">
-                      {c.lastMessage?.body || "No messages yet"}
+                      {conv ? conv.lastMessage?.body || "No messages yet" : member?.phone}
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="text-[11px] t-faint">{timeAgo(c.lastMessageAt)}</span>
-                    {c.unreadCount > 0 && (
-                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-rose-500 px-1 text-[10px] font-semibold text-white">
-                        {c.unreadCount > 9 ? "9+" : c.unreadCount}
+                    {conv ? (
+                      <span className="text-[11px] t-faint">{timeAgo(conv.lastMessageAt)}</span>
+                    ) : (
+                      <span className="badge tone-indigo px-2 py-0.5 text-xs">New</span>
+                    )}
+                    {conv?.unreadCount > 0 && (
+                      <span
+                        aria-label={`${conv.unreadCount} unread messages`}
+                        className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-rose-500 px-1 text-[10px] font-semibold text-white"
+                      >
+                        {conv.unreadCount > 9 ? "9+" : conv.unreadCount}
                       </span>
                     )}
                   </div>
                 </button>
               </li>
             ))}
-            {!isLoading && filtered.length === 0 && (
+            {!isLoading && rows.length === 0 && (
               <li className="px-2 py-8 text-center text-sm t-soft">
-                {conversations.length === 0
-                  ? "No chats yet — message a teammate to start."
-                  : "No chats match your search."}
+                {otherMembers.length === 0
+                  ? "No teammates yet — invite someone from the Invite page."
+                  : "No teammates match your search."}
               </li>
             )}
           </ul>
@@ -199,65 +205,6 @@ export function InboxView() {
         </Panel>
       </div>
 
-      {showNew && (
-        <div className="fixed inset-0 z-[120] flex items-start justify-center bg-black/30 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowNew(false); }}>
-          <div className="glass-pop mt-16 w-full max-w-md rounded-2xl p-4">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-display text-sm font-semibold t-ink">New chat</h3>
-              <button
-                type="button"
-                onClick={() => setShowNew(false)}
-                aria-label="Close new chat"
-                className="ring-accent rounded-lg p-1.5 t-faint transition-colors hover:bg-[var(--glass-b)] hover:text-[var(--ink)]"
-              >
-                <Cross2Icon width={14} height={14} />
-              </button>
-            </div>
-            <p className="mt-1 text-xs t-soft">
-              Pick a teammate. If you already chat with them, their existing conversation opens.
-            </p>
-
-            {otherMembers.length === 0 ? (
-              <p className="py-8 text-center text-sm t-soft">
-                No other teammates yet — invite someone from the Invite page.
-              </p>
-            ) : (
-              <ul className="divide-soft mt-3 max-h-[22rem] overflow-y-auto">
-                {otherMembers.map((m) => {
-                  const existing = conversationByPeer.get(m.id);
-                  return (
-                    <li key={m.id}>
-                      <button
-                        type="button"
-                        onClick={() => pickMember(m.id)}
-                        aria-label={
-                          existing
-                            ? `Continue chat with ${nameOf(m)}`
-                            : `Start chat with ${nameOf(m)}`
-                        }
-                        className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors hover:bg-[var(--glass-b)]"
-                      >
-                        <Avatar initial={initialsOf(m)} />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium t-ink">{nameOf(m)}</p>
-                          <p className="truncate text-xs t-soft">{m.phone}</p>
-                        </div>
-                        <span
-                          className={`badge px-2 py-0.5 text-xs ${
-                            existing ? "badge-tint" : "tone-indigo"
-                          }`}
-                        >
-                          {existing ? "Open chat" : "New"}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
