@@ -1,20 +1,5 @@
-import {
-  Root,
-  Trigger,
-  Portal,
-  Overlay,
-  Content,
-  Title,
-  Description,
-  Close,
-} from "radix-ui/dialog";
+import { Root, Trigger, Portal, Overlay, Content, Title, Description, Close } from "radix-ui/dialog";
 import { Cross2Icon } from "@radix-ui/react-icons";
-
-const sizes = {
-  sm: "max-w-sm",
-  md: "max-w-lg",
-  lg: "max-w-2xl",
-};
 
 export function Modal({
   open,
@@ -30,10 +15,20 @@ export function Modal({
     <Root open={open} onOpenChange={onOpenChange}>
       {trigger && <Trigger asChild>{trigger}</Trigger>}
       <Portal>
-        <Overlay className="bg-black/40 fixed inset-0 z-[80] backdrop-blur-sm" />
+        <Overlay className="overlay-in bg-black/40 fixed inset-0 z-[80] backdrop-blur-sm" />
         <Content
-          className={`glass-pop fixed left-1/2 top-1/2 z-[90] w-[calc(100vw-2rem)] max-h-[calc(100vh-3rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl p-5 sm:w-full ${sizes[size]}`}
+          aria-label={typeof title === "string" ? title : undefined}
+          className={[
+            "glass-pop drawer-in fixed inset-x-0 bottom-0 z-[90] mx-auto w-full rounded-t-[1.25rem] p-5",
+            "max-h-[calc(100vh-3rem)] overflow-y-auto sm:inset-x-0 sm:bottom-8 sm:w-auto sm:max-w-lg sm:rounded-2xl",
+            size === "sm" && "sm:max-w-sm",
+            size === "md" && "sm:max-w-lg",
+            size === "lg" && "sm:max-w-2xl",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--border-soft)] sm:hidden" />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <Title className="font-display text-lg font-semibold t-ink">{title}</Title>

@@ -144,3 +144,30 @@ type RecipientRow struct {
 	Surname   string
 	Phone     string
 }
+
+type GoalRow struct {
+	ID          uuid.UUID
+	TeamID      uuid.UUID
+	CreatedBy   uuid.UUID
+	OwnerID     uuid.UUID
+	Title       string
+	Description string
+	Status      string
+	DueAt       *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+
+	OwnerFirst   string
+	OwnerSurname string
+	OwnerPhone   string
+	Progress     int
+	KeyResults   int
+}
+
+type KeyResultRow struct {
+	ID        uuid.UUID
+	GoalID    uuid.UUID
+	Title     string
+	Progress  int
+	CreatedAt time.Time
+}
