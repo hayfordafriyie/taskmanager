@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PlusIcon, PersonIcon, Pencil2Icon, CalendarIcon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, Avatar } from "../ui";
+import { Panel, ViewHeader, Avatar, MemberChip } from "../ui";
 import Select from "../../../components/Select";
 import Modal from "../../../components/Modal";
 import DatePicker from "../../../components/DatePicker";
@@ -86,6 +86,14 @@ export function BoardView() {
 
   const members = team?.members ?? [];
   const busy = createTask.isPending || setStatus.isPending || assignTask.isPending;
+
+  // Options carry the member object so rows can render an initials chip; long
+  // names therefore truncate instead of stretching the select.
+  const assigneeOptions = [
+    { value: UNASSIGNED, label: "Unassigned", member: null },
+    ...members.map((m) => ({ value: m.id, label: personLabel(m), member: m })),
+  ];
+  const selectedMember = members.find((m) => m.id === assigneeId) ?? null;
 
   function openAdd() {
     setEditingTask(null);
@@ -255,12 +263,11 @@ export function BoardView() {
               <Select
                 value={assigneeId || UNASSIGNED}
                 onValueChange={(v) => setAssigneeId(v === UNASSIGNED ? "" : v)}
-                options={[
-                  { value: UNASSIGNED, label: "Unassigned" },
-                  ...members.map((m) => ({ value: m.id, label: personLabel(m) })),
-                ]}
+                options={assigneeOptions}
                 ariaLabel="Assignee"
                 size="md"
+                renderValue={<MemberChip member={selectedMember} />}
+                renderOption={(o) => <MemberChip member={o.member} />}
               />
             </div>
             {editingTask && (
@@ -458,11 +465,15 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
           value={task.assignee?.id ?? UNASSIGNED}
           onValueChange={(v) => onAssignee(v === UNASSIGNED ? "" : v)}
           options={[
-            { value: UNASSIGNED, label: "Unassigned" },
-            ...members.map((m) => ({ value: m.id, label: personLabel(m) })),
+            { value: UNASSIGNED, label: "Unassigned", member: null },
+            ...members.map((m) => ({ value: m.id, label: personLabel(m), member: m })),
           ]}
           size="sm"
-          className="max-w-[7.5rem]"
+          className="max-w-[6.5rem]"
+          // Initials only in the trigger so a long name cannot widen the card;
+          // the dropdown still lists names (truncated) next to the initials.
+          renderValue={<MemberChip member={assignee} compact />}
+          renderOption={(o) => <MemberChip member={o.member} />}
         />
       </div>
     </li>

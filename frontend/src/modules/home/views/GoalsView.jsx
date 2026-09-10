@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TargetIcon, PlusIcon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, PolicyBadge } from "../ui";
+import { Panel, ViewHeader, PolicyBadge, MemberChip } from "../ui";
 import Select from "../../../components/Select";
 import { useAuth } from "../../auth/AuthContext";
 import { useMyTeam } from "../../invite/hooks";
@@ -316,9 +316,15 @@ export function GoalsView() {
                   ariaLabel="Goal owner"
                   value={ownerId || user?.id || ""}
                   onValueChange={setOwnerId}
-                  options={members.map((m) => ({ value: m.id, label: nameOf(m) }))}
+                  options={members.map((m) => ({ value: m.id, label: nameOf(m), member: m }))}
                   size="md"
                   className="w-full"
+                  // Long names stay in the dropdown (truncated); the trigger
+                  // shows the rounded initials so the field never stretches.
+                  renderValue={
+                    <MemberChip member={members.find((m) => m.id === (ownerId || user?.id))} />
+                  }
+                  renderOption={(o) => <MemberChip member={o.member} />}
                 />
               </div>
               <div className="flex flex-col gap-1">

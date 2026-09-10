@@ -85,3 +85,41 @@ export function Avatar({ initial, className = "" }) {
     </span>
   );
 }
+
+/** Full display name for a person-like object ("Ama Osei"). */
+export function personName(person, fallback = "") {
+  if (!person) return fallback;
+  return `${person.firstName ?? ""} ${person.surname ?? ""}`.trim() || fallback;
+}
+
+/** Rounded initials for a person-like object ("Ama Osei" -> "AO"). */
+export function initialsOf(person, fallback = "?") {
+  if (!person) return fallback;
+  const initials = `${person.firstName?.[0] ?? ""}${person.surname?.[0] ?? ""}`.toUpperCase();
+  return initials || fallback;
+}
+
+/**
+ * Compact assignee/team-member display: a rounded initials badge plus an
+ * optional truncated name.
+ *
+ * Team members can have long names ("Kwabena Nkrumah-Agyeman Mensah"), which
+ * used to blow out select triggers on task cards. In select triggers we show
+ * the initials only (compact) with the full name in `title` and in the visually
+ * hidden Select.Value; inside dropdown rows we show initials + a truncated name.
+ */
+export function MemberChip({ member, compact = false, placeholder = "Unassigned", className = "" }) {
+  const name = personName(member);
+  const label = name || placeholder;
+  return (
+    <span className={`flex min-w-0 items-center gap-1.5 ${className}`} title={label}>
+      <span
+        aria-hidden="true"
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-700 text-[9px] font-semibold text-white ring-1 ring-white/25"
+      >
+        {initialsOf(member, "–")}
+      </span>
+      {!compact && <span className="min-w-0 truncate">{label}</span>}
+    </span>
+  );
+}
