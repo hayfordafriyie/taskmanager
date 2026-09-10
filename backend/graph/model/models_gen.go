@@ -142,6 +142,14 @@ type KeyResult struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type LogTimeInput struct {
+	TaskID  *uuid.UUID `json:"taskId,omitempty"`
+	Label   *string    `json:"label,omitempty"`
+	Minutes int32      `json:"minutes"`
+	SpentOn *time.Time `json:"spentOn,omitempty"`
+	Note    *string    `json:"note,omitempty"`
+}
+
 type LoginResult struct {
 	Success      bool    `json:"success"`
 	Message      string  `json:"message"`
@@ -189,6 +197,38 @@ type RefreshResult struct {
 	RefreshToken *string `json:"refreshToken,omitempty"`
 }
 
+type ReportPoint struct {
+	Label string `json:"label"`
+	Value int32  `json:"value"`
+}
+
+type ReportSlice struct {
+	Key     string `json:"key"`
+	Label   string `json:"label"`
+	Count   int32  `json:"count"`
+	Percent int32  `json:"percent"`
+}
+
+type ReportWorkload struct {
+	UserID   uuid.UUID `json:"userId"`
+	Name     string    `json:"name"`
+	Initials string    `json:"initials"`
+	Open     int32     `json:"open"`
+	Done     int32     `json:"done"`
+	Total    int32     `json:"total"`
+	Percent  int32     `json:"percent"`
+}
+
+type Reports struct {
+	CompletedPerDay []*ReportPoint    `json:"completedPerDay"`
+	ByStatus        []*ReportSlice    `json:"byStatus"`
+	Workload        []*ReportWorkload `json:"workload"`
+	TotalTasks      int32             `json:"totalTasks"`
+	CompletedTasks  int32             `json:"completedTasks"`
+	OverdueTasks    int32             `json:"overdueTasks"`
+	CompletionRate  int32             `json:"completionRate"`
+}
+
 type ResetPasswordResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
@@ -230,6 +270,32 @@ type TeamMember struct {
 	Surname   string    `json:"surname"`
 	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type TimeEntry struct {
+	ID        uuid.UUID  `json:"id"`
+	UserID    uuid.UUID  `json:"userId"`
+	TaskID    *uuid.UUID `json:"taskId,omitempty"`
+	TaskTitle *string    `json:"taskTitle,omitempty"`
+	Label     string     `json:"label"`
+	Minutes   int32      `json:"minutes"`
+	SpentOn   time.Time  `json:"spentOn"`
+	Note      string     `json:"note"`
+	CreatedAt time.Time  `json:"createdAt"`
+}
+
+type TimeResult struct {
+	Success bool       `json:"success"`
+	Message string     `json:"message"`
+	Entry   *TimeEntry `json:"entry,omitempty"`
+}
+
+type TimeSummary struct {
+	TotalMinutes int32   `json:"totalMinutes"`
+	EntryCount   int32   `json:"entryCount"`
+	ActiveDays   int32   `json:"activeDays"`
+	TopLabel     *string `json:"topLabel,omitempty"`
+	TopMinutes   int32   `json:"topMinutes"`
 }
 
 type UpdateTaskInput struct {

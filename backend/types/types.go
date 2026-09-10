@@ -171,3 +171,24 @@ type KeyResultRow struct {
 	Progress  int
 	CreatedAt time.Time
 }
+
+type TimeEntryRow struct {
+	ID        uuid.UUID
+	TeamID    uuid.UUID
+	UserID    uuid.UUID
+	TaskID    *uuid.UUID
+	TaskTitle *string
+	Label     string
+	Minutes   int
+	SpentOn   time.Time
+	Note      string
+	CreatedAt time.Time
+}
+
+type TimeSummaryRow struct {
+	TotalMinutes int64
+	EntryCount   int64
+	ActiveDays   int64
+	TopLabel     *string
+	TopMinutes   int64
+}

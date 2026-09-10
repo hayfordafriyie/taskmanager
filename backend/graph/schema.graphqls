@@ -254,6 +254,72 @@ input CreateGoalInput {
   ownerId: UUID
 }
 
+type TimeEntry {
+  id: UUID!
+  userId: UUID!
+  taskId: UUID
+  taskTitle: String
+  label: String!
+  minutes: Int!
+  spentOn: Time!
+  note: String!
+  createdAt: Time!
+}
+
+type TimeSummary {
+  totalMinutes: Int!
+  entryCount: Int!
+  activeDays: Int!
+  topLabel: String
+  topMinutes: Int!
+}
+
+type TimeResult {
+  success: Boolean!
+  message: String!
+  entry: TimeEntry
+}
+
+input LogTimeInput {
+  taskId: UUID
+  label: String
+  minutes: Int!
+  spentOn: Time
+  note: String
+}
+
+type ReportPoint {
+  label: String!
+  value: Int!
+}
+
+type ReportSlice {
+  key: String!
+  label: String!
+  count: Int!
+  percent: Int!
+}
+
+type ReportWorkload {
+  userId: UUID!
+  name: String!
+  initials: String!
+  open: Int!
+  done: Int!
+  total: Int!
+  percent: Int!
+}
+
+type Reports {
+  completedPerDay: [ReportPoint!]!
+  byStatus: [ReportSlice!]!
+  workload: [ReportWorkload!]!
+  totalTasks: Int!
+  completedTasks: Int!
+  overdueTasks: Int!
+  completionRate: Int!
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -275,6 +341,9 @@ type Query {
   conversations: [Conversation!]!
   conversationMessages(conversationId: UUID!, after: Time, limit: Int): [Message!]!
   teamGoals: [Goal!]!
+  timeEntries(from: Time!, to: Time!): [TimeEntry!]!
+  timeSummary(from: Time!, to: Time!): TimeSummary!
+  reports: Reports!
 }
 
 type Mutation {
@@ -308,4 +377,6 @@ type Mutation {
   createKeyResult(goalId: UUID!, title: String!): GoalResult!
   setKeyResultProgress(keyResultId: UUID!, progress: Int!): GoalResult!
   deleteGoal(goalId: UUID!): Boolean!
+  logTime(input: LogTimeInput!): TimeResult!
+  deleteTimeEntry(entryId: UUID!): Boolean!
 }
