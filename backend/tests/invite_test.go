@@ -168,9 +168,10 @@ func TestInviteAcceptFlow(t *testing.T) {
 	defer cleanup()
 
 	ownerToken := registerAndLogin(t, srv, sender, "+233537144161")
-	id := inviteID(t, gqlQueryAuth(t, srv, inviteQuery("+233541230000", "MEMBER"), ownerToken))
-
+	// The invitee already has an account, so signup cannot claim the
+	// invitation — the explicit accept path is what this test covers.
 	inviteeToken := registerAndLogin(t, srv, sender, "+233541230000")
+	id := inviteID(t, gqlQueryAuth(t, srv, inviteQuery("+233541230000", "MEMBER"), ownerToken))
 
 	invites := gqlData(t, gqlQueryAuth(t, srv, myInvitesQuery(), inviteeToken))["myInvites"].([]any)
 	if len(invites) != 1 {
@@ -228,18 +229,16 @@ func TestInviteToUnregisteredUser(t *testing.T) {
 	id := res["invite"].(map[string]any)["id"].(string)
 
 	inviteeToken := registerAndLogin(t, srv, sender, "+233551234567")
+	// Signup claims the invitation outright: nothing is left pending and the
+	// new account is already inside the inviting team with the invited role.
 	invites := gqlData(t, gqlQueryAuth(t, srv, myInvitesQuery(), inviteeToken))["myInvites"].([]any)
-	if len(invites) != 1 {
-		t.Fatalf("expected invite visible after registration, got %v", invites)
+	if len(invites) != 0 {
+		t.Fatalf("expected the invitation to be claimed at signup, got %v", invites)
 	}
-
-	accepted := gqlMutation(t, gqlQueryAuth(t, srv, acceptQuery(id), inviteeToken), "acceptInvite")
-	if accepted["success"] != true {
-		t.Fatalf("expected unregistered invitee to accept after registering, got %+v", accepted)
+	if role := myTeamData(t, srv, inviteeToken)["role"]; role != "GUEST" {
+		t.Errorf("expected the invited role GUEST, got %v", role)
 	}
-	if name := accepted["team"].(map[string]any)["name"]; name == "" {
-		t.Fatal("expected team name in accept result")
-	}
+	t.Logf("invite %s was claimed by signup", id)
 }
 
 func TestInviteSelfAndResendPending(t *testing.T) {
