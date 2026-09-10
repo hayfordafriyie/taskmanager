@@ -67,26 +67,110 @@ func FromEnv() *Cache {
 		return c
 	}
 	c.enabled = true
-	log.Printf("cache: redis enabled at %s", raw)
+	log.Printf("cache: redis enabled at %s", maskRedisTarget(raw))
 	return c
 }
 
-func (c *Cache) connect(raw string) error {
-	addr := raw
-	password := ""
-	db := ""
+// maskRedisTarget redacts the password from a Redis target so credentials never
+// reach the logs.
+func maskRedisTarget(raw string) string {
+	s := strings.TrimSpace(raw)
+	if i := strings.Index(s, "://"); i >= 0 {
+		scheme, rest := s[:i+len("://")], s[i+len("://"):]
+		if at := strings.LastIndex(rest, "@"); at >= 0 {
+			userinfo := rest[:at]
+			if c := strings.IndexByte(userinfo, ':'); c >= 0 {
+				userinfo = userinfo[:c] + ":****"
+			}
+			return scheme + userinfo + rest[at:]
+		}
+		return s
+	}
+	return s
+}
 
-	if u, err := url.Parse(raw); err == nil && u.Scheme != "" {
+// parseRedisTarget resolves a Redis target from either a URL
+// (redis://[user][:password]@host[:port][/db]) or a bare host[:port][/db].
+//
+// net/url rejects URLs whose password contains reserved characters (e.g. "/",
+// "?" or "#") with `invalid port ... after host`, which previously made the
+// caller dial the raw URL and silently disable the cache. Those targets are
+// therefore parsed manually as a fallback, and an explicit REDIS_PASSWORD
+// environment variable always takes precedence over the URL userinfo.
+func parseRedisTarget(raw string) (addr, password, db string, err error) {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return "", "", "", fmt.Errorf("empty redis address")
+	}
+	password = strings.TrimSpace(os.Getenv("REDIS_PASSWORD"))
+
+	if !strings.Contains(s, "://") {
+		addr, db = splitRedisHostAndDB(s)
+		if addr == "" {
+			return "", "", "", fmt.Errorf("invalid redis address %q", raw)
+		}
+		return addr, password, db, nil
+	}
+
+	if u, perr := url.Parse(s); perr == nil && u.Scheme != "" && u.Host != "" {
 		addr = u.Host
-		if u.User != nil {
+		if u.User != nil && password == "" {
 			password, _ = u.User.Password()
 		}
-		if p := strings.TrimPrefix(u.Path, "/"); p != "" {
-			db = p
+		db = strings.TrimPrefix(u.Path, "/")
+		return ensureRedisPort(addr), password, db, nil
+	}
+
+	// Manual fallback: userinfo ends at the LAST "@", the database is the first
+	// "/" AFTER the host section (a "/" before the "@" belongs to the password).
+	rest := s[strings.Index(s, "://")+len("://"):]
+	at := strings.LastIndex(rest, "@")
+	if at < 0 {
+		addr, db = splitRedisHostAndDB(rest)
+		if addr == "" {
+			return "", "", "", fmt.Errorf("invalid redis url %q", raw)
+		}
+		return addr, password, db, nil
+	}
+	userinfo, hostPart := rest[:at], rest[at+1:]
+	if password == "" {
+		if i := strings.IndexByte(userinfo, ':'); i >= 0 {
+			password = userinfo[i+1:]
 		}
 	}
-	if !strings.Contains(addr, ":") {
-		addr += ":6379"
+	addr, db = splitRedisHostAndDB(hostPart)
+	if addr == "" {
+		return "", "", "", fmt.Errorf("invalid redis url %q", raw)
+	}
+	return addr, password, db, nil
+}
+
+// splitRedisHostAndDB splits "host[:port][/db]" into its address and database.
+func splitRedisHostAndDB(s string) (addr, db string) {
+	s = strings.TrimSpace(s)
+	if i := strings.IndexByte(s, '/'); i >= 0 {
+		db = s[i+1:]
+		s = s[:i]
+	}
+	return ensureRedisPort(s), db
+}
+
+// ensureRedisPort appends the default Redis port when none is present.
+func ensureRedisPort(addr string) string {
+	addr = strings.TrimSpace(addr)
+	if addr == "" {
+		return ""
+	}
+	if _, _, err := net.SplitHostPort(addr); err != nil {
+		return net.JoinHostPort(addr, "6379")
+	}
+	return addr
+}
+
+func (c *Cache) connect(raw string) error {
+	addr, password, db, err := parseRedisTarget(raw)
+	if err != nil {
+		return err
 	}
 
 	conn, err := net.DialTimeout("tcp", addr, dialTimeout)
