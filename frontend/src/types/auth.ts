@@ -73,6 +73,82 @@ export interface PasswordResetResult {
   message: string;
 }
 
+/** Result of the `verifyOTP` mutation (mirrors the GraphQL `VerifyOTPResult`). */
+export interface VerifyOtpResult {
+  success: boolean;
+  message: string;
+}
+
+/** Variables shared by the phone-only mutations (`requestOTP`, `requestPasswordReset`). */
+export interface PhoneVariables extends GqlVariables {
+  phone: string;
+}
+
+/** Variables of the `verifyOTP` mutation. */
+export interface VerifyOtpVariables extends GqlVariables {
+  phone: string;
+  code: string;
+}
+
+/** Variables of the `requestPasswordReset`/`resetPassword` pair. */
+export interface ResetPasswordVariables extends GqlVariables {
+  phone: string;
+  code: string;
+  password: string;
+  confirmPassword: string;
+}
+
+/** Input object of the `createAccount` mutation (GraphQL `CreateAccountInput`). */
+export interface CreateAccountInput {
+  phone: string;
+  firstName: string;
+  surname: string;
+  otherNames?: string | null;
+  password: string;
+  confirmPassword: string;
+}
+
+/** Variables of the `createAccount` mutation. */
+export interface CreateAccountVariables extends GqlVariables {
+  input: CreateAccountInput;
+}
+
+/** Response data of the `requestOTP` mutation. */
+export interface RequestOtpData {
+  requestOTP: OtpResult;
+}
+
+/** Response data of the `verifyOTP` mutation. */
+export interface VerifyOtpData {
+  verifyOTP: VerifyOtpResult;
+}
+
+/** Response data of the `createAccount` mutation. */
+export interface CreateAccountData {
+  createAccount: CreateAccountResult;
+}
+
+/** Response data of the `requestPasswordReset` mutation. */
+export interface RequestPasswordResetData {
+  requestPasswordReset: OtpResult;
+}
+
+/** Response data of the `resetPassword` mutation. */
+export interface ResetPasswordData {
+  resetPassword: PasswordResetResult;
+}
+
+/** The step machine of the signup page. */
+export type SignupStage = "phone" | "otp" | "account";
+
+/** The step machine of the reset-password page. */
+export type ResetPasswordStage = "phone" | "code";
+
+/** Router state handed to `/login` after signup or a password reset. */
+export interface AuthLocationState {
+  notice?: string;
+}
+
 /** A stored session timestamp pair (kept for future "signed in at" labels). */
 export interface SessionMeta {
   signedInAt?: ISODateString | null;

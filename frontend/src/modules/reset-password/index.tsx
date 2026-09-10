@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { errorMessage } from "../../lib/errors";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
@@ -8,19 +9,20 @@ import OtpEntry from "../../components/OtpEntry";
 import { useToast } from "../../components/Toast";
 import { useRequestPasswordReset } from "./hooks/useRequestPasswordReset";
 import { useResetPassword } from "./hooks/useResetPassword";
+import type { AuthLocationState, ResetPasswordStage } from "../../types/auth";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const toast = useToast();
   const requestCode = useRequestPasswordReset();
   const reset = useResetPassword();
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [stage, setStage] = useState("phone");
+  const [phone, setPhone] = useState<string>("");
+  const [code, setCode] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirm, setConfirm] = useState<string>("");
+  const [stage, setStage] = useState<ResetPasswordStage>("phone");
 
-  async function requestResetCode() {
+  async function requestResetCode(): Promise<boolean> {
     if (!phone) {
       return false;
     }
@@ -39,7 +41,7 @@ export default function ResetPassword() {
     }
   }
 
-  async function handleRequest(e) {
+  async function handleRequest(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!phone) {
       toast.error("Enter your phone number first.");
@@ -51,7 +53,7 @@ export default function ResetPassword() {
     }
   }
 
-  async function handleReset(e) {
+  async function handleReset(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (password !== confirm) {
       toast.error("Passwords do not match.");
@@ -68,7 +70,9 @@ export default function ResetPassword() {
       if (result?.success) {
         navigate("/login", {
           replace: true,
-          state: { notice: "Password updated. Please log in again." },
+          state: {
+            notice: "Password updated. Please log in again.",
+          } satisfies AuthLocationState,
         });
       } else {
         toast.error(result?.message ?? "Reset failed");

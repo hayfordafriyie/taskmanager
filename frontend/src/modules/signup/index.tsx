@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { errorMessage } from "../../lib/errors";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
@@ -9,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { useRequestOtp } from "./hooks/useRequestOtp";
 import { useVerifyOtp } from "./hooks/useVerifyOtp";
 import { useCreateAccount } from "./hooks/useCreateAccount";
+import type { AuthLocationState, SignupStage } from "../../types/auth";
 
 const inputClass =
   "control w-full rounded-[0.85rem] px-3.5 py-2.5 text-sm";
@@ -19,19 +21,19 @@ export default function Signup() {
   const requestOtp = useRequestOtp();
   const verifyOtp = useVerifyOtp();
   const createAccount = useCreateAccount();
-  const [stage, setStage] = useState("phone");
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [surname, setSurname] = useState("");
-  const [otherNames, setOtherNames] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [stage, setStage] = useState<SignupStage>("phone");
+  const [phone, setPhone] = useState<string>("");
+  const [code, setCode] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>("");
+  const [surname, setSurname] = useState<string>("");
+  const [otherNames, setOtherNames] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirm, setConfirm] = useState<string>("");
 
   // Caught while typing so a mismatch never reaches the API.
   const mismatch = confirm.length > 0 && password !== confirm;
 
-  async function sendCode() {
+  async function sendCode(): Promise<boolean> {
     if (!phone) {
       return false;
     }
@@ -50,7 +52,7 @@ export default function Signup() {
     }
   }
 
-  async function handleRequest(e) {
+  async function handleRequest(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!phone) {
       toast.error("Enter your phone number first.");
@@ -63,7 +65,7 @@ export default function Signup() {
     }
   }
 
-  async function handleVerify(e) {
+  async function handleVerify(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!code) {
       toast.error("Enter the code we sent you.");
@@ -83,7 +85,7 @@ export default function Signup() {
     }
   }
 
-  async function handleCreate(e) {
+  async function handleCreate(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!firstName || !surname || !password) {
       toast.error("Fill in your name and choose a password.");
@@ -106,7 +108,7 @@ export default function Signup() {
       if (result?.success) {
         navigate("/login", {
           replace: true,
-          state: { notice: "Account created. Please log in." },
+          state: { notice: "Account created. Please log in." } satisfies AuthLocationState,
         });
       } else {
         toast.error(result?.message ?? "Failed to create account");

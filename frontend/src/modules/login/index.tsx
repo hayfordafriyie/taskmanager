@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { errorMessage } from "../../lib/errors";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -6,16 +7,18 @@ import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
 import PasswordInput from "../../components/PasswordInput";
 import { useToast } from "../../components/Toast";
+import type { AuthLocationState } from "../../types/auth";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const notice = location.state?.notice || null;
+  const [phone, setPhone] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [busy, setBusy] = useState<boolean>(false);
+  const notice =
+    (location.state as AuthLocationState | null)?.notice || null;
 
   useEffect(() => {
     if (notice) {
@@ -23,7 +26,7 @@ export default function Login() {
     }
   }, [notice, toast]);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!phone || !password) {
       toast.error("Phone and password are required.");
