@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "../../lib/errors";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
@@ -33,7 +34,7 @@ export default function ResetPassword() {
       toast.error(result?.message ?? "Unexpected response");
       return false;
     } catch (err) {
-      toast.error(err.message);
+      toast.error(errorMessage(err, "Something went wrong"));
       return false;
     }
   }
@@ -73,7 +74,7 @@ export default function ResetPassword() {
         toast.error(result?.message ?? "Reset failed");
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(errorMessage(err, "Something went wrong"));
     }
   }
 

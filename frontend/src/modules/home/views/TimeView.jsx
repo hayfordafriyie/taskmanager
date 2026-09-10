@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { errorMessage } from "../../../lib/errors";
 import {
   StopwatchIcon,
   PlusIcon,
@@ -140,7 +141,7 @@ export function TimeView() {
             toast.error(r?.message || "Could not log time.");
           }
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }
@@ -265,7 +266,7 @@ export function TimeView() {
                   onClick={() =>
                     deleteEntry.mutate(
                       { entryId: e.id },
-                      { onError: (err) => toast.error(err.message) },
+                      { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
                     )
                   }
                   className="ring-accent shrink-0 rounded-lg p-1.5 t-faint transition-colors hover:bg-[var(--glass-b)] hover:text-red-500"

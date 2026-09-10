@@ -4,7 +4,7 @@ import { EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
 const fieldClass =
   "control w-full rounded-[0.85rem] px-3.5 py-2.5 pr-10 text-sm";
 
-export default function PasswordInput({ value, onChange, placeholder, disabled }) {
+export default function PasswordInput({ value, onChange, placeholder, disabled, invalid }) {
   const [visible, setVisible] = useState(false);
   const type = visible ? "text" : "password";
 
@@ -16,7 +16,8 @@ export default function PasswordInput({ value, onChange, placeholder, disabled }
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className={fieldClass}
+        aria-invalid={invalid || undefined}
+        className={`${fieldClass}${invalid ? " ring-1 ring-red-500" : ""}`}
       />
       <button
         type="button"

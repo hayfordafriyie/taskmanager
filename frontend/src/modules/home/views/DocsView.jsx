@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { errorMessage } from "../../../lib/errors";
 import {
   ReaderIcon,
   FileTextIcon,
@@ -107,7 +108,7 @@ export function DocsView() {
           if (r?.success) toast.success(r.message);
           else toast.error(r?.message || "Could not save the document.");
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }
@@ -120,7 +121,7 @@ export function DocsView() {
           toast.success("Document deleted");
           setSelectedId((id) => (id === doc.id ? null : id));
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }
@@ -147,7 +148,7 @@ export function DocsView() {
             toast.error(r?.message || "Could not create the document.");
           }
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }
@@ -400,13 +401,13 @@ function ShareButton({ doc }) {
     if (existing) {
       revokeAccess.mutate(
         { docId: doc.id, userId: member.id },
-        { onError: (err) => toast.error(err.message) },
+        { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
       );
       return;
     }
     setAccess.mutate(
       { docId: doc.id, userId: member.id, canEdit: false },
-      { onError: (err) => toast.error(err.message) },
+      { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
     );
   }
 
@@ -414,7 +415,7 @@ function ShareButton({ doc }) {
     const existing = accessByUser.get(member.id);
     setAccess.mutate(
       { docId: doc.id, userId: member.id, canEdit: !existing?.canEdit },
-      { onError: (err) => toast.error(err.message) },
+      { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
     );
   }
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "../../lib/errors";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/Button";
 import PhoneInput from "../../components/PhoneInput";
@@ -27,6 +28,9 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
+  // Caught while typing so a mismatch never reaches the API.
+  const mismatch = confirm.length > 0 && password !== confirm;
+
   async function sendCode() {
     if (!phone) {
       return false;
@@ -41,7 +45,7 @@ export default function Signup() {
       toast.error(result?.message ?? "Unexpected response");
       return false;
     } catch (err) {
-      toast.error(err.message);
+      toast.error(errorMessage(err, "Something went wrong"));
       return false;
     }
   }
@@ -75,7 +79,7 @@ export default function Signup() {
         toast.error(result?.message ?? "Verification failed");
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(errorMessage(err, "Something went wrong"));
     }
   }
 
@@ -108,7 +112,7 @@ export default function Signup() {
         toast.error(result?.message ?? "Failed to create account");
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(errorMessage(err, "Something went wrong"));
     }
   }
 
@@ -186,7 +190,13 @@ export default function Signup() {
             value={confirm}
             onChange={setConfirm}
             placeholder="Confirm password"
+            invalid={mismatch}
           />
+          {mismatch && (
+            <p className="text-xs text-red-500" role="alert">
+              Passwords do not match.
+            </p>
+          )}
           <Button
             type="submit"
             disabled={
@@ -194,7 +204,8 @@ export default function Signup() {
               !firstName ||
               !surname ||
               !password ||
-              !confirm
+              !confirm ||
+              mismatch
             }
             className="w-full"
           >

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "../../../lib/errors";
 import { TargetIcon, PlusIcon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PolicyBadge, MemberChip } from "../ui";
 import Select from "../../../components/Select";
@@ -102,7 +103,7 @@ export function GoalsView() {
             toast.error(r?.message || "Could not create the goal.");
           }
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }
@@ -115,10 +116,10 @@ export function GoalsView() {
       {
         onSuccess: (res) => {
           const r = res?.data?.createKeyResult;
-          if (r && !r.success) toast.error(r.message);
+          if (r && !r.success) toast.error(errorMessage(r, "Something went wrong"));
           setNewKr((prev) => ({ ...prev, [goalId]: "" }));
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }
@@ -165,7 +166,7 @@ export function GoalsView() {
                 onClick={() =>
                   deleteGoal.mutate(
                     { goalId: g.id },
-                    { onError: (err) => toast.error(err.message) },
+                    { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
                   )
                 }
                 className="ring-accent shrink-0 rounded-lg p-1.5 t-faint transition-colors hover:bg-[var(--glass-b)] hover:text-red-500"
@@ -189,7 +190,7 @@ export function GoalsView() {
                   onValueChange={(value) =>
                     updateStatus.mutate(
                       { goalId: g.id, status: value },
-                      { onError: (err) => toast.error(err.message) },
+                      { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
                     )
                   }
                   options={GOAL_STATUS_OPTIONS}
@@ -231,7 +232,7 @@ export function GoalsView() {
                       onChange={(e) =>
                         setKrProgress.mutate(
                           { keyResultId: r.id, progress: Number(e.target.value) },
-                          { onError: (err) => toast.error(err.message) },
+                          { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
                         )
                       }
                       className="h-1.5 w-full cursor-pointer accent-sky-500"

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { errorMessage } from "../../lib/errors";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import Button from "../../components/Button";
@@ -37,7 +38,7 @@ export default function Login() {
         toast.error(result?.message ?? "Login failed");
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error(errorMessage(err, "Something went wrong"));
     } finally {
       setBusy(false);
     }

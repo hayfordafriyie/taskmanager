@@ -122,11 +122,22 @@ export function useSwitchTeam() {
         { teamId },
       ),
     onSuccess: (res) => {
-      if (res?.data?.switchTeam?.success === false) return;
-      // Different workspace, different data: drop every cached query so nothing
-      // from the previous team (tasks, members, invites, chat…) can be shown
-      // inside the new one. Mounted queries refetch automatically.
-      queryClient.clear();
+      const payload = res?.data?.switchTeam;
+      if (!payload || payload.success === false) return;
+
+      // Update the active-workspace handshake first: the shell keys its whole
+      // subtree on this team id, so it remounts once (not twice) and every view
+      // refetches straight away — no page refresh, no data from the old team.
+      if (payload.team) {
+        queryClient.setQueryData(["myTeam"], (prev) =>
+          prev ? { ...prev, ...payload.team } : prev,
+        );
+      }
+      // Drop everything else so nothing team-scoped can linger in memory.
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== "myTeam",
+      });
+      queryClient.invalidateQueries();
     },
   });
 }

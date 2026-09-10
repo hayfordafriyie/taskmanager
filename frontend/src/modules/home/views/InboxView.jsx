@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { errorMessage } from "../../../lib/errors";
 import {
   PaperPlaneIcon,
   MagnifyingGlassIcon,
@@ -107,7 +108,7 @@ export function InboxView() {
         const conv = res?.data?.startConversation;
         if (conv?.id) openConversation(conv.id);
       },
-      onError: (err) => toast.error(err.message),
+      onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
     });
   }
 
@@ -279,7 +280,7 @@ function Thread({ conversation, currentUser, onBack }) {
     setDraft("");
     sendMessage.mutate(body, {
       onError: (err) => {
-        toast.error(err.message);
+        toast.error(errorMessage(err, "Something went wrong"));
         setDraft(body);
       },
     });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "../../../lib/errors";
 import { CheckboxIcon, MagnifyingGlassIcon, CheckIcon, PersonIcon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, PriorityBadge } from "../ui";
 import { useAuth } from "../../auth/AuthContext";
@@ -43,9 +44,9 @@ export function MyTasksView() {
       {
         onSuccess: (res) => {
           const r = res?.data?.setTaskStatus;
-          if (r && !r.success) toast.error(r.message);
+          if (r && !r.success) toast.error(errorMessage(r, "Something went wrong"));
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
   }

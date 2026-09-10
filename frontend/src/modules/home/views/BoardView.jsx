@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "../../../lib/errors";
 import { PlusIcon, PersonIcon, Pencil2Icon, CalendarIcon } from "@radix-ui/react-icons";
 import { Panel, ViewHeader, Avatar, MemberChip } from "../ui";
 import Select from "../../../components/Select";
@@ -159,7 +160,7 @@ export function BoardView() {
           toast.error(r?.message || "Could not save the task.");
         }
       },
-      onError: (err) => toast.error(err.message),
+      onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
     };
     if (editingTask) {
       updateTask.mutate({ taskId: editingTask.id, input: { ...input, status } }, options);
@@ -175,9 +176,9 @@ export function BoardView() {
       {
         onSuccess: (res) => {
           const r = res?.data?.setTaskStatus;
-          if (r && !r.success) toast.error(r.message);
+          if (r && !r.success) toast.error(errorMessage(r, "Something went wrong"));
         },
-        onError: (err) => toast.error(err.message),
+        onError: (err) => toast.error(errorMessage(err, "Something went wrong")),
       },
     );
     setDragId(null);
@@ -374,13 +375,13 @@ export function BoardView() {
                         onStatus={(status) =>
                           setStatus.mutate(
                             { taskId: t.id, status },
-                            { onError: (err) => toast.error(err.message) },
+                            { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
                           )
                         }
                         onAssignee={(memberId) =>
                           assignTask.mutate(
                             { taskId: t.id, assigneeId: memberId || null },
-                            { onError: (err) => toast.error(err.message) },
+                            { onError: (err) => toast.error(errorMessage(err, "Something went wrong")) },
                           )
                         }
                       />

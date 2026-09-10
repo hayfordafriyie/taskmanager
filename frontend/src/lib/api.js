@@ -114,9 +114,24 @@ function parse(plain, status) {
     throw new Error(`server error ${status}: ${plain}`);
   }
   if (status >= 400) {
-    throw new Error(`request failed with status ${status}`);
+    // Report what the server actually said ("Passwords do not match",
+    // "invalid code", …) instead of a bare "request failed with status 400",
+    // which tells the user nothing about what to fix.
+    throw new Error(serverReason(parsed) ?? `request failed with status ${status}`);
   }
   return parsed;
+}
+
+/** First message the server gave us, from any of the shapes it may use. */
+function serverReason(parsed) {
+  if (!parsed || typeof parsed !== "object") return null;
+  const fromErrors = Array.isArray(parsed.errors)
+    ? parsed.errors.find((e) => e && typeof e.message === "string" && e.message.trim())
+    : null;
+  if (fromErrors) return fromErrors.message.trim();
+  if (typeof parsed.message === "string" && parsed.message.trim()) return parsed.message.trim();
+  if (typeof parsed.error === "string" && parsed.error.trim()) return parsed.error.trim();
+  return null;
 }
 
 function isNotAuthenticated(result) {
