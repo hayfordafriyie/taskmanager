@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { errorMessage } from "../../../lib/errors";
 import { TargetIcon, PlusIcon, TrashIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, PolicyBadge, MemberChip } from "../ui";
+import { Panel, ViewHeader, PolicyBadge } from "../ui";
 import Select from "../../../components/Select";
 import { useAuth } from "../../auth/AuthContext";
 import { useMyTeam } from "../../invite/hooks";
@@ -327,7 +327,12 @@ export function GoalsView() {
                   // Long names stay in the dropdown (truncated); the trigger
                   // shows the rounded initials so the field never stretches.
                   renderValue={
-                    <MemberChip member={members.find((m) => m.id === (ownerId || user?.id))} />
+                    <span
+                      className="block max-w-[12rem] truncate"
+                      title={nameOf(members.find((m) => m.id === (ownerId || user?.id)))}
+                    >
+                      {nameOf(members.find((m) => m.id === (ownerId || user?.id))) || "Unassigned"}
+                    </span>
                   }
                   renderOption={(o) => (
                     <span className="block truncate" title={o.label}>

@@ -154,32 +154,18 @@ describe('BoardView', () => {
     expect(group.className).toContain('flex-col')
   })
 
-  it('collapses a long assignee name to rounded initials once chosen', async () => {
+  it('shows the member name (truncated) in the assignee select — no initials', async () => {
     renderWithProviders(<BoardView />)
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Add task/ }))
 
+    await user.click(screen.getByRole('combobox', { name: 'Assignee' }))
+    await user.click(await screen.findByRole('option', { name: /Kwabena Nkrumah-Agyeman Mensah/ }))
+
     const trigger = screen.getByRole('combobox', { name: 'Assignee' })
-    expect(trigger).toHaveTextContent('Unassigned')
-
-    await user.click(trigger)
-    // The dropdown lists the full name…
-    const option = await screen.findByRole('option', { name: /Kwabena Nkrumah-Agyeman Mensah/ })
-    await user.click(option)
-
-    // …but the field itself only lays out the rounded initials, so a long name
-    // can never stretch the layout.
-    const after = screen.getByRole('combobox', { name: 'Assignee' })
-    expect(after).toHaveTextContent('KN')
-    // The field shows a rounded initials badge, and whatever name it lays out
-    // sits inside a truncating wrapper so a long name cannot stretch the form.
-    const badge = after.querySelector('span.rounded-full')
-    expect(badge).not.toBeNull()
-    expect(badge.textContent.trim()).toBe('KN')
-    // The closed select lays out the initials only (name is in the title/a11y).
-    const wrapper = badge.closest('.truncate')
-    expect(wrapper).not.toBeNull()
-    expect(wrapper.textContent.trim()).toBe('KN')
+    expect(trigger).toHaveTextContent('Kwabena Nkrumah-Agyeman Mensah')
+    // No rounded initials badge anywhere in the control.
+    expect(trigger.querySelector('.rounded-full')).toBeNull()
   })
 
   it('shows the planned window on a card', () => {

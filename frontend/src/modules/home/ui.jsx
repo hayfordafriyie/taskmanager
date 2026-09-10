@@ -108,18 +108,3 @@ export function initialsOf(person, fallback = "?") {
  * the initials only (compact) with the full name in `title` and in the visually
  * hidden Select.Value; inside dropdown rows we show initials + a truncated name.
  */
-export function MemberChip({ member, compact = false, placeholder = "Unassigned", className = "" }) {
-  const name = personName(member);
-  const label = name || placeholder;
-  return (
-    <span className={`flex min-w-0 items-center gap-1.5 ${className}`} title={label}>
-      <span
-        aria-hidden="true"
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gradient-to-br from-zinc-400 to-zinc-700 text-[9px] font-semibold text-white ring-1 ring-white/25"
-      >
-        {initialsOf(member, "–")}
-      </span>
-      {!compact && <span className="min-w-0 truncate">{label}</span>}
-    </span>
-  );
-}

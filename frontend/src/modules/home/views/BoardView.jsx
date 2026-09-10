@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { errorMessage } from "../../../lib/errors";
 import { PlusIcon, PersonIcon, Pencil2Icon, CalendarIcon } from "@radix-ui/react-icons";
-import { Panel, ViewHeader, Avatar, MemberChip } from "../ui";
+import { Panel, ViewHeader, Avatar } from "../ui";
 import Select from "../../../components/Select";
 import Modal from "../../../components/Modal";
 import DatePicker from "../../../components/DatePicker";
@@ -270,7 +270,11 @@ export function BoardView() {
                 options={assigneeOptions}
                 ariaLabel="Assignee"
                 size="md"
-                renderValue={<MemberChip member={selectedMember} compact />}
+                renderValue={
+                  <span className="block truncate" title={selectedMember ? personLabel(selectedMember) : "Unassigned"}>
+                    {selectedMember ? personLabel(selectedMember) : "Unassigned"}
+                  </span>
+                }
                 renderOption={(o) => (
                   <span className="block truncate" title={o.label}>
                     {o.label}
@@ -483,7 +487,11 @@ function TaskCard({ task, members, dragId, onDragStart, onDragEnd, onEdit, onSta
           ]}
           size="sm"
           className="w-full"
-          renderValue={<MemberChip member={assignee} compact />}
+          renderValue={
+            <span className="block truncate" title={assignee ? personLabel(assignee) : "Unassigned"}>
+              {assignee ? personLabel(assignee) : "Unassigned"}
+            </span>
+          }
           renderOption={(o) => (
             <span className="block truncate" title={o.label}>
               {o.label}
