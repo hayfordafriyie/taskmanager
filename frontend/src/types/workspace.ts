@@ -1,5 +1,6 @@
 /** Types for the authenticated workspace shell (`modules/home`). */
 
+import type { ReactNode } from "react";
 import type { IconComponent } from "./ui";
 
 /** The label of a workspace view (matches a `Dock` entry and a `views` key). */
@@ -27,4 +28,9 @@ export interface WorkspaceContextValue {
 export interface DockItem {
   label: WorkspaceView;
   Icon: IconComponent;
+}
+
+/** Props of `WorkspaceProvider`. */
+export interface WorkspaceProviderProps {
+  children?: ReactNode;
 }

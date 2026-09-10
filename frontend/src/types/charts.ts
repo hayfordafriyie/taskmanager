@@ -9,6 +9,19 @@ export interface DonutSlice {
   color: string;
 }
 
+/**
+ * A slice with its geometry resolved for rendering — the private shape
+ * `DonutChart` computes before drawing each arc.
+ */
+export interface DonutArc extends DonutSlice {
+  /** Share of the total, rounded to a whole percent. */
+  percent: number;
+  /** `stroke-dasharray` value for the arc. */
+  dash: string;
+  /** `stroke-dashoffset` value for the arc. */
+  offset: number;
+}
+
 export interface DonutChartProps {
   data?: DonutSlice[];
   /** Outer diameter in pixels. */

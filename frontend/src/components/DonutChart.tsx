@@ -1,11 +1,5 @@
 import { useMemo, useState } from "react";
-import type { DonutChartProps, DonutSlice } from "../types/charts";
-
-interface DonutArc extends DonutSlice {
-  percent: number;
-  dash: string;
-  offset: number;
-}
+import type { DonutArc, DonutChartProps, DonutSlice } from "../types/charts";
 
 /**
  * SVG donut chart.

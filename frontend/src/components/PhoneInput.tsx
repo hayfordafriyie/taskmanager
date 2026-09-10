@@ -13,13 +13,8 @@ import {
 } from "radix-ui/select";
 import { ChevronDownIcon, CheckIcon } from "@radix-ui/react-icons";
 import { countryOptions, combinePhone, normalizeNational } from "../lib/phone";
-import type { CountryOption } from "../types/phone";
+import type { CountryOption, SplitNumber } from "../types/phone";
 import type { PhoneInputProps } from "../types/ui";
-
-interface SplitNumber {
-  code: string;
-  national: string;
-}
 
 function splitNumber(value: string): SplitNumber {
   for (const country of countryOptions) {
