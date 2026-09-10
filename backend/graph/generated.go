@@ -45,6 +45,16 @@ type ComplexityRoot struct {
 		Team    func(childComplexity int) int
 	}
 
+	Conversation struct {
+		ID            func(childComplexity int) int
+		Kind          func(childComplexity int) int
+		LastMessage   func(childComplexity int) int
+		LastMessageAt func(childComplexity int) int
+		Peer          func(childComplexity int) int
+		TeamID        func(childComplexity int) int
+		UnreadCount   func(childComplexity int) int
+	}
+
 	CreateAccountResult struct {
 		Message func(childComplexity int) int
 		Success func(childComplexity int) int
@@ -115,6 +125,14 @@ type ComplexityRoot struct {
 		User         func(childComplexity int) int
 	}
 
+	Message struct {
+		Body           func(childComplexity int) int
+		ConversationID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Sender         func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AcceptInvite               func(childComplexity int, inviteID uuid.UUID) int
 		AssignTask                 func(childComplexity int, taskID uuid.UUID, assigneeID *uuid.UUID) int
@@ -127,6 +145,7 @@ type ComplexityRoot struct {
 		Logout                     func(childComplexity int) int
 		MarkAllNotificationsRead   func(childComplexity int) int
 		MarkAllNotificationsUnread func(childComplexity int) int
+		MarkConversationRead       func(childComplexity int, conversationID uuid.UUID) int
 		MarkNotificationRead       func(childComplexity int, id uuid.UUID) int
 		MarkNotificationUnread     func(childComplexity int, id uuid.UUID) int
 		RefreshToken               func(childComplexity int, token string) int
@@ -134,7 +153,9 @@ type ComplexityRoot struct {
 		RequestPasswordReset       func(childComplexity int, phone string) int
 		ResetPassword              func(childComplexity int, phone string, code string, password string, confirmPassword string) int
 		RevokeInvite               func(childComplexity int, inviteID uuid.UUID) int
+		SendMessage                func(childComplexity int, conversationID uuid.UUID, body string) int
 		SetTaskStatus              func(childComplexity int, taskID uuid.UUID, status model.TaskStatus) int
+		StartConversation          func(childComplexity int, memberID uuid.UUID) int
 		UpdateTask                 func(childComplexity int, taskID uuid.UUID, input model.UpdateTaskInput) int
 		UpdateTaskDescription      func(childComplexity int, taskID uuid.UUID, description string) int
 		VerifyOtp                  func(childComplexity int, phone string, code string) int
@@ -158,6 +179,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		ConversationMessages    func(childComplexity int, conversationID uuid.UUID, after *time.Time, limit *int32) int
+		Conversations           func(childComplexity int) int
 		Dashboard               func(childComplexity int) int
 		Health                  func(childComplexity int) int
 		Me                      func(childComplexity int) int
@@ -261,6 +284,9 @@ type MutationResolver interface {
 	MarkAllNotificationsUnread(ctx context.Context) (bool, error)
 	DeleteNotification(ctx context.Context, id uuid.UUID) (bool, error)
 	DeleteAllNotifications(ctx context.Context) (bool, error)
+	StartConversation(ctx context.Context, memberID uuid.UUID) (*model.Conversation, error)
+	SendMessage(ctx context.Context, conversationID uuid.UUID, body string) (*model.Message, error)
+	MarkConversationRead(ctx context.Context, conversationID uuid.UUID) (bool, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
@@ -271,6 +297,8 @@ type QueryResolver interface {
 	Notifications(ctx context.Context) ([]*model.Notification, error)
 	UnreadNotificationCount(ctx context.Context) (int32, error)
 	Dashboard(ctx context.Context) (*model.Dashboard, error)
+	Conversations(ctx context.Context) ([]*model.Conversation, error)
+	ConversationMessages(ctx context.Context, conversationID uuid.UUID, after *time.Time, limit *int32) ([]*model.Message, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -309,6 +337,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AcceptInviteResult.Team(childComplexity), true
+
+	case "Conversation.id":
+		if e.ComplexityRoot.Conversation.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.ID(childComplexity), true
+	case "Conversation.kind":
+		if e.ComplexityRoot.Conversation.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.Kind(childComplexity), true
+	case "Conversation.lastMessage":
+		if e.ComplexityRoot.Conversation.LastMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.LastMessage(childComplexity), true
+	case "Conversation.lastMessageAt":
+		if e.ComplexityRoot.Conversation.LastMessageAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.LastMessageAt(childComplexity), true
+	case "Conversation.peer":
+		if e.ComplexityRoot.Conversation.Peer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.Peer(childComplexity), true
+	case "Conversation.teamId":
+		if e.ComplexityRoot.Conversation.TeamID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.TeamID(childComplexity), true
+	case "Conversation.unreadCount":
+		if e.ComplexityRoot.Conversation.UnreadCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Conversation.UnreadCount(childComplexity), true
 
 	case "CreateAccountResult.message":
 		if e.ComplexityRoot.CreateAccountResult.Message == nil {
@@ -577,6 +648,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.LoginResult.User(childComplexity), true
 
+	case "Message.body":
+		if e.ComplexityRoot.Message.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Message.Body(childComplexity), true
+	case "Message.conversationId":
+		if e.ComplexityRoot.Message.ConversationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Message.ConversationID(childComplexity), true
+	case "Message.createdAt":
+		if e.ComplexityRoot.Message.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Message.CreatedAt(childComplexity), true
+	case "Message.id":
+		if e.ComplexityRoot.Message.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Message.ID(childComplexity), true
+	case "Message.sender":
+		if e.ComplexityRoot.Message.Sender == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Message.Sender(childComplexity), true
+
 	case "Mutation.acceptInvite":
 		if e.ComplexityRoot.Mutation.AcceptInvite == nil {
 			break
@@ -678,6 +780,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MarkAllNotificationsUnread(childComplexity), true
+	case "Mutation.markConversationRead":
+		if e.ComplexityRoot.Mutation.MarkConversationRead == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_markConversationRead_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MarkConversationRead(childComplexity, args["conversationId"].(uuid.UUID)), true
 	case "Mutation.markNotificationRead":
 		if e.ComplexityRoot.Mutation.MarkNotificationRead == nil {
 			break
@@ -755,6 +868,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RevokeInvite(childComplexity, args["inviteId"].(uuid.UUID)), true
+	case "Mutation.sendMessage":
+		if e.ComplexityRoot.Mutation.SendMessage == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendMessage_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SendMessage(childComplexity, args["conversationId"].(uuid.UUID), args["body"].(string)), true
 	case "Mutation.setTaskStatus":
 		if e.ComplexityRoot.Mutation.SetTaskStatus == nil {
 			break
@@ -766,6 +890,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetTaskStatus(childComplexity, args["taskId"].(uuid.UUID), args["status"].(model.TaskStatus)), true
+	case "Mutation.startConversation":
+		if e.ComplexityRoot.Mutation.StartConversation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_startConversation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.StartConversation(childComplexity, args["memberId"].(uuid.UUID)), true
 	case "Mutation.updateTask":
 		if e.ComplexityRoot.Mutation.UpdateTask == nil {
 			break
@@ -868,6 +1003,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.OTPResult.Success(childComplexity), true
 
+	case "Query.conversationMessages":
+		if e.ComplexityRoot.Query.ConversationMessages == nil {
+			break
+		}
+
+		args, err := ec.field_Query_conversationMessages_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ConversationMessages(childComplexity, args["conversationId"].(uuid.UUID), args["after"].(*time.Time), args["limit"].(*int32)), true
+	case "Query.conversations":
+		if e.ComplexityRoot.Query.Conversations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.Conversations(childComplexity), true
 	case "Query.dashboard":
 		if e.ComplexityRoot.Query.Dashboard == nil {
 			break
@@ -1289,6 +1441,26 @@ func (ec *executionContext) childFields_AcceptInviteResult(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type AcceptInviteResult", field.Name)
 }
 
+func (ec *executionContext) childFields_Conversation(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Conversation_id(ctx, field)
+	case "teamId":
+		return ec.fieldContext_Conversation_teamId(ctx, field)
+	case "kind":
+		return ec.fieldContext_Conversation_kind(ctx, field)
+	case "peer":
+		return ec.fieldContext_Conversation_peer(ctx, field)
+	case "lastMessage":
+		return ec.fieldContext_Conversation_lastMessage(ctx, field)
+	case "lastMessageAt":
+		return ec.fieldContext_Conversation_lastMessageAt(ctx, field)
+	case "unreadCount":
+		return ec.fieldContext_Conversation_unreadCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Conversation", field.Name)
+}
+
 func (ec *executionContext) childFields_CreateAccountResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "success":
@@ -1427,6 +1599,22 @@ func (ec *executionContext) childFields_LoginResult(ctx context.Context, field g
 		return ec.fieldContext_LoginResult_refreshToken(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type LoginResult", field.Name)
+}
+
+func (ec *executionContext) childFields_Message(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Message_id(ctx, field)
+	case "conversationId":
+		return ec.fieldContext_Message_conversationId(ctx, field)
+	case "sender":
+		return ec.fieldContext_Message_sender(ctx, field)
+	case "body":
+		return ec.fieldContext_Message_body(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Message_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Message", field.Name)
 }
 
 func (ec *executionContext) childFields_Notification(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -1831,6 +2019,20 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_markConversationRead_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "conversationId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["conversationId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_markNotificationRead_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1953,6 +2155,28 @@ func (ec *executionContext) field_Mutation_revokeInvite_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_sendMessage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "conversationId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["conversationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "body",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["body"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_setTaskStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1972,6 +2196,20 @@ func (ec *executionContext) field_Mutation_setTaskStatus_args(ctx context.Contex
 		return nil, err
 	}
 	args["status"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_startConversation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "memberId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["memberId"] = arg0
 	return args, nil
 }
 
@@ -2052,6 +2290,36 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_conversationMessages_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "conversationId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["conversationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*time.Time, error) {
+			return ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
 	return args, nil
 }
 
@@ -2191,6 +2459,185 @@ func (ec *executionContext) fieldContext_AcceptInviteResult_team(_ context.Conte
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _Conversation_id(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Conversation", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _Conversation_teamId(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_teamId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TeamID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_teamId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Conversation", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _Conversation_kind(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Conversation", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Conversation_peer(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_peer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Peer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖtaskmanagerᚋgraphᚋmodelᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_peer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Conversation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Conversation_lastMessage(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_lastMessage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastMessage, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Message) graphql.Marshaler {
+			return ec.marshalOMessage2ᚖtaskmanagerᚋgraphᚋmodelᚐMessage(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_lastMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Conversation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Message(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Conversation_lastMessageAt(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_lastMessageAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastMessageAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_lastMessageAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Conversation", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Conversation_unreadCount(ctx context.Context, field graphql.CollectedField, obj *model.Conversation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Conversation_unreadCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnreadCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Conversation_unreadCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Conversation", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _CreateAccountResult_success(ctx context.Context, field graphql.CollectedField, obj *model.CreateAccountResult) (ret graphql.Marshaler) {
@@ -3263,6 +3710,130 @@ func (ec *executionContext) fieldContext_LoginResult_refreshToken(_ context.Cont
 	return graphql.NewScalarFieldContext("LoginResult", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _Message_id(ctx context.Context, field graphql.CollectedField, obj *model.Message) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Message_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Message_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Message", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _Message_conversationId(ctx context.Context, field graphql.CollectedField, obj *model.Message) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Message_conversationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConversationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Message_conversationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Message", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _Message_sender(ctx context.Context, field graphql.CollectedField, obj *model.Message) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Message_sender(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Sender, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚖtaskmanagerᚋgraphᚋmodelᚐUser(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Message_sender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Message",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Message_body(ctx context.Context, field graphql.CollectedField, obj *model.Message) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Message_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Message_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Message", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Message_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Message) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Message_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Message_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Message", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
 func (ec *executionContext) _Mutation_requestOTP(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4147,6 +4718,138 @@ func (ec *executionContext) fieldContext_Mutation_deleteAllNotifications(_ conte
 	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _Mutation_startConversation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_startConversation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().StartConversation(ctx, fc.Args["memberId"].(uuid.UUID))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Conversation) graphql.Marshaler {
+			return ec.marshalNConversation2ᚖtaskmanagerᚋgraphᚋmodelᚐConversation(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_startConversation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Conversation(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_startConversation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_sendMessage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_sendMessage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SendMessage(ctx, fc.Args["conversationId"].(uuid.UUID), fc.Args["body"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Message) graphql.Marshaler {
+			return ec.marshalNMessage2ᚖtaskmanagerᚋgraphᚋmodelᚐMessage(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_sendMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Message(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendMessage_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_markConversationRead(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_markConversationRead(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().MarkConversationRead(ctx, fc.Args["conversationId"].(uuid.UUID))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_markConversationRead(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_markConversationRead_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4634,6 +5337,82 @@ func (ec *executionContext) fieldContext_Query_dashboard(_ context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_Dashboard(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_conversations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_conversations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().Conversations(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Conversation) graphql.Marshaler {
+			return ec.marshalNConversation2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐConversationᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_conversations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Conversation(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_conversationMessages(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_conversationMessages(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ConversationMessages(ctx, fc.Args["conversationId"].(uuid.UUID), fc.Args["after"].(*time.Time), fc.Args["limit"].(*int32))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Message) graphql.Marshaler {
+			return ec.marshalNMessage2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐMessageᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_conversationMessages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Message(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_conversationMessages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -7014,6 +7793,74 @@ func (ec *executionContext) _AcceptInviteResult(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var conversationImplementors = []string{"Conversation"}
+
+func (ec *executionContext) _Conversation(ctx context.Context, sel ast.SelectionSet, obj *model.Conversation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, conversationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Conversation")
+		case "id":
+			out.Values[i] = ec._Conversation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "teamId":
+			out.Values[i] = ec._Conversation_teamId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._Conversation_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "peer":
+			out.Values[i] = ec._Conversation_peer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "lastMessage":
+			out.Values[i] = ec._Conversation_lastMessage(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "lastMessageAt":
+			out.Values[i] = ec._Conversation_lastMessageAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unreadCount":
+			out.Values[i] = ec._Conversation_unreadCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var createAccountResultImplementors = []string{"CreateAccountResult"}
 
 func (ec *executionContext) _CreateAccountResult(ctx context.Context, sel ast.SelectionSet, obj *model.CreateAccountResult) graphql.Marshaler {
@@ -7526,6 +8373,64 @@ func (ec *executionContext) _LoginResult(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var messageImplementors = []string{"Message"}
+
+func (ec *executionContext) _Message(ctx context.Context, sel ast.SelectionSet, obj *model.Message) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, messageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Message")
+		case "id":
+			out.Values[i] = ec._Message_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "conversationId":
+			out.Values[i] = ec._Message_conversationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sender":
+			out.Values[i] = ec._Message_sender(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._Message_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Message_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -7696,6 +8601,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteAllNotifications":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteAllNotifications(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startConversation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_startConversation(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendMessage":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendMessage(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "markConversationRead":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_markConversationRead(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -8026,6 +8952,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dashboard(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "conversations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_conversations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "conversationMessages":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_conversationMessages(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -8960,6 +9930,32 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNConversation2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐConversationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Conversation) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNConversation2ᚖtaskmanagerᚋgraphᚋmodelᚐConversation(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNConversation2ᚖtaskmanagerᚋgraphᚋmodelᚐConversation(ctx context.Context, sel ast.SelectionSet, v *model.Conversation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Conversation(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateAccountInput2taskmanagerᚋgraphᚋmodelᚐCreateAccountInput(ctx context.Context, v any) (model.CreateAccountInput, error) {
 	res, err := ec.unmarshalInputCreateAccountInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -9138,6 +10134,32 @@ func (ec *executionContext) marshalNLoginResult2ᚖtaskmanagerᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._LoginResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMessage2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐMessageᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Message) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMessage2ᚖtaskmanagerᚋgraphᚋmodelᚐMessage(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMessage2ᚖtaskmanagerᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Message(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNNotification2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐNotificationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
@@ -9564,6 +10586,13 @@ func (ec *executionContext) marshalOInvite2ᚖtaskmanagerᚋgraphᚋmodelᚐInvi
 		return graphql.Null
 	}
 	return ec._Invite(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOMessage2ᚖtaskmanagerᚋgraphᚋmodelᚐMessage(ctx context.Context, sel ast.SelectionSet, v *model.Message) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Message(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOPriority2ᚖtaskmanagerᚋgraphᚋmodelᚐPriority(ctx context.Context, v any) (*model.Priority, error) {

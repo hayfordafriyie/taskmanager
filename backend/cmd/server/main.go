@@ -45,7 +45,9 @@ func main() {
 	smsWorker := notif.NewWorker(notif.SenderFunc(notif.SendSMSPayload), 2, 100, nil)
 	defer smsWorker.Close()
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: graph.NewResolver(pool, smsWorker)}))
+	resolvers := graph.NewResolver(pool, smsWorker)
+
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
@@ -67,6 +69,7 @@ func main() {
 	mux.Handle(apiV1+"/", playground.Handler("GraphQL playground", apiV1+"/query"))
 	mux.HandleFunc(apiV1+"/session", crypto.SessionHandler(sessions))
 	mux.Handle(apiV1+"/query", auth.ContextMiddleware(sessions.Middleware(srv)))
+	mux.HandleFunc("GET "+apiV1+"/events", server.Events(resolvers.Realtime))
 	mux.HandleFunc("GET "+apiV1+"/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))

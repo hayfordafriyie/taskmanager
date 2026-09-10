@@ -194,6 +194,24 @@ type Dashboard {
   dueThisWeek: [DashboardDay!]!
 }
 
+type Message {
+  id: UUID!
+  conversationId: UUID!
+  sender: User!
+  body: String!
+  createdAt: Time!
+}
+
+type Conversation {
+  id: UUID!
+  teamId: UUID!
+  kind: String!
+  peer: User
+  lastMessage: Message
+  lastMessageAt: Time!
+  unreadCount: Int!
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -212,6 +230,8 @@ type Query {
   notifications: [Notification!]!
   unreadNotificationCount: Int!
   dashboard: Dashboard!
+  conversations: [Conversation!]!
+  conversationMessages(conversationId: UUID!, after: Time, limit: Int): [Message!]!
 }
 
 type Mutation {
@@ -237,4 +257,7 @@ type Mutation {
   markAllNotificationsUnread: Boolean!
   deleteNotification(id: UUID!): Boolean!
   deleteAllNotifications: Boolean!
+  startConversation(memberId: UUID!): Conversation!
+  sendMessage(conversationId: UUID!, body: String!): Message!
+  markConversationRead(conversationId: UUID!): Boolean!
 }

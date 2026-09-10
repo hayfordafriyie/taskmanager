@@ -7,10 +7,15 @@ import Button from "../../components/Button";
 import Dock from "../../components/Dock";
 import NotificationBell from "../../components/NotificationBell";
 import Tooltip from "../../components/Tooltip";
+import { useChatRealtime } from "../../modules/chat/realtime";
 
 export default function AuthenticatedLayout() {
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+
+  // Push updates: new chat messages (and the notifications they create) arrive
+  // over the internal SSE stream while the app is open.
+  useChatRealtime(!!user);
 
   return (
     <div className="app-shell">

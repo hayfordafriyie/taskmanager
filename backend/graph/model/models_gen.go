@@ -18,6 +18,16 @@ type AcceptInviteResult struct {
 	Team    *Team  `json:"team,omitempty"`
 }
 
+type Conversation struct {
+	ID            uuid.UUID `json:"id"`
+	TeamID        uuid.UUID `json:"teamId"`
+	Kind          string    `json:"kind"`
+	Peer          *User     `json:"peer,omitempty"`
+	LastMessage   *Message  `json:"lastMessage,omitempty"`
+	LastMessageAt time.Time `json:"lastMessageAt"`
+	UnreadCount   int32     `json:"unreadCount"`
+}
+
 type CreateAccountInput struct {
 	Phone           string  `json:"phone"`
 	FirstName       string  `json:"firstName"`
@@ -103,6 +113,14 @@ type LoginResult struct {
 	User         *User   `json:"user,omitempty"`
 	AccessToken  *string `json:"accessToken,omitempty"`
 	RefreshToken *string `json:"refreshToken,omitempty"`
+}
+
+type Message struct {
+	ID             uuid.UUID `json:"id"`
+	ConversationID uuid.UUID `json:"conversationId"`
+	Sender         *User     `json:"sender"`
+	Body           string    `json:"body"`
+	CreatedAt      time.Time `json:"createdAt"`
 }
 
 type Mutation struct {

@@ -111,3 +111,36 @@ type NotificationRow struct {
 	Read      bool
 	CreatedAt time.Time
 }
+
+type ConversationRow struct {
+	ID          uuid.UUID
+	TeamID      uuid.UUID
+	Kind        string
+	CreatedAt   time.Time
+	LastAt      time.Time
+	PeerID      *uuid.UUID
+	PeerFirst   *string
+	PeerSurname *string
+	PeerPhone   *string
+	LastBody    *string
+	LastSender  *uuid.UUID
+	UnreadCount int64
+}
+
+type MessageRow struct {
+	ID             uuid.UUID
+	ConversationID uuid.UUID
+	SenderID       uuid.UUID
+	SenderFirst    string
+	SenderSurname  string
+	SenderPhone    string
+	Body           string
+	CreatedAt      time.Time
+}
+
+type RecipientRow struct {
+	UserID    uuid.UUID
+	FirstName string
+	Surname   string
+	Phone     string
+}

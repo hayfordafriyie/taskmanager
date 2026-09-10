@@ -8,6 +8,7 @@ const REFRESH_KEY = 'taskmanager_refresh_token';
 
 export const GRAPHQL_ENDPOINT = `${API_URL}/api/${API_VERSION}/query`;
 export const SESSION_ENDPOINT = `${API_URL}/api/${API_VERSION}/session`;
+export const EVENTS_ENDPOINT = `${API_URL}/api/${API_VERSION}/events`;
 
 let sessionReady = null;
 let accessToken = localStorage.getItem(ACCESS_KEY);
