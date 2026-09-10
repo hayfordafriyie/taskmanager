@@ -10,7 +10,7 @@ import {
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../dashboard/hooks";
 import { initialsOf } from "./ui";
-import { formatWindow, taskDateLabel } from "../tasks/dates";
+import { taskDateLabel } from "../tasks/dates";
 import type { ISODateString } from "../../types/common";
 import type {
   DashboardActivity,

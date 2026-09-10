@@ -26,13 +26,6 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
   DONE: "Done",
 };
 
-const STATUS_TONE: Record<TaskStatus, string> = {
-  TODO: "tone-neutral",
-  IN_PROGRESS: "tone-indigo",
-  REVIEW: "tone-amber",
-  DONE: "tone-emerald",
-};
-
 const STATUS_DOT: Record<TaskStatus, string> = {
   TODO: "bg-zinc-400/80",
   IN_PROGRESS: "bg-sky-400/80",

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { DonutArc, DonutChartProps, DonutSlice } from "../types/charts";
+import type { DonutArc, DonutChartProps } from "../types/charts";
 
 /**
  * SVG donut chart.

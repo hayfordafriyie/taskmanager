@@ -48,7 +48,6 @@ function nameOf(person?: PersonNameFields | null): string {
 export function DocsView() {
   const toast = useToast();
   const { user } = useAuth();
-  const { data: team } = useMyTeam();
   const { data: docs = [], isLoading } = useTeamDocs({ enabled: !!user?.id });
 
   const createDoc = useCreateDoc();
@@ -77,8 +76,6 @@ export function DocsView() {
     setVisibility(selected.visibility);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, selected?.title, selected?.body, selected?.visibility]);
-
-  const members = team?.members ?? [];
 
   const filtered = useMemo<Doc[]>(() => {
     const q = search.trim().toLowerCase();
