@@ -5,68 +5,20 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@radix-ui/react-icons";
-import type {
-  DatePickerProps,
-  MonthCursor,
-  MonthGrid,
-} from "../types/dates";
+import type { DatePickerProps, MonthCursor } from "../types/dates";
+import {
+  MONTH_NAMES,
+  WEEKDAYS,
+  formatDisplayDate,
+  monthGrid,
+  parseDateValue,
+  toDateValue,
+} from "../lib/calendar";
 
 // Radix has no date-picker primitive, so this composes Radix Popover (focus
 // management, Esc/outside-click, portal + collision handling) with an
 // accessible month grid. Values are plain "YYYY-MM-DD" strings and all date
 // maths is done in UTC so a timezone can never shift a day.
-
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const MONTH_SHORT = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function isDateString(value: string): boolean {
-  return typeof value === "string" && DATE_RE.test(value);
-}
-
-function parse(value: string): Date | null {
-  if (!isDateString(value)) return null;
-  const [y, m, d] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function toValue(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-/** "15 Sep 2026" — stable label that does not depend on the ICU build. */
-export function formatDisplayDate(value: string): string {
-  const date = parse(value);
-  if (!date) return "";
-  return `${date.getUTCDate()} ${MONTH_SHORT[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-}
-
-/** Six weeks of cells (Monday first) for the given month, padded with nulls. */
-export function monthGrid(year: number, monthIndex: number): MonthGrid {
-  const first = new Date(Date.UTC(year, monthIndex, 1));
-  const offset = (first.getUTCDay() + 6) % 7; // Monday = 0
-  const start = new Date(Date.UTC(year, monthIndex, 1 - offset));
-  const weeks: MonthGrid = [];
-  for (let w = 0; w < 6; w += 1) {
-    const week: Array<Date | null> = [];
-    for (let d = 0; d < 7; d += 1) {
-      const day = new Date(start);
-      day.setUTCDate(start.getUTCDate() + w * 7 + d);
-      week.push(day.getUTCMonth() === monthIndex ? day : null);
-    }
-    weeks.push(week);
-  }
-  return weeks;
-}
 
 export function DatePicker({
   value = "",
@@ -78,7 +30,7 @@ export function DatePicker({
   disabled = false,
   className = "",
 }: DatePickerProps) {
-  const selected = parse(value);
+  const selected = parseDateValue(value);
   const [open, setOpen] = useState<boolean>(false);
   const [cursor, setCursor] = useState<MonthCursor>(() => {
     const base = selected || new Date();
@@ -97,9 +49,9 @@ export function DatePicker({
     });
   };
 
-  const minDate = parse(min);
-  const maxDate = parse(max);
-  const todayValue = toValue(new Date());
+  const minDate = parseDateValue(min);
+  const maxDate = parseDateValue(max);
+  const todayValue = toDateValue(new Date());
 
   const isDisabledDay = (day: Date): boolean => {
     if (minDate && day.getTime() < minDate.getTime()) return true;
@@ -108,7 +60,7 @@ export function DatePicker({
   };
 
   const pick = (day: Date) => {
-    onChange?.(toValue(day));
+    onChange?.(toDateValue(day));
     setOpen(false);
   };
 
@@ -170,7 +122,7 @@ export function DatePicker({
                 // Keeps the 7-column rhythm for padding cells.
                 return <span key={`pad-${index}`} aria-hidden="true" />;
               }
-              const dayValue = toValue(day);
+              const dayValue = toDateValue(day);
               const isSelected = dayValue === value;
               const disabledDay = isDisabledDay(day);
               return (
@@ -200,7 +152,7 @@ export function DatePicker({
               className="btn-gloss-ghost rounded-full px-3 py-1 text-xs"
               onClick={() => {
                 const today = new Date();
-                const todayIso = toValue(today);
+                const todayIso = toDateValue(today);
                 setCursor({
                   year: today.getUTCFullYear(),
                   month: today.getUTCMonth(),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { initialsOf, personName } from '../src/modules/home/ui'
+import { initialsOf, personName } from '../src/modules/home/people'
 
 describe('member name helpers', () => {
   it('builds a full name from the parts', () => {

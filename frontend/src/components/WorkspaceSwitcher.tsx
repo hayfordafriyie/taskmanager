@@ -2,18 +2,9 @@ import { Popover } from "radix-ui";
 import { CheckIcon, ChevronDownIcon, PersonIcon } from "@radix-ui/react-icons";
 import { useMyTeams, useSwitchTeam } from "../modules/invite/hooks";
 import { useToast } from "./Toast";
-import { initialsOf } from "../modules/home/ui";
+import { initialsOf } from "../modules/home/people";
 import type { TeamSummary } from "../types/invite";
-
-// Every account's private workspace is created as "Personal Workspace", so a
-// joined team is labelled with its owner's name instead — otherwise the switcher
-// would list several identical entries with no way to tell them apart.
-export function workspaceLabel(team?: TeamSummary | null): string {
-  if (!team) return "";
-  if (team.isOwner) return team.name;
-  if (team.ownerName) return `${team.ownerName}'s workspace`;
-  return team.name;
-}
+import { workspaceLabel } from "../modules/invite/labels";
 
 /**
  * Workspace switcher: a user keeps a workspace of their own and can belong to

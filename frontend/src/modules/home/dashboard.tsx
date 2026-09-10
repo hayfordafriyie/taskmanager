@@ -9,7 +9,7 @@ import {
 } from "@radix-ui/react-icons";
 import { useAuth } from "../auth/AuthContext";
 import { useDashboard } from "../dashboard/hooks";
-import { initialsOf } from "./ui";
+import { initialsOf } from "./people";
 import { taskDateLabel } from "../tasks/dates";
 import type { ISODateString } from "../../types/common";
 import type {

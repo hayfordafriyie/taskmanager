@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import DatePicker, { formatDisplayDate, monthGrid } from '../src/components/DatePicker'
+import DatePicker from '../src/components/DatePicker'
+import { formatDisplayDate, monthGrid } from '../src/lib/calendar'
 import { renderWithProviders } from './test-utils'
 
 describe('DatePicker', () => {

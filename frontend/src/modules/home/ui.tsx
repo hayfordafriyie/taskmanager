@@ -1,6 +1,5 @@
 import type {
   AvatarProps,
-  PersonNameFields,
   PolicyBadgeProps,
   PriorityBadgeProps,
   SectionTitleProps,
@@ -95,26 +94,6 @@ export function Avatar({ initial, className = "" }: AvatarProps) {
   );
 }
 
-/** Full display name for a person-like object ("Ama Osei"). */
-export function personName(
-  person?: PersonNameFields | null,
-  fallback = "",
-): string {
-  if (!person) return fallback;
-  return `${person.firstName ?? ""} ${person.surname ?? ""}`.trim() || fallback;
-}
-
-/** Rounded initials for a person-like object ("Ama Osei" -> "AO"). */
-export function initialsOf(
-  person?: PersonNameFields | null,
-  fallback = "?",
-): string {
-  if (!person) return fallback;
-  const initials =
-    `${person.firstName?.[0] ?? ""}${person.surname?.[0] ?? ""}`.toUpperCase();
-  return initials || fallback;
-}
-
 /**
  * Compact assignee/team-member display: a rounded initials badge plus an
  * optional truncated name.
@@ -123,4 +102,6 @@ export function initialsOf(
  * used to blow out select triggers on task cards. In select triggers we show
  * the initials only (compact) with the full name in `title` and in the visually
  * hidden Select.Value; inside dropdown rows we show initials + a truncated name.
+ *
+ * The name/initials helpers themselves live in `./people`.
  */
