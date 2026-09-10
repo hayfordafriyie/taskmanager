@@ -1,8 +1,16 @@
 import '@testing-library/jest-dom/vitest'
-import { webcrypto } from 'node:crypto'
+import { vi } from 'vitest'
+
+// jsdom ships none of these APIs, and Radix primitives call them on first
+// interaction. The stubs below are intentionally minimal: they only need to
+// exist, not to behave like the browser implementations.
+//
+// `crypto.subtle` no longer needs a shim: the jsdom bundled with this project
+// exposes a full WebCrypto implementation, so the encrypted client works under
+// test without reaching into Node's `crypto` module.
 
 if (!window.matchMedia) {
-  window.matchMedia = (query) => ({
+  window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -11,21 +19,17 @@ if (!window.matchMedia) {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
-  })
+  })) as unknown as typeof window.matchMedia
 }
 
 if (!window.ResizeObserver) {
-  window.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+  class ResizeObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
   }
-}
-
-if (!window.crypto.subtle) {
-  Object.defineProperty(window.crypto, 'subtle', {
-    value: webcrypto.subtle,
-  })
+  window.ResizeObserver =
+    ResizeObserverStub as unknown as typeof window.ResizeObserver
 }
 
 if (typeof window.Element.prototype.hasPointerCapture !== 'function') {
@@ -41,12 +45,15 @@ if (typeof window.Element.prototype.scrollIntoView !== 'function') {
   window.Element.prototype.scrollIntoView = () => {}
 }
 if (typeof window.PointerEvent === 'undefined') {
-  class PointerEvent extends MouseEvent {
-    constructor(type, params) {
+  class PointerEventStub extends MouseEvent {
+    pointerId: number
+    isPrimary: boolean
+
+    constructor(type: string, params?: PointerEventInit) {
       super(type, params)
       this.pointerId = params?.pointerId ?? 0
       this.isPrimary = params?.isPrimary ?? true
     }
   }
-  window.PointerEvent = PointerEvent
+  window.PointerEvent = PointerEventStub as unknown as typeof window.PointerEvent
 }
