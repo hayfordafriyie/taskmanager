@@ -4,7 +4,12 @@
  * Components import these instead of declaring props inline, so the primitives
  * stay consistent across every page.
  */
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type {
+  ButtonHTMLAttributes,
+  ComponentType,
+  InputHTMLAttributes,
+  ReactNode,
+} from "react";
 
 /** The button styles offered by `components/Button`. */
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -72,6 +77,30 @@ export interface FieldProps
 export interface PasswordInputProps extends FieldProps {
   placeholder?: string;
 }
+
+/** Props for the phone field (country picker + national number). */
+export interface PhoneInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+/** Props for the one-time-code field with its resend cooldown. */
+export interface OtpEntryProps {
+  value: string;
+  onChange: (value: string) => void;
+  /** Returns true when a new code was sent (restarts the cooldown). */
+  onResend?: () => Promise<boolean | undefined> | boolean | undefined;
+  disabled?: boolean;
+  cooldownSeconds?: number;
+}
+
+/** An icon component as used in navigation items. */
+export type IconComponent = ComponentType<{
+  width?: number | string;
+  height?: number | string;
+  className?: string;
+}>;
 
 /** Basic props for a presentational panel/section wrapper. */
 export interface PanelProps {

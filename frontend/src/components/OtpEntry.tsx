@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Button from "./Button";
+import type { OtpEntryProps } from "../types/ui";
 
 export default function OtpEntry({
   value,
@@ -7,10 +8,10 @@ export default function OtpEntry({
   onResend,
   disabled = false,
   cooldownSeconds = 60,
-}) {
-  const [secondsLeft, setSecondsLeft] = useState(cooldownSeconds);
-  const [running, setRunning] = useState(true);
-  const [resending, setResending] = useState(false);
+}: OtpEntryProps) {
+  const [secondsLeft, setSecondsLeft] = useState<number>(cooldownSeconds);
+  const [running, setRunning] = useState<boolean>(true);
+  const [resending, setResending] = useState<boolean>(false);
 
   useEffect(() => {
     if (!running) {

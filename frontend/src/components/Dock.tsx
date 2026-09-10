@@ -12,8 +12,9 @@ import {
 } from "@radix-ui/react-icons";
 import Tooltip from "./Tooltip";
 import { useWorkspace } from "../modules/home/WorkspaceContext";
+import type { DockItem } from "../types/workspace";
 
-const items = [
+const items: DockItem[] = [
   { label: "Dashboard", Icon: DashboardIcon },
   { label: "My tasks", Icon: ListBulletIcon },
   { label: "Board", Icon: ColumnsIcon },

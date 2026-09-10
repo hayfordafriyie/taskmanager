@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ChangeEvent } from "react";
 import {
   Root,
   Trigger,
@@ -12,8 +13,15 @@ import {
 } from "radix-ui/select";
 import { ChevronDownIcon, CheckIcon } from "@radix-ui/react-icons";
 import { countryOptions, combinePhone, normalizeNational } from "../lib/phone";
+import type { CountryOption } from "../types/phone";
+import type { PhoneInputProps } from "../types/ui";
 
-function splitNumber(value) {
+interface SplitNumber {
+  code: string;
+  national: string;
+}
+
+function splitNumber(value: string): SplitNumber {
   for (const country of countryOptions) {
     if (value && value.startsWith(country.code)) {
       return { code: country.code, national: value.slice(country.code.length) };
@@ -22,22 +30,29 @@ function splitNumber(value) {
   return { code: countryOptions[0].code, national: value || "" };
 }
 
-export default function PhoneInput({ value, onChange, disabled }) {
-  const [country, setCountry] = useState(() => splitNumber(value).code);
-  const [national, setNational] = useState(() => splitNumber(value).national);
+export default function PhoneInput({
+  value,
+  onChange,
+  disabled,
+}: PhoneInputProps) {
+  const [country, setCountry] = useState<string>(() => splitNumber(value).code);
+  const [national, setNational] = useState<string>(
+    () => splitNumber(value).national,
+  );
 
-  function handleCountry(next) {
+  function handleCountry(next: string) {
     setCountry(next);
     onChange(combinePhone(next, national));
   }
 
-  function handleNational(e) {
+  function handleNational(e: ChangeEvent<HTMLInputElement>) {
     const fixed = normalizeNational(country, e.target.value);
     setNational(fixed);
     onChange(combinePhone(country, fixed));
   }
 
-  const active = countryOptions.find((c) => c.code === country) || countryOptions[0];
+  const active: CountryOption =
+    countryOptions.find((c) => c.code === country) || countryOptions[0];
 
   return (
     <div className="flex gap-2">
