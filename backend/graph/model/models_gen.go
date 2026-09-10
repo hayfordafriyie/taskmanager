@@ -96,6 +96,33 @@ type DashboardStats struct {
 	CompletedThisWeek int32 `json:"completedThisWeek"`
 }
 
+type Doc struct {
+	ID          uuid.UUID     `json:"id"`
+	TeamID      uuid.UUID     `json:"teamId"`
+	Title       string        `json:"title"`
+	Body        string        `json:"body"`
+	Visibility  DocVisibility `json:"visibility"`
+	CreatedAt   time.Time     `json:"createdAt"`
+	UpdatedAt   time.Time     `json:"updatedAt"`
+	CreatedBy   *User         `json:"createdBy"`
+	CanEdit     bool          `json:"canEdit"`
+	AccessCount int32         `json:"accessCount"`
+}
+
+type DocAccess struct {
+	UserID    uuid.UUID `json:"userId"`
+	Name      string    `json:"name"`
+	Phone     string    `json:"phone"`
+	CanEdit   bool      `json:"canEdit"`
+	GrantedAt time.Time `json:"grantedAt"`
+}
+
+type DocResult struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Doc     *Doc   `json:"doc,omitempty"`
+}
+
 type Goal struct {
 	ID          uuid.UUID    `json:"id"`
 	TeamID      uuid.UUID    `json:"teamId"`
@@ -318,6 +345,63 @@ type User struct {
 type VerifyOTPResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+type DocVisibility string
+
+const (
+	DocVisibilityTeam       DocVisibility = "TEAM"
+	DocVisibilityPrivate    DocVisibility = "PRIVATE"
+	DocVisibilityRestricted DocVisibility = "RESTRICTED"
+)
+
+var AllDocVisibility = []DocVisibility{
+	DocVisibilityTeam,
+	DocVisibilityPrivate,
+	DocVisibilityRestricted,
+}
+
+func (e DocVisibility) IsValid() bool {
+	switch e {
+	case DocVisibilityTeam, DocVisibilityPrivate, DocVisibilityRestricted:
+		return true
+	}
+	return false
+}
+
+func (e DocVisibility) String() string {
+	return string(e)
+}
+
+func (e *DocVisibility) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DocVisibility(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DocVisibility", str)
+	}
+	return nil
+}
+
+func (e DocVisibility) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DocVisibility) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DocVisibility) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type GoalStatus string

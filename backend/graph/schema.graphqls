@@ -320,6 +320,39 @@ type Reports {
   completionRate: Int!
 }
 
+enum DocVisibility {
+  TEAM
+  PRIVATE
+  RESTRICTED
+}
+
+type Doc {
+  id: UUID!
+  teamId: UUID!
+  title: String!
+  body: String!
+  visibility: DocVisibility!
+  createdAt: Time!
+  updatedAt: Time!
+  createdBy: User!
+  canEdit: Boolean!
+  accessCount: Int!
+}
+
+type DocAccess {
+  userId: UUID!
+  name: String!
+  phone: String!
+  canEdit: Boolean!
+  grantedAt: Time!
+}
+
+type DocResult {
+  success: Boolean!
+  message: String!
+  doc: Doc
+}
+
 input CreateAccountInput {
   phone: String!
   firstName: String!
@@ -344,6 +377,8 @@ type Query {
   timeEntries(from: Time!, to: Time!): [TimeEntry!]!
   timeSummary(from: Time!, to: Time!): TimeSummary!
   reports: Reports!
+  teamDocs: [Doc!]!
+  docAccessList(docId: UUID!): [DocAccess!]!
 }
 
 type Mutation {
@@ -379,4 +414,9 @@ type Mutation {
   deleteGoal(goalId: UUID!): Boolean!
   logTime(input: LogTimeInput!): TimeResult!
   deleteTimeEntry(entryId: UUID!): Boolean!
+  createDoc(title: String!, body: String = "", visibility: DocVisibility = TEAM): DocResult!
+  updateDoc(docId: UUID!, title: String, body: String, visibility: DocVisibility): DocResult!
+  deleteDoc(docId: UUID!): Boolean!
+  setDocAccess(docId: UUID!, userId: UUID!, canEdit: Boolean = false): DocResult!
+  revokeDocAccess(docId: UUID!, userId: UUID!): Boolean!
 }

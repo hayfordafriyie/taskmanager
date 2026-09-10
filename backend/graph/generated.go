@@ -98,6 +98,33 @@ type ComplexityRoot struct {
 		Overdue           func(childComplexity int) int
 	}
 
+	Doc struct {
+		AccessCount func(childComplexity int) int
+		Body        func(childComplexity int) int
+		CanEdit     func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		CreatedBy   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		TeamID      func(childComplexity int) int
+		Title       func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Visibility  func(childComplexity int) int
+	}
+
+	DocAccess struct {
+		CanEdit   func(childComplexity int) int
+		GrantedAt func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Phone     func(childComplexity int) int
+		UserID    func(childComplexity int) int
+	}
+
+	DocResult struct {
+		Doc     func(childComplexity int) int
+		Message func(childComplexity int) int
+		Success func(childComplexity int) int
+	}
+
 	Goal struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
@@ -164,10 +191,12 @@ type ComplexityRoot struct {
 		AcceptInvite               func(childComplexity int, inviteID uuid.UUID) int
 		AssignTask                 func(childComplexity int, taskID uuid.UUID, assigneeID *uuid.UUID) int
 		CreateAccount              func(childComplexity int, input model.CreateAccountInput) int
+		CreateDoc                  func(childComplexity int, title string, body *string, visibility *model.DocVisibility) int
 		CreateGoal                 func(childComplexity int, input model.CreateGoalInput) int
 		CreateKeyResult            func(childComplexity int, goalID uuid.UUID, title string) int
 		CreateTask                 func(childComplexity int, input model.CreateTaskInput) int
 		DeleteAllNotifications     func(childComplexity int) int
+		DeleteDoc                  func(childComplexity int, docID uuid.UUID) int
 		DeleteGoal                 func(childComplexity int, goalID uuid.UUID) int
 		DeleteNotification         func(childComplexity int, id uuid.UUID) int
 		DeleteTimeEntry            func(childComplexity int, entryID uuid.UUID) int
@@ -184,11 +213,14 @@ type ComplexityRoot struct {
 		RequestOtp                 func(childComplexity int, phone string) int
 		RequestPasswordReset       func(childComplexity int, phone string) int
 		ResetPassword              func(childComplexity int, phone string, code string, password string, confirmPassword string) int
+		RevokeDocAccess            func(childComplexity int, docID uuid.UUID, userID uuid.UUID) int
 		RevokeInvite               func(childComplexity int, inviteID uuid.UUID) int
 		SendMessage                func(childComplexity int, conversationID uuid.UUID, body string) int
+		SetDocAccess               func(childComplexity int, docID uuid.UUID, userID uuid.UUID, canEdit *bool) int
 		SetKeyResultProgress       func(childComplexity int, keyResultID uuid.UUID, progress int32) int
 		SetTaskStatus              func(childComplexity int, taskID uuid.UUID, status model.TaskStatus) int
 		StartConversation          func(childComplexity int, memberID uuid.UUID) int
+		UpdateDoc                  func(childComplexity int, docID uuid.UUID, title *string, body *string, visibility *model.DocVisibility) int
 		UpdateGoalStatus           func(childComplexity int, goalID uuid.UUID, status model.GoalStatus) int
 		UpdateTask                 func(childComplexity int, taskID uuid.UUID, input model.UpdateTaskInput) int
 		UpdateTaskDescription      func(childComplexity int, taskID uuid.UUID, description string) int
@@ -216,12 +248,14 @@ type ComplexityRoot struct {
 		ConversationMessages    func(childComplexity int, conversationID uuid.UUID, after *time.Time, limit *int32) int
 		Conversations           func(childComplexity int) int
 		Dashboard               func(childComplexity int) int
+		DocAccessList           func(childComplexity int, docID uuid.UUID) int
 		Health                  func(childComplexity int) int
 		Me                      func(childComplexity int) int
 		MyInvites               func(childComplexity int) int
 		MyTeam                  func(childComplexity int) int
 		Notifications           func(childComplexity int) int
 		Reports                 func(childComplexity int) int
+		TeamDocs                func(childComplexity int) int
 		TeamGoals               func(childComplexity int) int
 		TeamTasks               func(childComplexity int) int
 		TimeEntries             func(childComplexity int, from time.Time, to time.Time) int
@@ -390,6 +424,11 @@ type MutationResolver interface {
 	DeleteGoal(ctx context.Context, goalID uuid.UUID) (bool, error)
 	LogTime(ctx context.Context, input model.LogTimeInput) (*model.TimeResult, error)
 	DeleteTimeEntry(ctx context.Context, entryID uuid.UUID) (bool, error)
+	CreateDoc(ctx context.Context, title string, body *string, visibility *model.DocVisibility) (*model.DocResult, error)
+	UpdateDoc(ctx context.Context, docID uuid.UUID, title *string, body *string, visibility *model.DocVisibility) (*model.DocResult, error)
+	DeleteDoc(ctx context.Context, docID uuid.UUID) (bool, error)
+	SetDocAccess(ctx context.Context, docID uuid.UUID, userID uuid.UUID, canEdit *bool) (*model.DocResult, error)
+	RevokeDocAccess(ctx context.Context, docID uuid.UUID, userID uuid.UUID) (bool, error)
 }
 type QueryResolver interface {
 	Health(ctx context.Context) (string, error)
@@ -406,6 +445,8 @@ type QueryResolver interface {
 	TimeEntries(ctx context.Context, from time.Time, to time.Time) ([]*model.TimeEntry, error)
 	TimeSummary(ctx context.Context, from time.Time, to time.Time) (*model.TimeSummary, error)
 	Reports(ctx context.Context) (*model.Reports, error)
+	TeamDocs(ctx context.Context) ([]*model.Doc, error)
+	DocAccessList(ctx context.Context, docID uuid.UUID) ([]*model.DocAccess, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -643,6 +684,117 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DashboardStats.Overdue(childComplexity), true
+
+	case "Doc.accessCount":
+		if e.ComplexityRoot.Doc.AccessCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.AccessCount(childComplexity), true
+	case "Doc.body":
+		if e.ComplexityRoot.Doc.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.Body(childComplexity), true
+	case "Doc.canEdit":
+		if e.ComplexityRoot.Doc.CanEdit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.CanEdit(childComplexity), true
+	case "Doc.createdAt":
+		if e.ComplexityRoot.Doc.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.CreatedAt(childComplexity), true
+	case "Doc.createdBy":
+		if e.ComplexityRoot.Doc.CreatedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.CreatedBy(childComplexity), true
+	case "Doc.id":
+		if e.ComplexityRoot.Doc.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.ID(childComplexity), true
+	case "Doc.teamId":
+		if e.ComplexityRoot.Doc.TeamID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.TeamID(childComplexity), true
+	case "Doc.title":
+		if e.ComplexityRoot.Doc.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.Title(childComplexity), true
+	case "Doc.updatedAt":
+		if e.ComplexityRoot.Doc.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.UpdatedAt(childComplexity), true
+	case "Doc.visibility":
+		if e.ComplexityRoot.Doc.Visibility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Doc.Visibility(childComplexity), true
+
+	case "DocAccess.canEdit":
+		if e.ComplexityRoot.DocAccess.CanEdit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocAccess.CanEdit(childComplexity), true
+	case "DocAccess.grantedAt":
+		if e.ComplexityRoot.DocAccess.GrantedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocAccess.GrantedAt(childComplexity), true
+	case "DocAccess.name":
+		if e.ComplexityRoot.DocAccess.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocAccess.Name(childComplexity), true
+	case "DocAccess.phone":
+		if e.ComplexityRoot.DocAccess.Phone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocAccess.Phone(childComplexity), true
+	case "DocAccess.userId":
+		if e.ComplexityRoot.DocAccess.UserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocAccess.UserID(childComplexity), true
+
+	case "DocResult.doc":
+		if e.ComplexityRoot.DocResult.Doc == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocResult.Doc(childComplexity), true
+	case "DocResult.message":
+		if e.ComplexityRoot.DocResult.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocResult.Message(childComplexity), true
+	case "DocResult.success":
+		if e.ComplexityRoot.DocResult.Success == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocResult.Success(childComplexity), true
 
 	case "Goal.createdAt":
 		if e.ComplexityRoot.Goal.CreatedAt == nil {
@@ -930,6 +1082,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateAccount(childComplexity, args["input"].(model.CreateAccountInput)), true
+	case "Mutation.createDoc":
+		if e.ComplexityRoot.Mutation.CreateDoc == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDoc_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateDoc(childComplexity, args["title"].(string), args["body"].(*string), args["visibility"].(*model.DocVisibility)), true
 	case "Mutation.createGoal":
 		if e.ComplexityRoot.Mutation.CreateGoal == nil {
 			break
@@ -969,6 +1132,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteAllNotifications(childComplexity), true
+	case "Mutation.deleteDoc":
+		if e.ComplexityRoot.Mutation.DeleteDoc == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDoc_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteDoc(childComplexity, args["docId"].(uuid.UUID)), true
 	case "Mutation.deleteGoal":
 		if e.ComplexityRoot.Mutation.DeleteGoal == nil {
 			break
@@ -1130,6 +1304,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResetPassword(childComplexity, args["phone"].(string), args["code"].(string), args["password"].(string), args["confirmPassword"].(string)), true
+	case "Mutation.revokeDocAccess":
+		if e.ComplexityRoot.Mutation.RevokeDocAccess == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeDocAccess_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RevokeDocAccess(childComplexity, args["docId"].(uuid.UUID), args["userId"].(uuid.UUID)), true
 	case "Mutation.revokeInvite":
 		if e.ComplexityRoot.Mutation.RevokeInvite == nil {
 			break
@@ -1152,6 +1337,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendMessage(childComplexity, args["conversationId"].(uuid.UUID), args["body"].(string)), true
+	case "Mutation.setDocAccess":
+		if e.ComplexityRoot.Mutation.SetDocAccess == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setDocAccess_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetDocAccess(childComplexity, args["docId"].(uuid.UUID), args["userId"].(uuid.UUID), args["canEdit"].(*bool)), true
 	case "Mutation.setKeyResultProgress":
 		if e.ComplexityRoot.Mutation.SetKeyResultProgress == nil {
 			break
@@ -1185,6 +1381,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.StartConversation(childComplexity, args["memberId"].(uuid.UUID)), true
+	case "Mutation.updateDoc":
+		if e.ComplexityRoot.Mutation.UpdateDoc == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDoc_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateDoc(childComplexity, args["docId"].(uuid.UUID), args["title"].(*string), args["body"].(*string), args["visibility"].(*model.DocVisibility)), true
 	case "Mutation.updateGoalStatus":
 		if e.ComplexityRoot.Mutation.UpdateGoalStatus == nil {
 			break
@@ -1321,6 +1528,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Dashboard(childComplexity), true
+	case "Query.docAccessList":
+		if e.ComplexityRoot.Query.DocAccessList == nil {
+			break
+		}
+
+		args, err := ec.field_Query_docAccessList_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DocAccessList(childComplexity, args["docId"].(uuid.UUID)), true
 	case "Query.health":
 		if e.ComplexityRoot.Query.Health == nil {
 			break
@@ -1358,6 +1576,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Reports(childComplexity), true
+	case "Query.teamDocs":
+		if e.ComplexityRoot.Query.TeamDocs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.TeamDocs(childComplexity), true
 	case "Query.teamGoals":
 		if e.ComplexityRoot.Query.TeamGoals == nil {
 			break
@@ -2107,6 +2331,60 @@ func (ec *executionContext) childFields_DashboardStats(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type DashboardStats", field.Name)
 }
 
+func (ec *executionContext) childFields_Doc(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Doc_id(ctx, field)
+	case "teamId":
+		return ec.fieldContext_Doc_teamId(ctx, field)
+	case "title":
+		return ec.fieldContext_Doc_title(ctx, field)
+	case "body":
+		return ec.fieldContext_Doc_body(ctx, field)
+	case "visibility":
+		return ec.fieldContext_Doc_visibility(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Doc_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_Doc_updatedAt(ctx, field)
+	case "createdBy":
+		return ec.fieldContext_Doc_createdBy(ctx, field)
+	case "canEdit":
+		return ec.fieldContext_Doc_canEdit(ctx, field)
+	case "accessCount":
+		return ec.fieldContext_Doc_accessCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Doc", field.Name)
+}
+
+func (ec *executionContext) childFields_DocAccess(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "userId":
+		return ec.fieldContext_DocAccess_userId(ctx, field)
+	case "name":
+		return ec.fieldContext_DocAccess_name(ctx, field)
+	case "phone":
+		return ec.fieldContext_DocAccess_phone(ctx, field)
+	case "canEdit":
+		return ec.fieldContext_DocAccess_canEdit(ctx, field)
+	case "grantedAt":
+		return ec.fieldContext_DocAccess_grantedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocAccess", field.Name)
+}
+
+func (ec *executionContext) childFields_DocResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "success":
+		return ec.fieldContext_DocResult_success(ctx, field)
+	case "message":
+		return ec.fieldContext_DocResult_message(ctx, field)
+	case "doc":
+		return ec.fieldContext_DocResult_doc(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocResult", field.Name)
+}
+
 func (ec *executionContext) childFields_Goal(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -2677,6 +2955,36 @@ func (ec *executionContext) field_Mutation_createAccount_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createDoc_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "title",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "body",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["body"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "visibility",
+		func(ctx context.Context, v any) (*model.DocVisibility, error) {
+			return ec.unmarshalODocVisibility2ᚖtaskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["visibility"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createGoal_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2724,6 +3032,20 @@ func (ec *executionContext) field_Mutation_createTask_args(ctx context.Context, 
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDoc_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "docId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["docId"] = arg0
 	return args, nil
 }
 
@@ -2949,6 +3271,28 @@ func (ec *executionContext) field_Mutation_resetPassword_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_revokeDocAccess_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "docId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["docId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_revokeInvite_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2982,6 +3326,36 @@ func (ec *executionContext) field_Mutation_sendMessage_args(ctx context.Context,
 		return nil, err
 	}
 	args["body"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setDocAccess_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "docId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["docId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "canEdit",
+		func(ctx context.Context, v any) (*bool, error) {
+			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["canEdit"] = arg2
 	return args, nil
 }
 
@@ -3040,6 +3414,44 @@ func (ec *executionContext) field_Mutation_startConversation_args(ctx context.Co
 		return nil, err
 	}
 	args["memberId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDoc_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "docId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["docId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "title",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "body",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["body"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "visibility",
+		func(ctx context.Context, v any) (*model.DocVisibility, error) {
+			return ec.unmarshalODocVisibility2ᚖtaskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["visibility"] = arg3
 	return args, nil
 }
 
@@ -3172,6 +3584,20 @@ func (ec *executionContext) field_Query_conversationMessages_args(ctx context.Co
 		return nil, err
 	}
 	args["limit"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_docAccessList_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "docId",
+		func(ctx context.Context, v any) (uuid.UUID, error) {
+			return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["docId"] = arg0
 	return args, nil
 }
 
@@ -4163,6 +4589,438 @@ func (ec *executionContext) _DashboardStats_completedThisWeek(ctx context.Contex
 }
 func (ec *executionContext) fieldContext_DashboardStats_completedThisWeek(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DashboardStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_id(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_teamId(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_teamId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TeamID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_teamId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_title(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_body(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_body(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Body, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_body(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_visibility(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_visibility(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Visibility, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.DocVisibility) graphql.Marshaler {
+			return ec.marshalNDocVisibility2taskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_visibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type DocVisibility does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_createdBy(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_createdBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.User) graphql.Marshaler {
+			return ec.marshalNUser2ᚖtaskmanagerᚋgraphᚋmodelᚐUser(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Doc",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Doc_canEdit(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_canEdit(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanEdit, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_canEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Doc_accessCount(ctx context.Context, field graphql.CollectedField, obj *model.Doc) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Doc_accessCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AccessCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Doc_accessCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Doc", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocAccess_userId(ctx context.Context, field graphql.CollectedField, obj *model.DocAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocAccess_userId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UserID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+			return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocAccess_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocAccess", field, false, false, errors.New("field of type UUID does not have child fields"))
+}
+
+func (ec *executionContext) _DocAccess_name(ctx context.Context, field graphql.CollectedField, obj *model.DocAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocAccess_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocAccess_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocAccess", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocAccess_phone(ctx context.Context, field graphql.CollectedField, obj *model.DocAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocAccess_phone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Phone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocAccess_phone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocAccess", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocAccess_canEdit(ctx context.Context, field graphql.CollectedField, obj *model.DocAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocAccess_canEdit(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanEdit, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocAccess_canEdit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocAccess", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocAccess_grantedAt(ctx context.Context, field graphql.CollectedField, obj *model.DocAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocAccess_grantedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GrantedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocAccess_grantedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocAccess", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _DocResult_success(ctx context.Context, field graphql.CollectedField, obj *model.DocResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocResult_success(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocResult_message(ctx context.Context, field graphql.CollectedField, obj *model.DocResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocResult_message(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocResult", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocResult_doc(ctx context.Context, field graphql.CollectedField, obj *model.DocResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocResult_doc(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Doc, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Doc) graphql.Marshaler {
+			return ec.marshalODoc2ᚖtaskmanagerᚋgraphᚋmodelᚐDoc(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocResult_doc(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Doc(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _Goal_id(ctx context.Context, field graphql.CollectedField, obj *model.Goal) (ret graphql.Marshaler) {
@@ -6495,6 +7353,226 @@ func (ec *executionContext) fieldContext_Mutation_deleteTimeEntry(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createDoc(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createDoc(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateDoc(ctx, fc.Args["title"].(string), fc.Args["body"].(*string), fc.Args["visibility"].(*model.DocVisibility))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.DocResult) graphql.Marshaler {
+			return ec.marshalNDocResult2ᚖtaskmanagerᚋgraphᚋmodelᚐDocResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createDoc(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createDoc_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateDoc(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateDoc(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateDoc(ctx, fc.Args["docId"].(uuid.UUID), fc.Args["title"].(*string), fc.Args["body"].(*string), fc.Args["visibility"].(*model.DocVisibility))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.DocResult) graphql.Marshaler {
+			return ec.marshalNDocResult2ᚖtaskmanagerᚋgraphᚋmodelᚐDocResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateDoc(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDoc_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDoc(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteDoc(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteDoc(ctx, fc.Args["docId"].(uuid.UUID))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteDoc(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDoc_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setDocAccess(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setDocAccess(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetDocAccess(ctx, fc.Args["docId"].(uuid.UUID), fc.Args["userId"].(uuid.UUID), fc.Args["canEdit"].(*bool))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.DocResult) graphql.Marshaler {
+			return ec.marshalNDocResult2ᚖtaskmanagerᚋgraphᚋmodelᚐDocResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setDocAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setDocAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_revokeDocAccess(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_revokeDocAccess(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RevokeDocAccess(ctx, fc.Args["docId"].(uuid.UUID), fc.Args["userId"].(uuid.UUID))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_revokeDocAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_revokeDocAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7210,6 +8288,82 @@ func (ec *executionContext) fieldContext_Query_reports(_ context.Context, field 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_Reports(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_teamDocs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_teamDocs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().TeamDocs(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Doc) graphql.Marshaler {
+			return ec.marshalNDoc2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDocᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_teamDocs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Doc(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_docAccessList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_docAccessList(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DocAccessList(ctx, fc.Args["docId"].(uuid.UUID))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.DocAccess) graphql.Marshaler {
+			return ec.marshalNDocAccess2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDocAccessᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_docAccessList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocAccess(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_docAccessList_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10991,6 +12145,195 @@ func (ec *executionContext) _DashboardStats(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var docImplementors = []string{"Doc"}
+
+func (ec *executionContext) _Doc(ctx context.Context, sel ast.SelectionSet, obj *model.Doc) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, docImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Doc")
+		case "id":
+			out.Values[i] = ec._Doc_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "teamId":
+			out.Values[i] = ec._Doc_teamId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._Doc_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "body":
+			out.Values[i] = ec._Doc_body(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "visibility":
+			out.Values[i] = ec._Doc_visibility(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Doc_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Doc_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdBy":
+			out.Values[i] = ec._Doc_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canEdit":
+			out.Values[i] = ec._Doc_canEdit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "accessCount":
+			out.Values[i] = ec._Doc_accessCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var docAccessImplementors = []string{"DocAccess"}
+
+func (ec *executionContext) _DocAccess(ctx context.Context, sel ast.SelectionSet, obj *model.DocAccess) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, docAccessImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocAccess")
+		case "userId":
+			out.Values[i] = ec._DocAccess_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._DocAccess_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "phone":
+			out.Values[i] = ec._DocAccess_phone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canEdit":
+			out.Values[i] = ec._DocAccess_canEdit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "grantedAt":
+			out.Values[i] = ec._DocAccess_grantedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var docResultImplementors = []string{"DocResult"}
+
+func (ec *executionContext) _DocResult(ctx context.Context, sel ast.SelectionSet, obj *model.DocResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, docResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocResult")
+		case "success":
+			out.Values[i] = ec._DocResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._DocResult_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "doc":
+			out.Values[i] = ec._DocResult_doc(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var goalImplementors = []string{"Goal"}
 
 func (ec *executionContext) _Goal(ctx context.Context, sel ast.SelectionSet, obj *model.Goal) graphql.Marshaler {
@@ -11671,6 +13014,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createDoc":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDoc(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateDoc":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDoc(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDoc":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDoc(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setDocAccess":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setDocAccess(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "revokeDocAccess":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_revokeDocAccess(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12129,6 +13507,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_reports(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "teamDocs":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_teamDocs(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "docAccessList":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_docAccessList(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -13628,6 +15050,78 @@ func (ec *executionContext) marshalNDashboardStats2ᚖtaskmanagerᚋgraphᚋmode
 	return ec._DashboardStats(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNDoc2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDocᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Doc) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDoc2ᚖtaskmanagerᚋgraphᚋmodelᚐDoc(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDoc2ᚖtaskmanagerᚋgraphᚋmodelᚐDoc(ctx context.Context, sel ast.SelectionSet, v *model.Doc) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Doc(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocAccess2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐDocAccessᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DocAccess) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocAccess2ᚖtaskmanagerᚋgraphᚋmodelᚐDocAccess(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocAccess2ᚖtaskmanagerᚋgraphᚋmodelᚐDocAccess(ctx context.Context, sel ast.SelectionSet, v *model.DocAccess) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocAccess(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocResult2ᚖtaskmanagerᚋgraphᚋmodelᚐDocResult(ctx context.Context, sel ast.SelectionSet, v *model.DocResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocVisibility2taskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx context.Context, v any) (model.DocVisibility, error) {
+	var res model.DocVisibility
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocVisibility2taskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx context.Context, sel ast.SelectionSet, v model.DocVisibility) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNGoal2ᚕᚖtaskmanagerᚋgraphᚋmodelᚐGoalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Goal) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -14326,6 +15820,29 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODoc2ᚖtaskmanagerᚋgraphᚋmodelᚐDoc(ctx context.Context, sel ast.SelectionSet, v *model.Doc) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Doc(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODocVisibility2ᚖtaskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx context.Context, v any) (*model.DocVisibility, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.DocVisibility)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocVisibility2ᚖtaskmanagerᚋgraphᚋmodelᚐDocVisibility(ctx context.Context, sel ast.SelectionSet, v *model.DocVisibility) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalOGoal2ᚖtaskmanagerᚋgraphᚋmodelᚐGoal(ctx context.Context, sel ast.SelectionSet, v *model.Goal) graphql.Marshaler {

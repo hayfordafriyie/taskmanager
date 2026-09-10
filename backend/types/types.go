@@ -192,3 +192,27 @@ type TimeSummaryRow struct {
 	TopLabel     *string
 	TopMinutes   int64
 }
+
+type DocRow struct {
+	ID         uuid.UUID
+	TeamID     uuid.UUID
+	CreatedBy  uuid.UUID
+	Title      string
+	Body       string
+	Visibility string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+
+	CreatorFirst   string
+	CreatorSurname string
+	CanEdit        bool
+	AccessCount    int
+}
+
+type DocAccessRow struct {
+	DocID     uuid.UUID
+	UserID    uuid.UUID
+	CanEdit   bool
+	GrantedBy uuid.UUID
+	GrantedAt time.Time
+}
