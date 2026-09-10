@@ -362,6 +362,7 @@ type ComplexityRoot struct {
 		IsOwner     func(childComplexity int) int
 		MemberCount func(childComplexity int) int
 		Name        func(childComplexity int) int
+		OwnerName   func(childComplexity int) int
 		Role        func(childComplexity int) int
 	}
 
@@ -2050,6 +2051,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TeamSummary.Name(childComplexity), true
+	case "TeamSummary.ownerName":
+		if e.ComplexityRoot.TeamSummary.OwnerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TeamSummary.OwnerName(childComplexity), true
 	case "TeamSummary.role":
 		if e.ComplexityRoot.TeamSummary.Role == nil {
 			break
@@ -2845,6 +2852,8 @@ func (ec *executionContext) childFields_TeamSummary(ctx context.Context, field g
 		return ec.fieldContext_TeamSummary_isActive(ctx, field)
 	case "memberCount":
 		return ec.fieldContext_TeamSummary_memberCount(ctx, field)
+	case "ownerName":
+		return ec.fieldContext_TeamSummary_ownerName(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type TeamSummary", field.Name)
 }
@@ -10236,6 +10245,29 @@ func (ec *executionContext) fieldContext_TeamSummary_memberCount(_ context.Conte
 	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _TeamSummary_ownerName(ctx context.Context, field graphql.CollectedField, obj *model.TeamSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TeamSummary_ownerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TeamSummary_ownerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TeamSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _TimeEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.TimeEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -14861,6 +14893,11 @@ func (ec *executionContext) _TeamSummary(ctx context.Context, sel ast.SelectionS
 		case "memberCount":
 			out.Values[i] = ec._TeamSummary_memberCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ownerName":
+			out.Values[i] = ec._TeamSummary_ownerName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
