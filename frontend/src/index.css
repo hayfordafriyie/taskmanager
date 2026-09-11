@@ -46,6 +46,11 @@
   --accent-2: #1f2937;
   --accent: #3f3f46;
   --accent-contrast: #ffffff;
+  /* Own chat bubble. The accent (#3f3f46) is the same in both themes so the
+     bubble text and its timestamp stay legible against it. */
+  --bubble-own: #3f3f46;
+  --bubble-own-ink: #ffffff;
+  --bubble-own-meta: rgba(255, 255, 255, 0.72);
   --accent-tint: rgba(63, 63, 70, 0.12);
 }
 
@@ -74,11 +79,19 @@
   --ink-faint: #7c829a;
   --on-glass: #f1f2f8;
 
-  --accent-1: #8a919e;
-  --accent-2: #2b2f3b;
+  /* Primary-button gradient. Was #8a919e -> #2b2f3b, so its light end washed
+     out the white icon/label (~2:1). Dark slates give white ~7:1. */
+  --accent-1: #4b5563;
+  --accent-2: #1f2937;
   --accent: #cfd2db;
   --accent-contrast: #ffffff;
   --accent-tint: rgba(150, 156, 170, 0.2);
+  /* Own chat bubble. The accent (#cfd2db) with white text was ~1.3:1 in dark
+     mode — unreadable. Slate-500 keeps it distinct from the peer tile and
+     gives white text ~4.8:1. */
+  --bubble-own: #6b7280;
+  --bubble-own-ink: #ffffff;
+  --bubble-own-meta: rgba(255, 255, 255, 0.8);
 }
 
 html,

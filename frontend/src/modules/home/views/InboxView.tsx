@@ -290,7 +290,9 @@ function Thread({ conversation, currentUser, onBack }: InboxThreadProps) {
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                    mine ? "bg-[var(--accent)] text-white" : "glass-tile t-ink"
+                    mine
+                      ? "bg-[var(--bubble-own)] text-[var(--bubble-own-ink)]"
+                      : "glass-tile t-ink"
                   }`}
                 >
                   {!mine && (
@@ -299,7 +301,11 @@ function Thread({ conversation, currentUser, onBack }: InboxThreadProps) {
                     </p>
                   )}
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                  <p className={`mt-1 text-[10px] ${mine ? "text-white/70" : "t-faint"}`}>
+                  <p
+                    className={`mt-1 text-[10px] ${
+                      mine ? "text-[var(--bubble-own-meta)]" : "t-faint"
+                    }`}
+                  >
                     {clockTime(m.createdAt)}
                   </p>
                 </div>
