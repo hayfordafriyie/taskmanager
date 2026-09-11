@@ -450,7 +450,7 @@ acs.edspike.com {
 
 Then reload: `sudo systemctl reload caddy`.
 
-### 11.3 Scaling notes
+### 11.4 Scaling notes
 
 - The API is **stateless** (JWT auth, DB‑backed sessions) — run several replicas
   behind a load balancer. Caching stays consistent because invalidation is an
@@ -462,7 +462,7 @@ Then reload: `sudo systemctl reload caddy`.
 - Postgres connection pool is configured in `internal/db/db.go`
   (max 10 / min 2 per replica).
 
-### 11.4 Backups & data
+### 11.5 Backups & data
 
 | Data | Where | Notes |
 |---|---|---|
@@ -473,7 +473,7 @@ Then reload: `sudo systemctl reload caddy`.
 docker compose exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql
 ```
 
-### 11.5 Operations
+### 11.6 Operations
 
 - **Health**: `GET /health` and `/api/v1/health` return `ok` — use for container
   and load‑balancer probes.
